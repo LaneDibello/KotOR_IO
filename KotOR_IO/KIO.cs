@@ -12,6 +12,7 @@ using System.Threading.Tasks;
  * Consider making said varients derivative of the others.
  * Consider separate class for GFF derivatives
  * Continue populating XML documentation.
+ * FIX: Add_row, and add column methods for 2DAs
  * 
  */
 
@@ -668,7 +669,7 @@ namespace KotOR_IO
             //Header
             bw.Write(t.FileType.ToArray());
             bw.Write(t.Version.ToArray());
-
+            
             bw.Write((byte)10);
 
             //Column Labels
@@ -699,18 +700,18 @@ namespace KotOR_IO
             int DataOffset = (int)bw.BaseStream.Position;
 
             //Data
-            List<short> ChekcedOffsets = new List<short>();
+            List<short> CheckedOffsets = new List<short>();
             int row_index = 0;
             int col_index = 0;
             foreach (short sh in t.Offsets)
             {
-                if (!ChekcedOffsets.Contains(sh))
+                if (!CheckedOffsets.Contains(sh))
                 {
                     string tempData = Convert.ToString(t.Data[t.Columns[col_index]][row_index]);
                     bw.Seek(DataOffset + sh, SeekOrigin.Begin);
                     bw.Write(tempData.ToArray());
                     bw.Write((byte)0);
-                    ChekcedOffsets.Add(sh);
+                    CheckedOffsets.Add(sh);
                 }
                 col_index++;
 
@@ -718,7 +719,7 @@ namespace KotOR_IO
                 {
                     col_index = 0;
                     row_index++;
-                    if (row_index == t.Row_Count - 1) { break; }
+                    if (row_index == t.Row_Count) { break; }
                 }
             }
 
@@ -1158,8 +1159,6 @@ namespace KotOR_IO
         public string FileType;
         /// <summary>The 4 char file version</summary>
         public string Version;
-
-        
     }
 
 
@@ -1176,6 +1175,7 @@ namespace KotOR_IO
     /// </summary>
     public class TwoDA: KFile
     {
+        #region class definition
         //header
         //FileType & Version in superclass
         /// <summary>List of Column Headers. Generally used as the keys for Data</summary>
@@ -1218,9 +1218,156 @@ namespace KotOR_IO
             }
             IsParsed = true;
         }
+        #endregion
 
+        #region Construction
         ///<summary>Initiates a new instance of the <see cref="TwoDA"/> class.</summary>
         public TwoDA() { }
+
+        /// <summary>
+        /// Initiates a new instance of the <see cref="TwoDA"/> class, given column names and 2-deminsional data.
+        /// </summary>
+        /// <param name="_Columns">A string array containing the names of the columns</param>
+        /// <param name="_Data">The 2-dimensional data</param>
+        /// <param name="_IsParsed">Whether the data has been parsed into different formats. If False, then all data is in string format.</param>
+        public TwoDA(string[] _Columns, object[,] _Data, bool _IsParsed)
+        {
+            if (_Columns.Length != _Data.GetLength(1)) { throw new IndexOutOfRangeException("Length of columns should be equal to the number of columns in data.");  }
+
+            //header info
+            FileType = "2DA ";
+            Version = "V2.b";
+
+            // Columns
+            Columns.AddRange(_Columns);
+
+            //row count
+            Row_Count = _Data.GetLength(0);
+
+            //Offsets
+            List<object> UniqueValues = new List<object>();
+            List<int> IndexOffsets = new List<int>();
+
+            int totaloffset = 0;
+            foreach (object o in _Data)
+            {
+                if (!UniqueValues.Contains(o))
+                {
+                    UniqueValues.Add(o);
+                    IndexOffsets.Add(totaloffset);
+                    totaloffset += GetDataSize(o) + 1;
+                }
+
+                Offsets.Add((short)(IndexOffsets[UniqueValues.IndexOf(o)]));
+            }
+            Offsets.Add((short)totaloffset);
+            //Data
+
+            //generate index column
+            List<object> index_list = new List<object>();
+            for (int i = 0; i < Row_Count; i++) { index_list.Add(Convert.ToString(i)); }
+            Data.Add("row_index", index_list);
+
+            foreach (string c in _Columns)
+            {
+                List<object> tempCol = new List<object>();
+                int colIndex = Array.IndexOf(_Columns, c);
+
+                for (int i = 0; i < Row_Count; i++)
+                {
+                    tempCol.Add(_Data[i, colIndex]);
+                }
+
+                Data.Add(c, tempCol);
+            }
+
+            //Parsing
+            IsParsed = _IsParsed;
+
+        }
+        
+        int GetDataSize(object o)
+        {
+            if (o is string)
+            {
+                return (o as string).Length;
+            }
+            else if (o is int)
+            {
+                return Convert.ToString((int)o).Length;
+            }
+            else if (o is float)
+            {
+                return Convert.ToString((float)o).Length;
+            }
+            else
+            {
+                return Convert.ToString(o).Length;
+            }
+        }
+
+        /// <summary>
+        /// Indexer for 2DA data
+        /// </summary>
+        /// <param name="Column_Label">The label of the column in the <see cref="TwoDA"/>.</param>
+        /// <param name="Row_Index">The index of the row in <see cref="Data"/>.</param>
+        public object this[string Column_Label, int Row_Index] //maybe switch first vaule to column
+        {
+            get
+            {
+                if (Data.Keys.Contains(Column_Label) && Row_Index < Row_Count)
+                {
+                    return Data[Column_Label][Row_Index];
+                }
+                else
+                {
+                    throw new IndexOutOfRangeException("Column Label and row index must exist in the 2DA."); 
+                }
+            }
+            set
+            {
+                if (Data.Keys.Contains(Column_Label) && Row_Index < Row_Count)
+                {
+                    Data[Column_Label][Row_Index] = value;
+                }
+                else
+                {
+                    throw new IndexOutOfRangeException("Column Label and row index must exist in the 2DA.");
+                }
+            }
+        }
+
+        ///// <summary>
+        ///// Adds a new collumn onto <see cref="Data"/>
+        ///// </summary>
+        ///// <param name="_Label">The Label or Header for the collumn</param>
+        ///// <param name="_Data">The list of objects to be seeded in the collumn</param>
+        //public void Add_Column(string _Label, object[] _Data)
+        //{
+        //    if (_Data.Length > Row_Count) { throw new IndexOutOfRangeException("_Data extends beyond Row_Count"); }
+        //    List<object> tmpCol = new List<object>(_Data);
+        //    Data.Add(_Label, tmpCol);
+        //    Columns.Add(_Label);
+        //}
+
+        ///// <summary>
+        ///// Adds a row to the 2DA
+        ///// </summary>
+        ///// <param name="_Data">The Data to be seeded to that row (from left to right).</param>
+        //public void Add_Row(object[] _Data)
+        //{
+        //    if (_Data.Length > Columns.Count) { throw new IndexOutOfRangeException("_Data contains more collumns than are present in the 2DA."); }
+        //    Data["row_index"].Add(Row_Count);
+        //    Row_Count++;
+        //    foreach (object o in _Data)
+        //    {
+        //        int colIndex = 0;
+        //        Data[Columns[colIndex]].Add(o);
+        //        colIndex++;
+        //    }
+        //} 
+        #endregion
+        //^^^Row and Column Addition (**DOESN"T UPDATE OFFSETS!!!!)^^^
 
     }
 
@@ -1404,7 +1551,7 @@ namespace KotOR_IO
         ///<summary>The number of years after 1900 that the ERF file was built. (i.e. 2019 == 119)</summary>
         public int BuildYear;
         ///<summary>The number of days after January 1st the ERF file was built. (i.e. October 5th == 277)</summary>
-        public int BuildDay; //days since january 1st (i.e. October 5th == 277)
+        public int BuildDay;
         ///<summary>A numerical string reference to a talk table (<see cref="TLK"/>) for the file description if one exist.</summary>
         public int DescriptionStrRef;
         ///<summary>A block of 116 (usually null) bytes that are reserved for future backwards compatibility.</summary>
@@ -1634,53 +1781,80 @@ namespace KotOR_IO
             /// <summary>Whether or not the <see cref="Type"/> is complex according to <see cref="Reference_Tables.Complex_Field_Types"/> </summary>
             public bool Complex;
         }
+        /// <summary>The array of all fields contained withing the GFF</summary>
         public List<Field> Field_Array = new List<Field>();
 
         //Label Array
+        /// <summary>The array of all Field labels (aka variable names) in the GFF</summary>
         public List<string> Label_Array = new List<string>();
 
         //Field_Indices
+        /// <summary>A list of Index references used to assign fields to structs.</summary>
         public List<int> Field_Indices = new List<int>();
 
         //List Indices
+        /// <summary>Describes a 'List' field as struct indexs prefixed with a 'size'</summary>
         public class List_Index
         {
+            /// <summary>The number of <see cref="GFFStruct"/>s in the list</summary>
             public int Size;
+            /// <summary>Index vaules representing which <see cref="GFFStruct"/>s from <see cref="Struct_Array"/> are present in the list.</summary>
             public List<int> Indices = new List<int>();
         }
+        /// <summary>The array contianing all of the <see cref="List_Index"/> elements.</summary>
         public List<List_Index> List_Indices = new List<List_Index>();
 
         //Complex Data Types
+        /// <summary>A chacrter string prefixed with a size.</summary>
         public class CExoString
         {
+            /// <summary>The length of the string.</summary>
             public int Size;
-            public string Text; //Obtained from a char[] of size 'Size'
+            /// <summary>The string, obatined from a <see cref="char"/> array of length <see cref="Size"/></summary>
+            public string Text; 
         }
 
+        /// <summary>Virtually identical to <see cref="CExoString"/>, however it is capped at a size of 16.</summary>
         public class CResRef
         {
+            /// <summary>The length of the string. *This can be no larger than 16</summary>
             public byte Size;
+            /// <summary>The string, obatined from a <see cref="char"/> array of length <see cref="Size"/></summary>
             public string Text; //Obtained from a char[] of size 'Size'
         }
 
+        /// <summary>A set of localized string that contains language data in addition to the content of <see cref="CExoString"/></summary>
         public class CExoLocString
         {
+            /// <summary>Total number of bytes in the object, not including these.</summary>
             public int Total_Size;
+            /// <summary>The reference of the string into a relevant Talk table (<see cref="TLK"/>). If this is -1 it does not reference a string.</summary>
             public int StringRef;
+            /// <summary>The number of <see cref="SubString"/>s contained.</summary>
             public int StringCount;
+            /// <summary>Nearly Identical to a <see cref="CExoString"/> be is prefixed by an ID.</summary>
             public class SubString
             {
-                public int StringID; //2 * LangID + gender (consider Reference_Tables integration)
+                /// <summary>An identify that is calulated by multiplying the <see cref="Reference_Tables.Language_IDs"/> ID by 2, and adding 1 if the speaker if feminine.
+                /// <para/>For example, a line spoken by an Italien Male would have an ID of 6
+                /// </summary>
+                public int StringID;
+                /// <summary>The length of the string in characters</summary>
                 public int StringLength;
+                /// <summary>The string contained</summary>
                 public string Text; //Obtained from a char[] of size 'StringLength'
             }
+            /// <summary>The list containing the <see cref="SubString"/>s contained.</summary>
             public List<SubString> SubStringList = new List<SubString>();
         }
 
+        /// <summary>A byte array prefixed with size.</summary>
         public class Void_Binary
         {
+            /// <summary>The sive of teh void object in bytes</summary>
             public int Size;
-            public byte[] Data; //Obtained from a byte[] of size 'Size'
+            /// <summary>The raw byte data of the object, with a length of <see cref="Size"/></summary>
+            public byte[] Data;
         }
 
         ///<summary>Initiates a new instance of the <see cref="GFF"/> class.</summary>
@@ -1700,37 +1874,63 @@ namespace KotOR_IO
     {
         //Header
         //FileType & Version in superclass
+        /// <summary>The number of <see cref="BIF"/> files this key controls.</summary>
         public int BIFCount;
+        /// <summary>The Number of resources in all of the <see cref="BIF"/>s linked to this key.</summary>
         public int KeyCount;
+        /// <summary>Byte offset to the <see cref="File_Table"/> from beginning of the file</summary>
         public int OffsetToFileTable;
+        /// <summary>Byte offset to the <see cref="Key_Table"/> from beginning of the file</summary>
         public int OffsetToKeyTable;
+        ///<summary>The number of years after 1900 that the KEY file was built. (i.e. 2019 == 119)</summary>
         public int Build_Year;
+        ///<summary>The number of days after January 1st the ERF file was built. (i.e. October 5th == 277)</summary>
         public int Build_Day;
+        /// <summary>32 (usually) empty bytes reserved for future use.</summary>
         public byte[] reserved;
 
         //File Table
+        /// <summary>An Entry that describes basic info about a <see cref="BIF"/> file</summary>
         public class File_Entry
         {
+            ///<summary>The size of the <see cref="BIF"/> file in bytes.</summary>
             public int FileSize;
+            ///<summary>The byte offset from the start of the file to the <see cref="BIF"/>'s filename.</summary>
             public int FilenameOffset;
+            ///<summary>The size of the filename in <see cref="char"/>s</summary>
             public short FilenameSize;
+            ///<summary>A 16-bit number representing which drive the <see cref="BIF"/> is installed on.</summary>
             public short Drives;
 
+            ///<summary>The Filename of the <see cref="BIF"/> as a path from the <see cref="KEY"/>'s root directory</summary>
             public string Filename;
         }
+        /// <summary>A List containing all of the <see cref="File_Entry"/>s associated with the linked <see cref="BIF"/> files.</summary>
         public List<File_Entry> File_Table = new List<File_Entry>();
 
         //Key Table
+        /// <summary>An entry containing every resources string reference, Type, and ID.</summary>
         public class Key_Entry
         {
-            public string ResRef; //The filename of the resource, must be char[16]
+            ///<summary>The name of the resource. (16 <see cref="char"/>s)</summary>
+            public string ResRef;
+            ///<summary>The Resource Type ID of this resource. See: <see cref="Reference_Tables.Res_Types"/> </summary>
             public short ResourceType;
+            ///<summary>The file extension representation of this resource. Obtained from <see cref="Reference_Tables.Res_Types"/> </summary>
             public string Type_Text; //Populated from Reference_Tables.Res_types[ResourceType]
+            ///<summary>
+            ///A unique ID number that denotes both which BIF this resource refers to, and the index of this resource in the <see cref="BIF.Variable_Resource_Table"/>
+            ///<para/> ResID = (x &lt;&lt; 20) + y
+            ///<para/> Where y is an index into <see cref="File_Table"/> to specify a <see cref="BIF"/>, and x is an index into that <see cref="BIF"/>'s <see cref="BIF.Variable_Resource_Table"/>.
+            /// </summary>
             public int ResID;
 
-            public int IDx; //x component of the ID which references an index in the file table
-            public int IDy; //y component of the ID which is an index in the Biff
+            ///<summary>The x component of <see cref="ResID"/> which references an index in the <see cref="File_Table"/></summary>
+            public int IDx;
+            ///<summary>The y component of <see cref="ResID"/> which is an index into the <see cref="BIF.Variable_Resource_Table"/></summary>
+            public int IDy; 
         }
+        /// <summary>A list of all the <see cref="Key_Entry"/>s associted with the linked <see cref="BIF"/> files.</summary>
         public List<Key_Entry> Key_Table = new List<Key_Entry>();
 
         ///<summary>Initiates a new instance of the <see cref="KEY"/> class.</summary>
@@ -1750,24 +1950,37 @@ namespace KotOR_IO
     {
         //Header
         //FileType & Version in superclass
-        public byte[] Unknown; //4 bytes that appear to be null in every rim I've come across so far.
+        ///<summary>4 bytes that appear to be null in every <see cref="RIM"/> I've come across so far.</summary>
+        public byte[] Unknown;
+        ///<summary>The number of files contained within the <see cref="RIM"/></summary>
         public int FileCount;
-        public int File_Table_Offset; //Byte offset from start of the file to the file array
-        public bool IsExtension; //a single byte boolean value that I've seen in extension rims (marked with 'filename' + 'x') 
+        ///<summary>Byte offset from start of the file to the <see cref="File_Table"/></summary>
+        public int File_Table_Offset;
+        ///<summary>Denotes a <see cref="RIM"/> that is an extension to another (marked by a filename ending in 'x')</summary>
+        public bool IsExtension;
 
-        public byte[] Reserved; //99 empty bytes, probably reserved for backwards compatibility
+        ///<summary>99 empty bytes, probably reserved for backwards compatibility</summary>
+        public byte[] Reserved;
 
         //File Table
+        ///<summary>A File contained within the <see cref="RIM"/></summary>
         public class rFile
         {
-            public string Label; //char[16]
+            ///<summary>The file's name. (max 16 <see cref="char"/>s)</summary>
+            public string Label;
+            ///<summary>The type ID from <see cref="Reference_Tables.Res_Types"/></summary>
             public int TypeID;
+            ///<summary>The Index of this file in <see cref="File_Table"/></summary>
             public int Index;
-            public int DataOffset; //Offset of file_data from start of the file
+            ///<summary>Byte offset of <see cref="File_Data"/> from start of the <see cref="RIM"/></summary>
+            public int DataOffset;
+            ///<summary>The size of <see cref="File_Data"/> in bytes</summary>
             public int DataSize;
 
+            ///<summary>The data contained within this file</summary>
             public byte[] File_Data; //populated from the FileData block
         }
+        ///<summary>All of the <see cref="rFile"/>s contained within the <see cref="RIM"/>. This is the primary property of the <see cref="RIM"/></summary>
         public List<rFile> File_Table = new List<rFile>();
 
         ///<summary>Initiates a new instance of the <see cref="RIM"/> class.</summary>
@@ -1788,22 +2001,34 @@ namespace KotOR_IO
     {
         //header
         //FileType & Version in superclass
-        public int UnknownInt; //32-bit int that I'm not entirely sure the purpose of
+        /// <summary>A 32-bit int that I'm not entirely sure the purpose of, but is present in all <see cref="SSF"/>s</summary>
+        public int UnknownInt;
 
         //string refs or Sound class if populated
+        /// <summary>A table containing all the sounds in the Sound Set. The <see cref="object"/> value will be an <see cref="int"/> index into a talk table if <see cref="TLKPopulated"/> is false, and <see cref="Sound"/> if true.</summary>
         public Dictionary<string, object> StringTable = new Dictionary<string, object>();
-        
+
+        /// <summary>Represents a sound in the <see cref="SSF"/>. This class is used when <see cref="TLKPopulated"/> is true.</summary>
         public class Sound
         {
+            /// <summary>An <see cref="int"/> index into a <see cref="TLK"/> representing a particular sound and text.</summary>
             public int SRef;
+            /// <summary>The Filename of the audio file linked to this sound</summary>
             public string SoundFile;
+            /// <summary>The text representation of this sound</summary>
             public string SoundText;
-        } //Sound class is used when populated by dialog.tlk
+        }
 
-        public byte[] EndPadding; //Contains most string entries that are either unused or unknown, usually all just 0xFFFFFFFF
+        /// <summary>A set 0xF bytes that pad until the end of the <see cref="SSF"/>, representing unused sounds</summary>
+        public byte[] EndPadding;
 
-        public bool TLKPopulated; //Check for rather dialog.tlk info has been seeded.
+        /// <summary>Whether the <see cref="SSF"/> has been populated by a <see cref="TLK"/> (usually dialog.tlk). If True then the string references have been converted into <see cref="Sound"/>s.</summary>
+        public bool TLKPopulated;
 
+        /// <summary>
+        /// Populates the <see cref="StringTable"/> objects with <see cref="Sound"/>s based on the <see cref="int"/> string references.
+        /// </summary>
+        /// <param name="t">The talk table used to populate the Soundset. (usually dialog.tlk)</param>
         public void PopulateTLK(TLK t) 
         {
             if (!TLKPopulated)
@@ -1858,22 +2083,35 @@ namespace KotOR_IO
         public int StringEntriesOffset;
 
         //String Data Table
+        /// <summary>An element on the <see cref="String_Data_Table"/>.</summary>
         public class String_Data
         {
-            public int Flags; 
+            /// <summary>Bitwise Flags about this string reference. See: <see cref="TEXT_PRESENT"/>, <see cref="SND_PRESENT"/>, and <see cref="SNDLENGTH_PRESENT"/></summary>
+            public int Flags;
+            /// <summary>16 character resource reference for the wave file associated with this sound</summary>
             public string SoundResRef; //char[16]
+            /// <summary>Marked as not used by the documentation, but presumably adjust volume.</summary>
             public int VolumeVariance;
+            /// <summary>Marked as not used by the documentation, but presumably adjust pitch.</summary>
             public int PitchVariance;
+            /// <summary>Byte offset from <see cref="StringEntriesOffset"/> to the string's text.</summary>
             public int OffsetToString;
+            /// <summary>The size of the string in <see cref="char"/>s.</summary>
             public int StringSize;
+            /// <summary>The duration of the sound in seconds</summary>
             public float SoundLength;
 
-            public bool TEXT_PRESENT = false; //populated from Flags
-            public bool SND_PRESENT = false; //populated from Flags
-            public bool SNDLENGTH_PRESENT = false; //populated from Flags
+            /// <summary>Whether or not text exist for the string. *Note: these flags don't see much use in KotOR</summary>
+            public bool TEXT_PRESENT = false;
+            /// <summary>Whether or not a Sound exist for the string. *Note: these flags don't see much use in KotOR</summary>
+            public bool SND_PRESENT = false;
+            /// <summary>Whether or not a sound length is present for this string. *Note: these flags don't see much use in KotOR</summary>
+            public bool SNDLENGTH_PRESENT = false;
 
+            /// <summary>The text associated with the string.</summary>
             public string StringText;
         }
+        /// <summary>The tabel containing all of the <see cref="String_Data"/> elements. This is the primary property of the <see cref="TLK"/>.</summary>
         public List<String_Data> String_Data_Table = new List<String_Data>();
 
         ///<summary>Initiates a new instance of the <see cref="TLK"/> class.</summary>
