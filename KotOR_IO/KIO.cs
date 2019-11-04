@@ -12,7 +12,8 @@ using System.Threading.Tasks;
  * Consider making said varients derivative of the others.
  * Consider separate class for GFF derivatives
  * Continue populating XML documentation.
- * FIX: Add_row, and add column methods for 2DAs
+ * ADD: GFF add field, add struct, add label, etc. These will be used in "set" accessors in Blueprints. GFF constructors will accept different blueprints, and call their own GFF seeding method.
+ * 
  * 
  */
 
@@ -1337,37 +1338,87 @@ namespace KotOR_IO
             }
         }
 
-        ///// <summary>
-        ///// Adds a new collumn onto <see cref="Data"/>
-        ///// </summary>
-        ///// <param name="_Label">The Label or Header for the collumn</param>
-        ///// <param name="_Data">The list of objects to be seeded in the collumn</param>
-        //public void Add_Column(string _Label, object[] _Data)
-        //{
-        //    if (_Data.Length > Row_Count) { throw new IndexOutOfRangeException("_Data extends beyond Row_Count"); }
-        //    List<object> tmpCol = new List<object>(_Data);
-        //    Data.Add(_Label, tmpCol);
-        //    Columns.Add(_Label);
-        //}
+        /// <summary>
+        /// Adds a new collumn onto <see cref="Data"/>
+        /// </summary>
+        /// <param name="_Label">The Label or Header for the collumn</param>
+        /// <param name="_Data">The list of objects to be seeded in the collumn</param>
+        public void Add_Column(string _Label, object[] _Data)
+        {
+            if (_Data.Length > Row_Count) { throw new IndexOutOfRangeException("_Data extends beyond Row_Count"); }
+            List<object> tmpCol = new List<object>(_Data);
+            Data.Add(_Label, tmpCol);
+            Columns.Add(_Label);
+            Offsets.Clear();
 
-        ///// <summary>
-        ///// Adds a row to the 2DA
-        ///// </summary>
-        ///// <param name="_Data">The Data to be seeded to that row (from left to right).</param>
-        //public void Add_Row(object[] _Data)
-        //{
-        //    if (_Data.Length > Columns.Count) { throw new IndexOutOfRangeException("_Data contains more collumns than are present in the 2DA."); }
-        //    Data["row_index"].Add(Row_Count);
-        //    Row_Count++;
-        //    foreach (object o in _Data)
-        //    {
-        //        int colIndex = 0;
-        //        Data[Columns[colIndex]].Add(o);
-        //        colIndex++;
-        //    }
-        //} 
+            //Offsets
+            List<object> UniqueValues = new List<object>();
+            List<int> IndexOffsets = new List<int>();
+
+            int totaloffset = 0;
+            for (int row = 0; row < Data["row_index"].Count; row++)
+            {
+                bool indexColSkipped = false;
+                foreach (List<object> col in Data.Values)
+                {
+                    if (!indexColSkipped) { indexColSkipped = true; continue; }
+                    if (!UniqueValues.Contains(col[row]))
+                    {
+                        UniqueValues.Add(col[row]);
+                        IndexOffsets.Add(totaloffset);
+                        totaloffset += GetDataSize(col[row]) + 1;
+                    }
+
+                    Offsets.Add((short)(IndexOffsets[UniqueValues.IndexOf(col[row])]));
+                }
+            }
+            Offsets.Add((short)totaloffset);
+
+
+        }
+
+        /// <summary>
+        /// Adds a row to the 2DA
+        /// </summary>
+        /// <param name="_Data">The Data to be seeded to that row (from left to right).</param>
+        public void Add_Row(object[] _Data)
+        {
+            if (_Data.Length > Columns.Count) { throw new IndexOutOfRangeException("_Data contains more collumns than are present in the 2DA."); }
+            Data["row_index"].Add(Row_Count);
+            Row_Count++;
+            int colIndex = 0;
+            foreach (object o in _Data)
+            {
+                Data[Columns[colIndex]].Add(o);
+                colIndex++;
+            }
+            Offsets.Clear();
+
+            //Offsets
+            List<object> UniqueValues = new List<object>();
+            List<int> IndexOffsets = new List<int>();
+
+            int totaloffset = 0;
+            for (int row = 0; row < Data["row_index"].Count; row++)
+            {
+                bool indexColSkipped = false;
+                foreach (List<object> col in Data.Values)
+                {
+                    if (!indexColSkipped) { indexColSkipped = true; continue; }
+                    if (!UniqueValues.Contains(col[row]))
+                    {
+                        UniqueValues.Add(col[row]);
+                        IndexOffsets.Add(totaloffset);
+                        totaloffset += GetDataSize(col[row]) + 1;
+                    }
+
+                    Offsets.Add((short)(IndexOffsets[UniqueValues.IndexOf(col[row])]));
+                }
+            }
+            Offsets.Add((short)totaloffset);
+
+        }
         #endregion
-        //^^^Row and Column Addition (**DOESN"T UPDATE OFFSETS!!!!)^^^
 
     }
 
