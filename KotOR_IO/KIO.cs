@@ -8,8 +8,6 @@ using System.Threading.Tasks;
 /*TODO: 
  * 
  * Create detailed constructors, with lots of back-end to make creating these files very user friendly
- * Maybe Create collection variants of these Types that are procedurally generated, and actually have the content that they usually hold as variables.
- * Consider making said varients derivative of the others.
  * Consider separate class for GFF derivatives
  * Continue populating XML documentation.
  * ADD: GFF add field, add struct, add label, etc. These will be used in "set" accessors in Blueprints. GFF constructors will accept different blueprints, and call their own GFF seeding method.
