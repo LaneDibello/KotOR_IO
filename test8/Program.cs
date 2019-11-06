@@ -13,14 +13,17 @@ namespace test8
     {
         static void Main(string[] args)
         {
-            TwoDA t = KReader.Read2DA(File.OpenRead("L:\\laned\\Documents\\kotor stuffs\\Biff Reader Test\\comptypes.2da"));
-            object[] os = new object[] { 1, 2 };
-            object[] os2 = new object[] { "foo", "bar",  3};
+            ERF e = KReader.ReadERF(File.OpenRead("L:\\laned\\Documents\\kotor stuffs\\Biff Reader Test\\MYtest.erf"));
 
-            t.Add_Column("new_col", os);
-            t.Add_Row(os2);
-            kWriter.Write(t,File.OpenWrite("L:\\laned\\Documents\\kotor stuffs\\Biff Reader Test\\test3.2da"));
-            Console.ReadKey();
+            MemoryStream ms = new MemoryStream();
+
+            File.OpenRead("L:\\laned\\Documents\\kotor stuffs\\Biff Reader Test\\g_bandon.ute").CopyTo(ms);
+
+            e.Append_File("g_bandon", ms.ToArray());
+
+            byte[] b = e["g_bandon"];
+
+            Console.Write("");
 
             //GFF g = KReader.ReadGFF(File.OpenRead("L:\\laned\\Documents\\kotor stuffs\\Biff Reader Test\\g_bandon.ute"));
 
@@ -80,8 +83,8 @@ namespace test8
 
 
             //}
-            
-            
+
+
             //Console.ReadKey();
 
         }

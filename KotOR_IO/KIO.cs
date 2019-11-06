@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.IO;
+using System.Text;
 using System.Threading.Tasks;
 
 /*TODO: 
@@ -205,7 +206,7 @@ namespace KotOR_IO
             for(int i = 0; i < e.EntryCount; i++)
             {
                 ERF.Key key = new ERF.Key();
-                key.ResRef = new string(br.ReadChars(16));
+                key.ResRef = new string(br.ReadChars(16)).TrimEnd('\0');
                 key.ResID = br.ReadInt32();
                 key.ResType = br.ReadInt16();
                 key.Type_string = Reference_Tables.Res_Types[key.ResType];
@@ -1736,6 +1737,71 @@ namespace KotOR_IO
                 Resource_List.Add(r);
 
                 TotalOffset += r.ResourceSize;
+            }
+        }
+
+        /// <summary>
+        /// Adds another resource to the <see cref="ERF"/>.
+        /// </summary>
+        /// <param name="res_ref">The name of the resource/file. *Maximum of 16 Characters</param>
+        /// <param name="file_data">A byte array containing the data for the resource</param>
+        public void Append_File(string res_ref, byte[] file_data)
+        {
+            //header
+            EntryCount++;
+            OffsetToResourceList += 24;
+
+            //key
+            Key k = new Key();
+            k.ResRef = res_ref;
+            k.ResID = Key_List.Last().ResID + 1;
+            StringBuilder sb = new StringBuilder(4);
+            sb.Append(new char[4] { (char)file_data[0], (char)file_data[1], (char)file_data[2], (char)file_data[3], });
+            k.ResType = (short)Reference_Tables.TypeCodes[sb.ToString()];
+            k.Type_string = k.Type_string = Reference_Tables.Res_Types[k.ResType];
+            k.Unused = 0;
+            Key_List.Add(k);
+
+            //Offset Correction
+            int TotalOffset = OffsetToResourceList + EntryCount * 8;
+            foreach (Resource res in Resource_List)
+            {
+                res.OffsetToResource = TotalOffset;
+                TotalOffset += res.ResourceSize;
+            }
+
+            //resource
+            Resource r = new Resource();
+            r.Resource_data = file_data;
+            r.ResourceSize = file_data.Length;
+            r.OffsetToResource = Resource_List.Last().OffsetToResource + Resource_List.Last().ResourceSize;
+            Resource_List.Add(r);
+
+        }
+
+        /// <summary>
+        /// Gets the <see cref="byte"/> data for the specified resource, given the resource reference
+        /// </summary>
+        /// <param name="res_ref">The string resource reference of the file.</param>
+        /// <returns></returns>
+        public byte[] this[string res_ref]
+        {
+            get
+            {
+                return Resource_List[(from k in Key_List where k.ResRef == res_ref select k.ResID).First()].Resource_data;
+            }
+        }
+
+        /// <summary>
+        /// Gets the <see cref="byte"/> data for the specified resource, given the index of the resource
+        /// </summary>
+        /// <param name="index">The index of the resource in the resource array.</param>
+        /// <returns></returns>
+        public byte[] this[int index]
+        {
+            get
+            {
+                return Resource_List[index].Resource_data;
             }
         }
 
