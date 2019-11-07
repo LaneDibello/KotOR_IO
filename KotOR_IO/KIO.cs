@@ -1328,7 +1328,19 @@ namespace KotOR_IO
             {
                 if (Data.Keys.Contains(Column_Label) && Row_Index < Row_Count)
                 {
+                    short _Offset = Offsets[Columns.IndexOf(Column_Label) + Row_Index * Columns.Count];
+                    object oldvalue = Data[Column_Label][Row_Index];
                     Data[Column_Label][Row_Index] = value;
+                    int offset_difference = Convert.ToString(value).Length - Convert.ToString(oldvalue).Length;
+
+                    for(int i = 0; i < Offsets.Count; i++)
+                    {
+                        if (Offsets[i] > _Offset)
+                        {
+                            Offsets[i] += (short)offset_difference;
+                        }
+                    }
+
                 }
                 else
                 {
@@ -1522,7 +1534,7 @@ namespace KotOR_IO
         /// <param name="Filename">
         /// The filename for this BIF file which will be used to index its ID from the KEY. 
         /// <para>This is given in the form of a path from the KEY's directory.</para>
-        /// <para>For Example: if the BIF file 'file' is located in a directory called 'data' (like KotOR BIFs), then the Filename would be "data/file.bif"</para>
+        /// <para>For Example: if the BIF file 'file' is located in a directory called 'data' (like KotOR BIFs), then the Filename would be "data\\file.bif"</para>
         /// </param>
         public void attachKey(KEY k, string Filename)
         {

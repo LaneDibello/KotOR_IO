@@ -11,19 +11,79 @@ namespace test8
 {
     class Program
     {
+        public static void FisherYatesShuffle<T>(IList<T> list)
+        {
+            int n = list.Count;
+
+            while (n > 1)
+            {
+                n--;
+                int k = ThreadSafeRandom.Rng.Next(n + 1);
+                T value = list[k];
+                list[k] = list[n];
+                list[n] = value;
+            }
+        }
+
+        public static class ThreadSafeRandom
+        {
+            [ThreadStatic]
+            private static Random Local;
+
+            public static Random Rng
+            {
+                get
+                {
+                    return Local ?? (Local = new Random(Seed));
+                }
+            }
+
+            public static int Seed { get; private set; } = unchecked(Environment.TickCount * 31 + System.Threading.Thread.CurrentThread.ManagedThreadId);
+
+            public static int GenerateSeed()
+            {
+                Seed = Rng.Next();
+                return Seed;
+            }
+
+            public static void SetSeed(int seed)
+            {
+                Seed = seed;
+                Local = null;
+            }
+
+            public static void RestartRng()
+            {
+                Local = null;
+            }
+        }
+
+
         static void Main(string[] args)
         {
-            ERF e = KReader.ReadERF(File.OpenRead("L:\\laned\\Documents\\kotor stuffs\\Biff Reader Test\\MYtest.erf"));
+            BIF b = KReader.ReadBIF(File.OpenRead("L:\\laned\\Documents\\kotor stuffs\\Biff Reader Test\\tes\\2da.bif"));
+            KEY k = KReader.ReadKEY(File.OpenRead("L:\\laned\\Documents\\kotor stuffs\\Biff Reader Test\\tes\\chitin.key"));
+            b.attachKey(k, "data\\2da.bif");
+            Console.WriteLine();
+            Stream s = new MemoryStream(b.Variable_Resource_Table[8].Entry_Data);
 
-            MemoryStream ms = new MemoryStream();
+            TwoDA t = KReader.Read2DA(s);
 
-            File.OpenRead("L:\\laned\\Documents\\kotor stuffs\\Biff Reader Test\\g_bandon.ute").CopyTo(ms);
+            t["label", 3] = "test";
 
-            e.Append_File("g_bandon", ms.ToArray());
 
-            byte[] b = e["g_bandon"];
+            kWriter.Write(t, File.OpenWrite("L:\\laned\\Documents\\kotor stuffs\\Biff Reader Test\\tes\\appearance.2da"));
+            Console.WriteLine();
 
-            Console.Write("");
+            //MemoryStream ms = new MemoryStream();
+
+            //File.OpenRead("L:\\laned\\Documents\\kotor stuffs\\Biff Reader Test\\g_bandon.ute").CopyTo(ms);
+
+            //e.Append_File("g_bandon", ms.ToArray());
+
+            //byte[] b = e["g_bandon"];
+
+            //Console.Write("");
 
             //GFF g = KReader.ReadGFF(File.OpenRead("L:\\laned\\Documents\\kotor stuffs\\Biff Reader Test\\g_bandon.ute"));
 
