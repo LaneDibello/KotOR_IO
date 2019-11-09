@@ -2228,6 +2228,11 @@ namespace KotOR_IO
             File_Table.Add(rf);
         }
 
+        /// <summary>
+        /// Gets byte data from the RIM from the given index
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns></returns>
         public byte[] this[int index]
         {
             get
@@ -2236,6 +2241,11 @@ namespace KotOR_IO
             }
         }
 
+        /// <summary>
+        /// Gets byte data from the RIM with the given filename
+        /// </summary>
+        /// <param name="filename">The Name (res_ref) of the file being referenced</param>
+        /// <returns></returns>
         public byte[] this[string filename]
         {
             get
@@ -2244,6 +2254,51 @@ namespace KotOR_IO
             }
         }
 
+        /// <summary>
+        /// Returns a formatted <see cref="KFile"/> read form the resource at the given index.
+        /// </summary>
+        /// <param name="index">The index of the file to be returned</param>
+        /// <returns></returns>
+        public KFile GetKFile (int index)
+        {
+            MemoryStream ms = new MemoryStream(File_Table[index].File_Data);
+
+            KFile k;
+            if (File_Table[index].TypeID == 2017)
+            {
+                k = KReader.Read2DA(ms);
+            }
+            else if (File_Table[index].TypeID == 9998)
+            {
+                k = KReader.ReadBIF(ms);
+            }
+            else if (Reference_Tables.ERFResTypes.Contains(File_Table[index].TypeID)) 
+            {
+                k = KReader.ReadERF(ms);
+            }
+            else if (Reference_Tables.GFFResTypes.Contains(File_Table[index].TypeID))
+            {
+                k = KReader.ReadGFF(ms);
+            }
+            else if (File_Table[index].TypeID == 3002)
+            {
+                k = KReader.ReadRIM(ms);
+            }
+            else if (File_Table[index].TypeID == 2060)
+            {
+                k = KReader.ReadSSF(ms);
+            }
+            else if (File_Table[index].TypeID == 2018)
+            {
+                k = KReader.ReadTLK(ms);
+            }
+            else
+            {
+                k = KReader.ReadKFile(ms);
+            }
+            return k;
+
+        }
         #endregion
 
     }
@@ -2415,7 +2470,7 @@ namespace KotOR_IO
     static public class Reference_Tables
     {
         /// <summary> Dictionary for conversion of Resource Type IDs to resource file extension. </summary>
-        public static Dictionary<int, string> Res_Types = new Dictionary<int, string>() { { 0, "null" }, { 1, "bmp" }, { 3, "tga" }, { 4, "wav" }, { 6, "plt" }, { 7, "ini" }, { 10, "txt" }, { 2002, "mdl" }, { 2009, "nss" }, { 2011, "mod" }, { 2010, "ncs" }, { 2012, "are" }, { 2013, "set" }, { 2014, "ifo" }, { 2015, "bic" }, { 2016, "wok" }, { 2017, "2da" }, { 2022, "txi" }, { 2023, "git" }, { 2024, "bti" }, { 2025, "uti" }, { 2026, "btc" }, { 2027, "utc" }, { 2029, "dlg" }, { 2030, "itp" }, { 2032, "utt" }, { 2033, "dds" }, { 2035, "uts" }, { 2036, "ltr" }, { 2037, "gff" }, { 2038, "fac" }, { 2040, "ute" }, { 2042, "utd" }, { 2044, "utp" }, { 2045, "dft" }, { 2046, "gic" }, { 2047, "gui" }, { 2051, "utm" }, { 2052, "dwk" }, { 2053, "pwk" }, { 2056, "jrl" }, { 2057, "mod" }, { 2058, "utw" }, { 2060, "ssf" }, { 2061, "hak" }, { 2064, "ndb" }, { 2065, "ptm" }, { 2066, "ptt" }, { 3000, "lyt" }, { 3001, "vis" }, { 3002, "rim" }, { 3007, "tpc" }, { 3008, "mdx" }, { 9999, "key" }, { 9998, "bif" }, { 9997, "erf" } };
+        public static Dictionary<int, string> Res_Types = new Dictionary<int, string>() { { 0, "null" }, { 1, "bmp" }, { 3, "tga" }, { 4, "wav" }, { 6, "plt" }, { 7, "ini" }, { 10, "txt" }, { 2002, "mdl" }, { 2009, "nss" }, { 2011, "mod" }, { 2010, "ncs" }, { 2012, "are" }, { 2013, "set" }, { 2014, "ifo" }, { 2015, "bic" }, { 2016, "wok" }, { 2017, "2da" }, { 2018, "tlk" }, { 2022, "txi" }, { 2023, "git" }, { 2024, "bti" }, { 2025, "uti" }, { 2026, "btc" }, { 2027, "utc" }, { 2029, "dlg" }, { 2030, "itp" }, { 2032, "utt" }, { 2033, "dds" }, { 2035, "uts" }, { 2036, "ltr" }, { 2037, "gff" }, { 2038, "fac" }, { 2040, "ute" }, { 2042, "utd" }, { 2044, "utp" }, { 2045, "dft" }, { 2046, "gic" }, { 2047, "gui" }, { 2051, "utm" }, { 2052, "dwk" }, { 2053, "pwk" }, { 2056, "jrl" }, { 2057, "mod" }, { 2058, "utw" }, { 2060, "ssf" }, { 2061, "hak" }, { 2064, "ndb" }, { 2065, "ptm" }, { 2066, "ptt" }, { 3000, "lyt" }, { 3001, "vis" }, { 3002, "rim" }, { 3007, "tpc" }, { 3008, "mdx" }, { 9999, "key" }, { 9998, "bif" }, { 9997, "erf" } };
         /// <summary> Dictionary for conversion of Language IDs to Language name. </summary>
         public static Dictionary<int, string> Language_IDs = new Dictionary<int, string>() { { 0, "English" }, { 1, "French" }, { 2, "German" }, { 3, "Italian" }, { 4, "Spanish" }, { 5, "Polish" }, { 128, "Korean" }, { 129, "Chinese Traditional" }, { 130, "Chinese Simplified" }, { 131, "Japanese" } };
         /// <summary> Dictionary for conversion of GFF Field Type IDs to GFF Field data type text. </summary>
@@ -2425,7 +2480,10 @@ namespace KotOR_IO
         /// <summary> List of Default Fields in Sound set files. </summary>
         public static List<string> SSFields = new List<string>() { "Battlecry 1", "Battlecry 2", "Battlecry 3", "Battlecry 4", "Battlecry 5", "Battlecry 6", "Select 1", "Select 2", "Select 3", "Attack Grunt 1", "Attack Grunt 2", "Attack Grunt 3","Pain Grunt 1", "Pain Grunt 2", "Low Health", "Dead", "Critical Hit", "Target Immune to Assault", "Lay Mine", "Disarm Mine", "Begin Stealth", "Begin Search", "Begin Unlock", "Unlock Failed", "Unlock Success", "Separate from Party", "Rejoin Party", "Poisoned"};
         /// <summary> Dictionary for conversion of 4 char FileTypes into resource IDs</summary>
-        public static Dictionary<string, int> TypeCodes = new Dictionary<string, int>() { { "NULL", 0 }, { "BMP ", 1 }, { "TGA ", 3 }, { "WAV ", 4 }, { "PLT ", 6 }, { "INI ", 7 }, { "TXT ", 10 }, { "MDL ", 2002 }, { "NSS ", 2009 }, { "MOD ", 2011 }, { "NCS ", 2010 }, { "ARE ", 2012 }, { "SET ", 2013 }, { "IFO ", 2014 }, { "BIC ", 2015 }, { "WOK ", 2016 }, { "2DA ", 2017 }, { "TXI ", 2022 }, { "GIT ", 2023 }, { "BTI ", 2024 }, { "UTI ", 2025 }, { "BTC ", 2026 }, { "UTC ", 2027 }, { "DLG ", 2029 }, { "ITP ", 2030 }, { "UTT ", 2032 }, { "DDS ", 2033 }, { "UTS ", 2035 }, { "LTR ", 2036 }, { "GFF ", 2037 }, { "FAC ", 2038 }, { "UTE ", 2040 }, { "UTD ", 2042 }, { "UTP ", 2044 }, { "DFT ", 2045 }, { "GIC ", 2046 }, { "GUI ", 2047 }, { "UTM ", 2051 }, { "DWK ", 2052 }, { "PWK ", 2053 }, { "JRL ", 2056 }, { "SAV ", 2057 }, { "UTW ", 2058 }, { "SSF ", 2060 }, { "HAK ", 2061 }, { "NDB ", 2064 }, { "PTM ", 2065 }, { "PTT ", 2066 }, { "LYT ", 3000 }, { "VIS ", 3001 }, { "RIM ", 3002 }, { "TPC ", 3007 }, { "MDX ", 3008 }, { "KEY ", 9999 }, { "BIF ", 9998 }, { "ERF ", 9997 } };
-
+        public static Dictionary<string, int> TypeCodes = new Dictionary<string, int>() { { "NULL", 0 }, { "BMP ", 1 }, { "TGA ", 3 }, { "WAV ", 4 }, { "PLT ", 6 }, { "INI ", 7 }, { "TXT ", 10 }, { "MDL ", 2002 }, { "NSS ", 2009 }, { "MOD ", 2011 }, { "NCS ", 2010 }, { "ARE ", 2012 }, { "SET ", 2013 }, { "IFO ", 2014 }, { "BIC ", 2015 }, { "WOK ", 2016 }, { "2DA ", 2017 }, {"TLK ", 2018 }, { "TXI ", 2022 }, { "GIT ", 2023 }, { "BTI ", 2024 }, { "UTI ", 2025 }, { "BTC ", 2026 }, { "UTC ", 2027 }, { "DLG ", 2029 }, { "ITP ", 2030 }, { "UTT ", 2032 }, { "DDS ", 2033 }, { "UTS ", 2035 }, { "LTR ", 2036 }, { "GFF ", 2037 }, { "FAC ", 2038 }, { "UTE ", 2040 }, { "UTD ", 2042 }, { "UTP ", 2044 }, { "DFT ", 2045 }, { "GIC ", 2046 }, { "GUI ", 2047 }, { "UTM ", 2051 }, { "DWK ", 2052 }, { "PWK ", 2053 }, { "JRL ", 2056 }, { "SAV ", 2057 }, { "UTW ", 2058 }, { "SSF ", 2060 }, { "HAK ", 2061 }, { "NDB ", 2064 }, { "PTM ", 2065 }, { "PTT ", 2066 }, { "LYT ", 3000 }, { "VIS ", 3001 }, { "RIM ", 3002 }, { "TPC ", 3007 }, { "MDX ", 3008 }, { "KEY ", 9999 }, { "BIF ", 9998 }, { "ERF ", 9997 } };
+        /// <summary> List of resource type codes that are of GFF type.</summary>
+        public static List<int> GFFResTypes = new List<int>() { 2012, 2014, 2015, 2023, 2025, 2027, 2029, 2030, 2032, 2035, 2037, 2038, 2040, 2042, 2044, 2046, 2047, 2051, 2056, 2058, 2065, 2066 };
+        /// <summary> List of resource type codes that are of GFF type.</summary>
+        public static List<int> ERFResTypes = new List<int>() { 2011, 2057, 9997 };
     }
 }
