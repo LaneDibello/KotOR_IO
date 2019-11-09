@@ -1792,6 +1792,28 @@ namespace KotOR_IO
         }
 
         /// <summary>
+        /// Adds another resource to the <see cref="ERF"/>.
+        /// </summary>
+        /// <param name="file">A Kotor Source File</param>
+        /// <param name="filename">The name of the <see cref="KFile"/></param>
+        public void Append_File(KFile file, string filename)
+        {
+            MemoryStream ms = new MemoryStream();
+
+            if (file is TwoDA) { kWriter.Write(file as TwoDA, ms); }
+            else if (file is BIF) { kWriter.Write(file as BIF, ms); }
+            else if (file is ERF) { kWriter.Write(file as ERF, ms); }
+            else if (file is GFF) { kWriter.Write(file as GFF, ms); }
+            else if (file is KEY) { kWriter.Write(file as KEY, ms); }
+            else if (file is RIM) { kWriter.Write(file as RIM, ms); }
+            else if (file is SSF) { kWriter.Write(file as SSF, ms); }
+            else if (file is TLK) { kWriter.Write(file as TLK, ms); }
+            else { kWriter.Write(file as MiscType, ms); }
+
+            Append_File(filename, ms.ToArray());
+        }
+
+        /// <summary>
         /// Gets the <see cref="byte"/> data for the specified resource, given the resource reference
         /// </summary>
         /// <param name="res_ref">The string resource reference of the file.</param>
@@ -2112,6 +2134,94 @@ namespace KotOR_IO
 
         ///<summary>Initiates a new instance of the <see cref="RIM"/> class.</summary>
         public RIM() { }
+
+        /// <summary>
+        /// Initiates a new instance of the <see cref="RIM"/> class, given a set of Kotor source files, and filenames.
+        /// </summary>
+        /// <param name="files">An array of <see cref="KFile"/>s containing the resources to be added to be put in the <see cref="RIM"/></param>
+        /// <param name="filenames">The names of the <see cref="KFile"/>s being added.</param>
+        /// <param name="_IsExtension">Indicates whether this <see cref="RIM"/> is an extension of another. (Usually indicated by a RIM filename ending in 'x', leave "false" if unsure.) </param>
+        public RIM(KFile[] files, string[] filenames, bool _IsExtension)
+        {
+            FileType = "RIM ";
+            Version = "V1.0";
+
+            Unknown = new byte[] { 0x0, 0x0, 0x0, 0x0 };
+            FileCount = files.Count();
+            File_Table_Offset = 120;
+            IsExtension = _IsExtension;
+
+            Reserved = new byte[99];
+            for (int i = 0; i < 99; i++) { Reserved[i] = 0x0; }
+
+            int totalOffset = File_Table_Offset + (32 * files.Count()) + 8;
+            for (int i = 0; i < files.Count(); i++)
+            {
+                rFile rf = new rFile();
+                rf.Label = filenames[i];
+                rf.TypeID = Reference_Tables.TypeCodes[files[i].FileType];
+                rf.Index = i;
+
+                MemoryStream ms = new MemoryStream();
+
+                if (files[i] is TwoDA) { kWriter.Write(files[i] as TwoDA, ms); }
+                else if (files[i] is BIF) { kWriter.Write(files[i] as BIF, ms); }
+                else if (files[i] is ERF) { kWriter.Write(files[i] as ERF, ms); }
+                else if (files[i] is GFF) { kWriter.Write(files[i] as GFF, ms); }
+                else if (files[i] is KEY) { kWriter.Write(files[i] as KEY, ms); }
+                else if (files[i] is RIM) { kWriter.Write(files[i] as RIM, ms); }
+                else if (files[i] is SSF) { kWriter.Write(files[i] as SSF, ms); }
+                else if (files[i] is TLK) { kWriter.Write(files[i] as TLK, ms); }
+                else { kWriter.Write(files[i] as MiscType, ms); }
+
+                rf.File_Data = ms.ToArray();
+                rf.DataSize = rf.File_Data.Count();
+                rf.DataOffset = totalOffset;
+
+                File_Table.Add(rf);
+
+                totalOffset += rf.DataSize + 4;
+            }
+
+        }
+
+        /// <summary>
+        /// Appends a new KFile to the end of the <see cref="RIM"/>
+        /// </summary>
+        /// <param name="file">The <see cref="KFile"/> to be added.</param>
+        /// <param name="filename">The name of the file.</param>
+        public void Append_File(KFile file, string filename)
+        {
+            FileCount++;
+
+            foreach (rFile r in File_Table)
+            {
+                r.DataOffset += 32;
+            }
+
+            rFile rf = new rFile();
+            rf.Label = filename;
+            rf.TypeID = Reference_Tables.TypeCodes[file.FileType];
+            rf.Index = File_Table.Count();
+
+            MemoryStream ms = new MemoryStream();
+
+            if (file is TwoDA) { kWriter.Write(file as TwoDA, ms); }
+            else if (file is BIF) { kWriter.Write(file as BIF, ms); }
+            else if (file is ERF) { kWriter.Write(file as ERF, ms); }
+            else if (file is GFF) { kWriter.Write(file as GFF, ms); }
+            else if (file is KEY) { kWriter.Write(file as KEY, ms); }
+            else if (file is RIM) { kWriter.Write(file as RIM, ms); }
+            else if (file is SSF) { kWriter.Write(file as SSF, ms); }
+            else if (file is TLK) { kWriter.Write(file as TLK, ms); }
+            else { kWriter.Write(file as MiscType, ms); }
+
+            rf.File_Data = ms.ToArray();
+            rf.DataSize = rf.File_Data.Count();
+            rf.DataOffset = File_Table.Last().DataOffset + File_Table.Last().DataSize;
+
+            File_Table.Add(rf);
+        }
 
     }
 
