@@ -287,7 +287,7 @@ namespace KotOR_IO
             //Label Array
             for(int i = 0; i < g.LabelCount; i++)
             {
-                string l = new string (br.ReadChars(16));
+                string l = new string (br.ReadChars(16)).TrimEnd('\0');
                 g.Label_Array.Add(l);
             }
 
@@ -493,7 +493,7 @@ namespace KotOR_IO
             for(int i = 0; i < k.KeyCount; i++)
             {
                 KEY.Key_Entry KE = new KEY.Key_Entry();
-                KE.ResRef = new string(br.ReadChars(16));
+                KE.ResRef = new string(br.ReadChars(16)).TrimEnd('\0');
                 KE.ResourceType = br.ReadInt16();
                 KE.Type_Text = Reference_Tables.Res_Types[KE.ResourceType];
                 KE.ResID = br.ReadInt32();
@@ -532,7 +532,7 @@ namespace KotOR_IO
             for(int i = 0; i < r.FileCount; i++)
             {
                 RIM.rFile RF = new RIM.rFile();
-                RF.Label = new string(br.ReadChars(16));
+                RF.Label = new string(br.ReadChars(16)).TrimEnd('\0');
                 RF.TypeID = br.ReadInt32();
                 RF.Index = br.ReadInt32();
                 RF.DataOffset = br.ReadInt32();
@@ -606,7 +606,7 @@ namespace KotOR_IO
                 if (tempFlags >= 4) { SD.SNDLENGTH_PRESENT = true; tempFlags -= 4; }
                 if (tempFlags >= 2) { SD.SND_PRESENT = true; tempFlags -= 2; }
                 if (tempFlags >= 1) { SD.TEXT_PRESENT = true; tempFlags--; }
-                SD.SoundResRef = new string(br.ReadChars(16));
+                SD.SoundResRef = new string(br.ReadChars(16)).TrimEnd('\0');
                 SD.VolumeVariance = br.ReadInt32();
                 SD.PitchVariance = br.ReadInt32();
                 SD.OffsetToString = br.ReadInt32();
@@ -1814,15 +1814,15 @@ namespace KotOR_IO
         }
 
         /// <summary>
-        /// Gets the <see cref="byte"/> data for the specified resource, given the resource reference
+        /// Gets the <see cref="byte"/> data for the specified resource, given the resource reference (filename)
         /// </summary>
-        /// <param name="res_ref">The string resource reference of the file.</param>
+        /// <param name="filename">The string resource reference of the file.</param>
         /// <returns></returns>
-        public byte[] this[string res_ref]
+        public byte[] this[string filename]
         {
             get
             {
-                return Resource_List[(from k in Key_List where k.ResRef == res_ref select k.ResID).First()].Resource_data;
+                return Resource_List[(from k in Key_List where k.ResRef == filename select k.ResID).First()].Resource_data;
             }
         }
 
@@ -2097,6 +2097,7 @@ namespace KotOR_IO
     /// </summary>
     public class RIM : KFile
     {
+        #region Class Definition
         //Header
         //FileType & Version in superclass
         ///<summary>4 bytes that appear to be null in every <see cref="RIM"/> I've come across so far.</summary>
@@ -2131,6 +2132,10 @@ namespace KotOR_IO
         }
         ///<summary>All of the <see cref="rFile"/>s contained within the <see cref="RIM"/>. This is the primary property of the <see cref="RIM"/></summary>
         public List<rFile> File_Table = new List<rFile>();
+
+        #endregion
+
+        #region Construction
 
         ///<summary>Initiates a new instance of the <see cref="RIM"/> class.</summary>
         public RIM() { }
@@ -2180,7 +2185,7 @@ namespace KotOR_IO
 
                 File_Table.Add(rf);
 
-                totalOffset += rf.DataSize + 4;
+                totalOffset += rf.DataSize + 16;
             }
 
         }
@@ -2218,10 +2223,28 @@ namespace KotOR_IO
 
             rf.File_Data = ms.ToArray();
             rf.DataSize = rf.File_Data.Count();
-            rf.DataOffset = File_Table.Last().DataOffset + File_Table.Last().DataSize;
+            rf.DataOffset = File_Table.Last().DataOffset + File_Table.Last().DataSize + 16;
 
             File_Table.Add(rf);
         }
+
+        public byte[] this[int index]
+        {
+            get
+            {
+                return File_Table[index].File_Data;
+            }
+        }
+
+        public byte[] this[string filename]
+        {
+            get
+            {
+                return File_Table.Where(rf => rf.Label == filename).FirstOrDefault().File_Data;
+            }
+        }
+
+        #endregion
 
     }
 
@@ -2368,6 +2391,21 @@ namespace KotOR_IO
 
         ///<summary>Initiates a new instance of the <see cref="MiscType"/> class.</summary>
         public MiscType() { }
+
+        /// <summary>
+        /// Initiates a new instance of the <see cref="MiscType"/> class from byte data
+        /// </summary>
+        /// <param name="data">A byte array containing the file data.</param>
+        public MiscType(byte[] data)
+        {
+            char[] ft = new char[4] { (char)data[0], (char)data[1], (char)data[2], (char)data[3] };
+            FileType = new string(ft);
+
+            char[] fv = new char[4] { (char)data[5], (char)data[6], (char)data[7], (char)data[8] };
+            Version = new string(fv);
+
+            this.data = data;
+        }
     }
 
    
