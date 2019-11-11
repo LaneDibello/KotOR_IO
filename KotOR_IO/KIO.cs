@@ -2400,6 +2400,25 @@ namespace KotOR_IO
 
         ///<summary>Initiates a new instance of the <see cref="SSF"/> class.</summary>
         public SSF() { }
+
+        /// <summary>
+        /// Gets and Sets SoundSet values. The type will be <see cref="int"/> if <see cref="TLKPopulated"/> is false, and <see cref="Sound"/> if <see cref="TLKPopulated"/> is true.
+        /// </summary>
+        /// <param name="SSField"></param>
+        /// <returns></returns>
+        public object this[string SSField] //value from referene table
+        {
+            get
+            {
+                return StringTable[SSField];
+            }
+            set
+            {
+                StringTable[SSField] = value;
+            }
+        }
+
+
     }
 
     /// <summary>
@@ -2457,6 +2476,29 @@ namespace KotOR_IO
 
         ///<summary>Initiates a new instance of the <see cref="TLK"/> class.</summary>
         public TLK() { }
+
+        /// <summary>
+        /// Gets a particular string from a string reference
+        /// </summary>
+        /// <param name="str_ref">The reference number (index) for this particular string.</param>
+        /// <returns></returns>
+        public string this[int str_ref]
+        {
+            get
+            {
+                return String_Data_Table[str_ref].StringText;
+            }
+            set
+            {
+                int delta_offset = value.Length - String_Data_Table[str_ref].StringSize;
+                String_Data_Table[str_ref].StringSize = value.Length;
+                String_Data_Table[str_ref].StringText = value;
+                for (int i = str_ref + 1; i < StringCount; i++)
+                {
+                    String_Data_Table[i].OffsetToString += delta_offset;
+                }
+            }
+        }
     }
 
     /// <summary>
