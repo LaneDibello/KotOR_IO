@@ -61,19 +61,61 @@ namespace test8
 
         static void Main(string[] args)
         {
-            BIF b = KReader.ReadBIF(File.OpenRead("L:\\laned\\Documents\\kotor stuffs\\Biff Reader Test\\tes\\2da.bif"));
-            KEY k = KReader.ReadKEY(File.OpenRead("L:\\laned\\Documents\\kotor stuffs\\Biff Reader Test\\tes\\chitin.key"));
-            b.attachKey(k, "data\\2da.bif");
+            Random rng = new Random(55);
+            DirectoryInfo di = new DirectoryInfo("L:\\laned\\Documents\\kotor stuffs\\DumbIdea\\modules");
+            foreach (FileInfo f in di.EnumerateFiles())
+            {
+                RIM r = KReader.ReadRIM(f.OpenRead());
+
+                foreach (RIM.rFile rf in r.File_Table.Where(k => k.TypeID == 2027))
+                {
+                    GFF g = new GFF(rf.File_Data);
+
+                    int temp = rng.Next(1, 508);
+                    if (temp == 0 || temp == 29 || temp == 82) { temp = 200; }
+                    g.Field_Array.Where(k => k.Label == "Appearance_Type").FirstOrDefault().Field_Data = temp;
+                    g.Field_Array.Where(k => k.Label == "Appearance_Type").FirstOrDefault().DataOrDataOffset = temp;
+
+                    MemoryStream ms = new MemoryStream();
+
+                    kWriter.Write(g, ms);
+
+                    rf.File_Data = ms.ToArray();
+                }
+                
+                kWriter.Write(r, f.OpenWrite());
+
+            }
+
+            
+
             Console.WriteLine();
-            Stream s = new MemoryStream(b.Variable_Resource_Table[8].Entry_Data);
 
-            TwoDA t = KReader.Read2DA(s);
-
-            t["label", 3] = "test";
+            
 
 
-            kWriter.Write(t, File.OpenWrite("L:\\laned\\Documents\\kotor stuffs\\Biff Reader Test\\tes\\appearance.2da"));
-            Console.WriteLine();
+            //BIF b = KReader.ReadBIF(File.OpenRead("L:\\laned\\Documents\\kotor stuffs\\Biff Reader Test\\tes\\2da.bif"));
+            //KEY k = KReader.ReadKEY(File.OpenRead("L:\\laned\\Documents\\kotor stuffs\\Biff Reader Test\\tes\\chitin.key"));
+            //b.attachKey(k, "data\\2da.bif");
+            //Console.WriteLine();
+            //Stream s = new MemoryStream(b.Variable_Resource_Table[8].Entry_Data);
+
+            //TwoDA t = KReader.Read2DA(s);
+
+            //int n = t.Row_Count;
+
+            //while (n > 1)
+            //{
+            //    n--;
+            //    int l = ThreadSafeRandom.Rng.Next(n + 1);
+            //    object value = t["modela", l];
+            //    t["modela", l] = t["modela", n];
+            //    t["modela", n] = value;
+            //}
+
+
+            //kWriter.Write(t, File.OpenWrite("L:\\laned\\Documents\\kotor stuffs\\Biff Reader Test\\tes\\appearance.2da"));
+            //Console.WriteLine();
 
             //MemoryStream ms = new MemoryStream();
 
