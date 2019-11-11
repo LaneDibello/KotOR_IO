@@ -162,5 +162,60 @@ namespace KotOR_IO
 
         }
     }
-
+    
+    /// <summary>
+    /// <see cref="GFF"/> Static Area Info file. Contains Static information (hallways, layouts, structures) about a module area.
+    /// </summary>
+    public class ARE : GFF
+    {
+    
+    }
+    
+    /// <summary>
+    /// <see cref="GFF"/> Dialogue File. Contains conversion/cutscene nodes used for in-game dialogues.
+    /// </summary>
+    public class DLG : GFF
+    {
+    
+    }
+    
+    /// <summary>
+    /// <see cref="GFF"/> Faction FIle. Contains information about different factions/alignment groups in the module (i.e. hostile, passive, etc.)
+    /// </summary>
+    public class FAC : GFF
+    {
+    
+    }
+    
+    /// <summary>
+    /// <see cref="GFF"/> Dynamic Area Information File. Contains dynamic information (Creatures, Placeables, Triggers) about a module.
+    /// </summary>
+    public class GIT : GFF
+    {
+    
+    }
+    
+    /// <summary>
+    ///
+    /// </summary>
+    public class GUI : GFF
+    {
+    
+    }
+    
+    /// <summary>
+    /// <see cref="GFF"/> Module Info File. Contains information about the module (spawnpoint, lighting data, etc)
+    /// </summary>
+    public class IFO : GFF
+    {
+    
+    }
+    
+    /// <summary>
+    /// <see cref="GFF"/> Journal File. Contains the log entries for the player Journal/ mission log stored with each save.
+    /// </summary>
+    public class JRL : GFF
+    {
+    
+    }
 }
