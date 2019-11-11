@@ -2008,6 +2008,32 @@ namespace KotOR_IO
 
         ///<summary>Initiates a new instance of the <see cref="GFF"/> class.</summary>
         public GFF() { }
+
+        public GFF(byte[] raw_data)
+        {
+            MemoryStream ms = new MemoryStream(raw_data);
+            GFF g = KReader.ReadGFF(ms);
+
+            this.FieldCount = g.FieldCount;
+            this.FieldDataCount = g.FieldDataCount;
+            this.FieldDataOffset = g.FieldDataOffset;
+            this.FieldIndicesCount = g.FieldIndicesCount;
+            this.FieldIndicesOffset = g.FieldIndicesOffset;
+            this.FieldOffset = g.FieldOffset;
+            this.Field_Array = g.Field_Array;
+            this.Field_Indices = g.Field_Indices;
+            this.FileType = g.FileType;
+            this.LabelCount = g.LabelCount;
+            this.LabelOffset = g.LabelOffset;
+            this.Label_Array = g.Label_Array;
+            this.ListIndicesCount = g.ListIndicesCount;
+            this.ListIndicesOffset = g.ListIndicesOffset;
+            this.List_Indices = g.List_Indices;
+            this.StructCount = g.StructCount;
+            this.StructOffset = g.StructOffset;
+            this.Struct_Array = g.Struct_Array;
+            this.Version = g.Version;
+        }
     }
 
     /// <summary>
