@@ -2404,7 +2404,7 @@ namespace KotOR_IO
         /// <summary>
         /// Gets and Sets SoundSet values. The type will be <see cref="int"/> if <see cref="TLKPopulated"/> is false, and <see cref="Sound"/> if <see cref="TLKPopulated"/> is true.
         /// </summary>
-        /// <param name="SSField"></param>
+        /// <param name="SSField">The string representation of the soundeffect from <see cref="Reference_Tables.SSFields"/></param>
         /// <returns></returns>
         public object this[string SSField] //value from referene table
         {
@@ -2417,8 +2417,6 @@ namespace KotOR_IO
                 StringTable[SSField] = value;
             }
         }
-
-
     }
 
     /// <summary>
