@@ -1852,6 +1852,7 @@ namespace KotOR_IO
     /// </summary>
     public class GFF : KFile
     {
+        #region Class Defnitions
         //header
         //FileType & Version in superclass
         ///<summary>Offset of Struct array as bytes from the beginning of the file</summary>
@@ -2005,10 +2006,15 @@ namespace KotOR_IO
             /// <summary>The raw byte data of the object, with a length of <see cref="Size"/></summary>
             public byte[] Data;
         }
+        #endregion
 
         ///<summary>Initiates a new instance of the <see cref="GFF"/> class.</summary>
         public GFF() { }
 
+        /// <summary>
+        /// Initiates a new instance of the <see cref="GFF"/> class from raw byte data.
+        /// </summary>
+        /// <param name="raw_data"></param>
         public GFF(byte[] raw_data)
         {
             MemoryStream ms = new MemoryStream(raw_data);
@@ -2033,6 +2039,41 @@ namespace KotOR_IO
             this.StructOffset = g.StructOffset;
             this.Struct_Array = g.Struct_Array;
             this.Version = g.Version;
+        }
+
+        /// <summary>
+        /// Gets field data given a field label. If more than one fields have this label, type will be <see cref="List{object}"/>, otherwise type will be <see cref="object"/>
+        /// </summary>
+        /// <param name="Field_Label"></param>
+        /// <returns></returns>
+        public object this[string Field_Label]
+        {
+            get
+            {
+                int count = Field_Array.Where(p => p.Label == Field_Label).Count();
+
+                if (count == 0)
+                {
+                    throw new Exception("Field_Label \"" + Field_Label + "\" does not exist in this GFF");
+                }
+
+                else if (count == 1)
+                {
+                    return Field_Array.Where(p => p.Label == Field_Label).FirstOrDefault().Field_Data;
+                }
+
+                else if (count > 1)
+                {
+                    return Field_Array.Where(p => p.Label == Field_Label);
+                }
+
+                else
+                {
+                    throw new Exception("Something has gone seriously wrong. There should not be a negative quantity of Fields.");
+                }
+            }
+
+
         }
     }
 
@@ -2402,6 +2443,41 @@ namespace KotOR_IO
         public SSF() { }
 
         /// <summary>
+        /// Initiates a new instance of the <see cref="SSF"/> class from raw byte data
+        /// </summary>
+        /// <param name="raw_data">The raw byte data for the Sound Set</param>
+        public SSF(byte raw_data)
+        {
+            MemoryStream ms = new MemoryStream(raw_data);
+            SSF f = KReader.ReadSSF(ms);
+
+            this.EndPadding = f.EndPadding;
+            this.FileType = f.FileType;
+            this.StringTable = f.StringTable;
+            this.TLKPopulated = f.TLKPopulated;
+            this.UnknownInt = f.UnknownInt;
+            this.Version = f.Version;
+        }
+
+        /// <summary>
+        /// Initiates a new instance of the <see cref="SSF"/> class from an array of sound references. 
+        /// </summary>
+        /// <param name="Sound_References">An Int array of 28 (dialog.tlk) sound references in the order they occur in the Sound Set.<para/>SEE: <see cref="Reference_Tables.SSFields"/></param>
+        public SSF(int[] Sound_References)
+        {
+            FileType = "SSF ";
+            Version = "V1.1";
+            UnknownInt = 12;
+
+            int i = 0;
+            foreach (string s in Reference_Tables.SSFields)
+            {
+                StringTable.Add(s, Sound_References[i]);
+                i++;
+            }
+        }
+
+        /// <summary>
         /// Gets and Sets SoundSet values. The type will be <see cref="int"/> if <see cref="TLKPopulated"/> is false, and <see cref="Sound"/> if <see cref="TLKPopulated"/> is true.
         /// </summary>
         /// <param name="SSField">The string representation of the soundeffect from <see cref="Reference_Tables.SSFields"/></param>
@@ -2468,6 +2544,33 @@ namespace KotOR_IO
 
             /// <summary>The text associated with the string.</summary>
             public string StringText;
+
+            /// <summary>
+            /// Initiates a new instance of the <see cref="TLK.String_Data"/> class.
+            /// </summary>
+            public String_Data() { }
+
+            /// <summary>
+            /// Initiates a new instance of the <see cref="TLK.String_Data"/> class from text and sound information. <para/> NOTE: This feature is experimental and may not work properly.
+            /// </summary>
+            /// <param name="StringText">The Text contained in the string</param>
+            /// <param name="SoundResRef">The 16 character reference for the sound file, if none exist set value to ""</param>
+            /// <param name="SoundLength">The duration in seconds of the sound, if none sxist set to zero</param>
+            public String_Data(string StringText, string SoundResRef, float SoundLength)
+            {
+                //**NOTE: all Caps flags don't appear to be used in Kotor, but be mindful of their implementation in other games.
+                Flags = 7;
+                this.SoundResRef = SoundResRef;
+                VolumeVariance = 0;
+                PitchVariance = 0;
+                //OffsetToString should be calculated elsewhere.
+                StringSize = StringText.Length;
+                this.SoundLength = SoundLength;
+                TEXT_PRESENT = true;
+                SND_PRESENT = true;
+                SNDLENGTH_PRESENT = true;
+                this.StringText = StringText;
+            }
         }
         /// <summary>The tabel containing all of the <see cref="String_Data"/> elements. This is the primary property of the <see cref="TLK"/>.</summary>
         public List<String_Data> String_Data_Table = new List<String_Data>();
