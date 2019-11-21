@@ -25,33 +25,25 @@ namespace KotOR_IO
         /// </summary>
         public class UTC : GFF
         {
-            public struct APinfo
-            {
-                public byte Race;
-                public byte SubraceIndex;
-                public string FirstName;
-                public string LastName;
-                public short Appearance_Type;
-                public byte Gender;
-                public int Phenotype;
-                public short PortraitId;
-                public string Description;
-                public string Subrace;
-                public byte BodyBag;
-                public byte BodyVariation;
-                public byte TextureVar;
-            }
-            public APinfo Appearance_Info;
+            public byte Race;
+            public byte SubraceIndex;
+            public string FirstName;
+            public string LastName;
+            public short Appearance_Type;
+            public byte Gender;
+            public int Phenotype;
+            public short PortraitId;
+            public string Description;
+            public string Subrace;
+            public byte BodyBag;
+            public byte BodyVariation;
+            public byte TextureVar;
 
-            public struct IDinfo
-            {
-                public string TemplateResRef;
-                public string Tag;
-                public byte IsPC;
-                public short FactionID;
-                public byte Plot;
-            }
-            public IDinfo Identification;
+            public string TemplateResRef;
+            public string Tag;
+            public byte IsPC;
+            public short FactionID;
+            public byte Plot;
 
             public string Conversation;
             public byte Disarmable;
@@ -62,71 +54,47 @@ namespace KotOR_IO
             public byte Min1HP;
             public byte PartyInteract;
 
-            public struct ABscores
-            {
-                public byte Str;
-                public byte Dex;
-                public byte Con;
-                public byte Int;
-                public byte Wis;
-                public byte Cha;
-            }
-            public ABscores Abilities;
+            public byte Str;
+            public byte Dex;
+            public byte Con;
+            public byte Int;
+            public byte Wis;
+            public byte Cha;
 
             public int WalkRate;
             public byte NaturalAC;
 
-            public struct hp
-            {
-                public short HitPoints;
-                public short CurrentHitPoints;
-                public short MaxHitPoints;
-            }
-            public hp Hit_Points;
+            public short HitPoints;
+            public short CurrentHitPoints;
+            public short MaxHitPoints;
 
-            public struct fp
-            {
-                public short ForcePoints;
-                public short CurrentForce;
-            }
-            public fp Force_Points;
+            public short ForcePoints;
+            public short CurrentForce;
 
-            public struct svs
-            {
-                public short refbonus;
-                public short willbonus;
-                public short fortbonus;
-            }
-            public svs Saving_Throws;
+            public short refbonus;
+            public short willbonus;
+            public short fortbonus;
 
-            public struct algn
-            {
-                public byte GoodEvil;
-                public byte LawfulChaotic;
-            }
-            public algn Alignment;
+            public byte GoodEvil;
+            public byte LawfulChaotic;
 
             public float ChallengeRating;
             public byte PerceptionRange;
 
-            public struct scrpts
-            {
-                public string ScriptHeartbeat;
-                public string ScriptOnNotice;
-                public string ScriptSpellAt;
-                public string ScriptAttacked;
-                public string ScriptDamaged;
-                public string ScriptDisturbed;
-                public string ScriptEndRound;
-                public string ScriptEndDialogu;
-                public string ScriptDialogue;
-                public string ScriptSpawn;
-                public string ScriptRested;
-                public string ScriptDeath;
-                public string ScriptUserDefine;
-                public string ScriptOnBlocked;
-            }
-            public scrpts Scripts;
+            public string ScriptHeartbeat;
+            public string ScriptOnNotice;
+            public string ScriptSpellAt;
+            public string ScriptAttacked;
+            public string ScriptDamaged;
+            public string ScriptDisturbed;
+            public string ScriptEndRound;
+            public string ScriptEndDialogu;
+            public string ScriptDialogue;
+            public string ScriptSpawn;
+            public string ScriptRested;
+            public string ScriptDeath;
+            public string ScriptUserDefine;
+            public string ScriptOnBlocked;
 
             public List<byte> SkillList; //contains ranks
             public List<int> FeatList; //int feat indexes
