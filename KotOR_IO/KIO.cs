@@ -1895,6 +1895,45 @@ namespace KotOR_IO
             public int FieldCount;
             ///<summary>The data stored in this Struct, populated from DataOrDataOffset. Usually takes the form of a <see cref="Field"/> or <see cref="List{Field}"/></summary>
             public object StructData;
+
+            /// <summary>
+            /// Adds the specified Field to the Struct
+            /// </summary>
+            /// <param name="field_index"></param>
+            /// <param name="g">The GFF that contains this Struct</param>
+            public void add_field(int field_index, GFF g)
+            {
+                
+                if (FieldCount == 0) { DataOrDataOffset = field_index; StructData = g.Field_Array[field_index]; }
+                else if (FieldCount == 1)
+                {
+                    Field old = StructData as Field;
+                    StructData = new List<Field>();
+                    (StructData as List<Field>).Add(old);
+                    (StructData as List<Field>).Add(g.Field_Array[field_index]);
+                    DataOrDataOffset = g.ListIndicesOffset - g.FieldIndicesOffset; //Using this before the list offset is set to represent end of FieldIndices Array, where the new indices will be appended.
+                    g.Field_Indices.Add(g.Field_Array.IndexOf(old));
+                    g.Field_Indices.Add(field_index);
+                    g.FieldIndicesCount += 8;
+                    g.ListIndicesOffset += 8;
+                }
+                else
+                {
+                    (StructData as List<Field>).Add(g.Field_Array[field_index]);
+                    int insert_index = (DataOrDataOffset / 4) + FieldCount;
+                    g.Field_Indices.Insert(insert_index, field_index);
+
+                    foreach (GFFStruct gs in g.Struct_Array.Where(s => s.DataOrDataOffset > DataOrDataOffset))
+                    {
+                        gs.DataOrDataOffset += 4;
+                    }
+
+                    g.FieldIndicesCount += 4;
+                    g.ListIndicesOffset += 4;
+                }
+
+                FieldCount++;
+            }
         }
         /// <summary>The array of all of teh GFF Structs stored in this file, this is where the bulk of the data will be stored</summary>
         public List<GFFStruct> Struct_Array = new List<GFFStruct>();
@@ -2082,7 +2121,7 @@ namespace KotOR_IO
         /// <returns></returns>
         public int get_Field_Index(string label, int occurance)
         {
-            return Field_Array.IndexOf(Field_Array.Where(f => f.Label == label.TrimEnd('\0')).ToArray()[occurance]);
+            return Field_Array.IndexOf(Field_Array.Where(f => f.Label == label.TrimEnd('\0')).ToArray()[occurance - 1]);
         }
         /// <summary>
         /// Returns the index of of the given field.
@@ -2130,7 +2169,7 @@ namespace KotOR_IO
             {
                 GF.DataOrDataOffset = ListIndicesOffset - FieldIndicesOffset; //Using this before the list offset is set to represent end of FieldIndices Array, where the new indices will be appended.
                 Field_Indices.AddRange(_Field_Indices);
-                FieldIndicesCount += GF.FieldCount;
+                FieldIndicesCount += GF.FieldCount * 4;
                 ListIndicesOffset += 12 + (4 * GF.FieldCount);
             }
 
@@ -2141,6 +2180,7 @@ namespace KotOR_IO
 
         /// <summary>
         /// Adds a new field to the <see cref="Field_Array"/>.
+        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int)"/>
         /// </summary>
         /// <param name="data">The <see cref="byte"/> data stored within this field</param>
         /// <param name="label">The Label of the field being added</param>
@@ -2174,6 +2214,7 @@ namespace KotOR_IO
         }
         /// <summary>
         /// Adds a new field to the <see cref="Field_Array"/>.
+        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int)"/>
         /// </summary>
         /// <param name="data">The <see cref="char"/> data stored within this field</param>
         /// <param name="label">The Label of the field being added</param>
@@ -2207,6 +2248,7 @@ namespace KotOR_IO
         }
         /// <summary>
         /// Adds a new field to the <see cref="Field_Array"/>.
+        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int)"/>
         /// </summary>
         /// <param name="data">The <see cref="ushort"/> data stored within this field</param>
         /// <param name="label">The Label of the field being added</param>
@@ -2240,6 +2282,7 @@ namespace KotOR_IO
         }
         /// <summary>
         /// Adds a new field to the <see cref="Field_Array"/>.
+        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int)"/>
         /// </summary>
         /// <param name="data">The <see cref="short"/> data stored within this field</param>
         /// <param name="label">The Label of the field being added</param>
@@ -2273,6 +2316,7 @@ namespace KotOR_IO
         }
         /// <summary>
         /// Adds a new field to the <see cref="Field_Array"/>.
+        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int)"/>
         /// </summary>
         /// <param name="data">The <see cref="uint"/> data stored within this field</param>
         /// <param name="label">The Label of the field being added</param>
@@ -2306,6 +2350,7 @@ namespace KotOR_IO
         }
         /// <summary>
         /// Adds a new field to the <see cref="Field_Array"/>.
+        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int)"/>
         /// </summary>
         /// <param name="data">The <see cref="int"/> data stored within this field</param>
         /// <param name="label">The Label of the field being added</param>
@@ -2339,6 +2384,7 @@ namespace KotOR_IO
         }
         /// <summary>
         /// Adds a new field to the <see cref="Field_Array"/>.
+        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int)"/>
         /// </summary>
         /// <param name="data">The <see cref="float"/> data stored within this field</param>
         /// <param name="label">The Label of the field being added</param>
@@ -2347,7 +2393,7 @@ namespace KotOR_IO
             Field F = new Field();
 
             //Binary Content
-            F.Type = 4;
+            F.Type = 8;
 
             if (Label_Array.Contains(label)) { F.LabelIndex = Label_Array.IndexOf(label); }
             else { F.LabelIndex = add_label(label); }
@@ -2372,6 +2418,7 @@ namespace KotOR_IO
         }
         /// <summary>
         /// Adds a new field to the <see cref="Field_Array"/>.
+        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int)"/>
         /// </summary>
         /// <param name="data">The <see cref="ulong"/> data stored within this field</param>
         /// <param name="label">The Label of the field being added</param>
@@ -2405,6 +2452,7 @@ namespace KotOR_IO
         }
         /// <summary>
         /// Adds a new field to the <see cref="Field_Array"/>.
+        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int)"/>
         /// </summary>
         /// <param name="data">The <see cref="long"/> data stored within this field</param>
         /// <param name="label">The Label of the field being added</param>
@@ -2438,6 +2486,7 @@ namespace KotOR_IO
         }
         /// <summary>
         /// Adds a new field to the <see cref="Field_Array"/>.
+        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int)"/>
         /// </summary>
         /// <param name="data">The <see cref="double"/> data stored within this field</param>
         /// <param name="label">The Label of the field being added</param>
@@ -2471,6 +2520,7 @@ namespace KotOR_IO
         }
         /// <summary>
         /// Adds a new field to the <see cref="Field_Array"/>.
+        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int)"/>
         /// </summary>
         /// <param name="data">The <see cref="CExoString"/> data stored within this field</param>
         /// <param name="label">The Label of the field being added</param>
@@ -2505,6 +2555,7 @@ namespace KotOR_IO
         }
         /// <summary>
         /// Adds a new field to the <see cref="Field_Array"/>.
+        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int)"/>
         /// </summary>
         /// <param name="data">The <see cref="CResRef"/> data stored within this field</param>
         /// <param name="label">The Label of the field being added</param>
@@ -2538,6 +2589,7 @@ namespace KotOR_IO
         }
         /// <summary>
         /// Adds a new field to the <see cref="Field_Array"/>.
+        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int)"/>
         /// </summary>
         /// <param name="data">The <see cref="CExoLocString"/> data stored within this field</param>
         /// <param name="label">The Label of the field being added</param>
@@ -2572,6 +2624,7 @@ namespace KotOR_IO
         }
         /// <summary>
         /// Adds a new field to the <see cref="Field_Array"/>.
+        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int)"/>
         /// </summary>
         /// <param name="data">The <see cref="Void_Binary"/> data stored within this field</param>
         /// <param name="label">The Label of the field being added</param>
@@ -2605,6 +2658,7 @@ namespace KotOR_IO
         }
         /// <summary>
         /// Adds a new field to the <see cref="Field_Array"/>.
+        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int)"/>
         /// </summary>
         /// <param name="data">The <see cref="GFFStruct"/> data stored within this field. <para/> NOTE: <see cref="GFFStruct"/> must exist in the <see cref="Struct_Array"/>.</param>
         /// <param name="label">The Label of the field being added</param>
@@ -2639,6 +2693,7 @@ namespace KotOR_IO
         }
         /// <summary>
         /// Adds a new field to the <see cref="Field_Array"/>.
+        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int)"/>
         /// </summary>
         /// <param name="data">The list of structs stored within this field. NOTE: The <see cref="GFFStruct"/>s must exist in the <see cref="Struct_Array"/>.</param>
         /// <param name="label">The Label of the field being added</param>
