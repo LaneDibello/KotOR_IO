@@ -2072,8 +2072,6 @@ namespace KotOR_IO
                     throw new Exception("Something has gone seriously wrong. There should not be a negative quantity of Fields.");
                 }
             }
-
-
         }
 
         /// <summary>
@@ -2084,7 +2082,7 @@ namespace KotOR_IO
         /// <returns></returns>
         public int get_Field_Index(string label, int occurance)
         {
-            return Field_Array.IndexOf(Field_Array.Where(f => f.Label == label).ToArray()[occurance]);
+            return Field_Array.IndexOf(Field_Array.Where(f => f.Label == label.TrimEnd('\0')).ToArray()[occurance]);
         }
         /// <summary>
         /// Returns the index of of the given field.
@@ -2094,6 +2092,16 @@ namespace KotOR_IO
         public int get_Field_Index(Field F)
         {
             return Field_Array.IndexOf(F);
+        }
+
+        /// <summary>
+        /// Gets the index of the given label
+        /// </summary>
+        /// <param name="label">The label given. (16 <see cref="char"/> or less)</param>
+        /// <returns></returns>
+        public int get_Label_Index(string label)
+        {
+            return Label_Array.IndexOf(label.TrimEnd('\0'));
         }
 
         /// <summary>
@@ -2112,7 +2120,6 @@ namespace KotOR_IO
             FieldOffset += 12;
             LabelOffset += 12;
             FieldDataOffset += 12;
-            FieldIndicesOffset += 12;
 
             if (GF.FieldCount == 1)
             {
@@ -2121,15 +2128,577 @@ namespace KotOR_IO
             }
             else
             {
-                GF.DataOrDataOffset = ListIndicesOffset; //Using this before the list offset is set to represent end of FieldIndices Array, where the new indices will be appended.
+                GF.DataOrDataOffset = ListIndicesOffset - FieldIndicesOffset; //Using this before the list offset is set to represent end of FieldIndices Array, where the new indices will be appended.
                 Field_Indices.AddRange(_Field_Indices);
+                FieldIndicesCount += GF.FieldCount;
                 ListIndicesOffset += 12 + (4 * GF.FieldCount);
             }
+
+            FieldIndicesOffset += 12;
 
             Struct_Array.Add(GF);
         }
 
+        /// <summary>
+        /// Adds a new field to the <see cref="Field_Array"/>.
+        /// </summary>
+        /// <param name="data">The <see cref="byte"/> data stored within this field</param>
+        /// <param name="label">The Label of the field being added</param>
+        public void add_field(byte data, string label)
+        {
+            Field F = new Field();
 
+            //Binary Content
+            F.Type = 0;
+
+            if (Label_Array.Contains(label)) { F.LabelIndex = Label_Array.IndexOf(label); }
+            else { F.LabelIndex = add_label(label); }
+
+            F.DataOrDataOffset = data;
+
+            //User Content
+            F.Field_Data = data;
+            F.Label = label;
+            F.Complex = false;
+            F.Type_Text = Reference_Tables.Field_Types[F.Type];
+
+            //Offsets
+            LabelOffset += 12;
+            FieldDataOffset += 12;
+            FieldIndicesOffset += 12;
+            ListIndicesOffset += 12;
+
+            FieldCount++;
+
+            Field_Array.Add(F);
+        }
+        /// <summary>
+        /// Adds a new field to the <see cref="Field_Array"/>.
+        /// </summary>
+        /// <param name="data">The <see cref="char"/> data stored within this field</param>
+        /// <param name="label">The Label of the field being added</param>
+        public void add_field(char data, string label)
+        {
+            Field F = new Field();
+
+            //Binary Content
+            F.Type = 1;
+
+            if (Label_Array.Contains(label)) { F.LabelIndex = Label_Array.IndexOf(label); }
+            else { F.LabelIndex = add_label(label); }
+
+            F.DataOrDataOffset = data;
+
+            //User Content
+            F.Field_Data = data;
+            F.Label = label;
+            F.Complex = false;
+            F.Type_Text = Reference_Tables.Field_Types[F.Type];
+
+            //Offsets
+            LabelOffset += 12;
+            FieldDataOffset += 12;
+            FieldIndicesOffset += 12;
+            ListIndicesOffset += 12;
+
+            FieldCount++;
+
+            Field_Array.Add(F);
+        }
+        /// <summary>
+        /// Adds a new field to the <see cref="Field_Array"/>.
+        /// </summary>
+        /// <param name="data">The <see cref="ushort"/> data stored within this field</param>
+        /// <param name="label">The Label of the field being added</param>
+        public void add_field(ushort data, string label)
+        {
+            Field F = new Field();
+
+            //Binary Content
+            F.Type = 2;
+
+            if (Label_Array.Contains(label)) { F.LabelIndex = Label_Array.IndexOf(label); }
+            else { F.LabelIndex = add_label(label); }
+
+            F.DataOrDataOffset = data;
+
+            //User Content
+            F.Field_Data = data;
+            F.Label = label;
+            F.Complex = false;
+            F.Type_Text = Reference_Tables.Field_Types[F.Type];
+
+            //Offsets
+            LabelOffset += 12;
+            FieldDataOffset += 12;
+            FieldIndicesOffset += 12;
+            ListIndicesOffset += 12;
+
+            FieldCount++;
+
+            Field_Array.Add(F);
+        }
+        /// <summary>
+        /// Adds a new field to the <see cref="Field_Array"/>.
+        /// </summary>
+        /// <param name="data">The <see cref="short"/> data stored within this field</param>
+        /// <param name="label">The Label of the field being added</param>
+        public void add_field(short data, string label)
+        {
+            Field F = new Field();
+
+            //Binary Content
+            F.Type = 3;
+
+            if (Label_Array.Contains(label)) { F.LabelIndex = Label_Array.IndexOf(label); }
+            else { F.LabelIndex = add_label(label); }
+
+            F.DataOrDataOffset = data;
+
+            //User Content
+            F.Field_Data = data;
+            F.Label = label;
+            F.Complex = false;
+            F.Type_Text = Reference_Tables.Field_Types[F.Type];
+
+            //Offsets
+            LabelOffset += 12;
+            FieldDataOffset += 12;
+            FieldIndicesOffset += 12;
+            ListIndicesOffset += 12;
+
+            FieldCount++;
+
+            Field_Array.Add(F);
+        }
+        /// <summary>
+        /// Adds a new field to the <see cref="Field_Array"/>.
+        /// </summary>
+        /// <param name="data">The <see cref="uint"/> data stored within this field</param>
+        /// <param name="label">The Label of the field being added</param>
+        public void add_field(uint data, string label)
+        {
+            Field F = new Field();
+
+            //Binary Content
+            F.Type = 4;
+
+            if (Label_Array.Contains(label)) { F.LabelIndex = Label_Array.IndexOf(label); }
+            else { F.LabelIndex = add_label(label); }
+
+            F.DataOrDataOffset = (int)data;
+
+            //User Content
+            F.Field_Data = data;
+            F.Label = label;
+            F.Complex = false;
+            F.Type_Text = Reference_Tables.Field_Types[F.Type];
+
+            //Offsets
+            LabelOffset += 12;
+            FieldDataOffset += 12;
+            FieldIndicesOffset += 12;
+            ListIndicesOffset += 12;
+
+            FieldCount++;
+
+            Field_Array.Add(F);
+        }
+        /// <summary>
+        /// Adds a new field to the <see cref="Field_Array"/>.
+        /// </summary>
+        /// <param name="data">The <see cref="int"/> data stored within this field</param>
+        /// <param name="label">The Label of the field being added</param>
+        public void add_field(int data, string label)
+        {
+            Field F = new Field();
+
+            //Binary Content
+            F.Type = 5;
+
+            if (Label_Array.Contains(label)) { F.LabelIndex = Label_Array.IndexOf(label); }
+            else { F.LabelIndex = add_label(label); }
+
+            F.DataOrDataOffset = data;
+
+            //User Content
+            F.Field_Data = data;
+            F.Label = label;
+            F.Complex = false;
+            F.Type_Text = Reference_Tables.Field_Types[F.Type];
+
+            //Offsets
+            LabelOffset += 12;
+            FieldDataOffset += 12;
+            FieldIndicesOffset += 12;
+            ListIndicesOffset += 12;
+
+            FieldCount++;
+
+            Field_Array.Add(F);
+        }
+        /// <summary>
+        /// Adds a new field to the <see cref="Field_Array"/>.
+        /// </summary>
+        /// <param name="data">The <see cref="float"/> data stored within this field</param>
+        /// <param name="label">The Label of the field being added</param>
+        public void add_field(float data, string label)
+        {
+            Field F = new Field();
+
+            //Binary Content
+            F.Type = 4;
+
+            if (Label_Array.Contains(label)) { F.LabelIndex = Label_Array.IndexOf(label); }
+            else { F.LabelIndex = add_label(label); }
+
+            F.DataOrDataOffset = BitConverter.ToInt32(BitConverter.GetBytes(data), 0);
+
+            //User Content
+            F.Field_Data = data;
+            F.Label = label;
+            F.Complex = false;
+            F.Type_Text = Reference_Tables.Field_Types[F.Type];
+
+            //Offsets
+            LabelOffset += 12;
+            FieldDataOffset += 12;
+            FieldIndicesOffset += 12;
+            ListIndicesOffset += 12;
+
+            FieldCount++;
+
+            Field_Array.Add(F);
+        }
+        /// <summary>
+        /// Adds a new field to the <see cref="Field_Array"/>.
+        /// </summary>
+        /// <param name="data">The <see cref="ulong"/> data stored within this field</param>
+        /// <param name="label">The Label of the field being added</param>
+        public void add_field(ulong data, string label)
+        {
+            Field F = new Field();
+
+            //Binary Content
+            F.Type = 6;
+
+            if (Label_Array.Contains(label)) { F.LabelIndex = Label_Array.IndexOf(label); }
+            else { F.LabelIndex = add_label(label); }
+            
+            F.DataOrDataOffset = FieldIndicesOffset - FieldDataOffset; //Because the new data will be added at the end of the FieldDataBlock
+
+            //User Content
+            F.Field_Data = data;
+            F.Label = label;
+            F.Complex = true;
+            F.Type_Text = Reference_Tables.Field_Types[F.Type];
+
+            //Offsets
+            LabelOffset += 12;
+            FieldDataOffset += 12;
+            FieldIndicesOffset += 20;
+            ListIndicesOffset += 20;
+
+            FieldCount++;
+
+            Field_Array.Add(F);
+        }
+        /// <summary>
+        /// Adds a new field to the <see cref="Field_Array"/>.
+        /// </summary>
+        /// <param name="data">The <see cref="long"/> data stored within this field</param>
+        /// <param name="label">The Label of the field being added</param>
+        public void add_field(long data, string label)
+        {
+            Field F = new Field();
+
+            //Binary Content
+            F.Type = 7;
+
+            if (Label_Array.Contains(label)) { F.LabelIndex = Label_Array.IndexOf(label); }
+            else { F.LabelIndex = add_label(label); }
+
+            F.DataOrDataOffset = FieldIndicesOffset - FieldDataOffset; //Because the new data will be added at the end of the FieldDataBlock
+
+            //User Content
+            F.Field_Data = data;
+            F.Label = label;
+            F.Complex = true;
+            F.Type_Text = Reference_Tables.Field_Types[F.Type];
+
+            //Offsets
+            LabelOffset += 12;
+            FieldDataOffset += 12;
+            FieldIndicesOffset += 20;
+            ListIndicesOffset += 20;
+
+            FieldCount++;
+
+            Field_Array.Add(F);
+        }
+        /// <summary>
+        /// Adds a new field to the <see cref="Field_Array"/>.
+        /// </summary>
+        /// <param name="data">The <see cref="double"/> data stored within this field</param>
+        /// <param name="label">The Label of the field being added</param>
+        public void add_field(double data, string label)
+        {
+            Field F = new Field();
+
+            //Binary Content
+            F.Type = 9;
+
+            if (Label_Array.Contains(label)) { F.LabelIndex = Label_Array.IndexOf(label); }
+            else { F.LabelIndex = add_label(label); }
+
+            F.DataOrDataOffset = FieldIndicesOffset - FieldDataOffset; //Because the new data will be added at the end of the FieldDataBlock
+
+            //User Content
+            F.Field_Data = data;
+            F.Label = label;
+            F.Complex = true;
+            F.Type_Text = Reference_Tables.Field_Types[F.Type];
+
+            //Offsets
+            LabelOffset += 12;
+            FieldDataOffset += 12;
+            FieldIndicesOffset += 20;
+            ListIndicesOffset += 20;
+
+            FieldCount++;
+
+            Field_Array.Add(F);
+        }
+        /// <summary>
+        /// Adds a new field to the <see cref="Field_Array"/>.
+        /// </summary>
+        /// <param name="data">The <see cref="CExoString"/> data stored within this field</param>
+        /// <param name="label">The Label of the field being added</param>
+        public void add_field(CExoString data, string label)
+        {
+            Field F = new Field();
+
+            //Binary Content
+            F.Type = 10;
+
+            if (Label_Array.Contains(label)) { F.LabelIndex = Label_Array.IndexOf(label); }
+            else { F.LabelIndex = add_label(label); }
+
+            F.DataOrDataOffset = FieldIndicesOffset - FieldDataOffset; //Because the new data will be added at the end of the FieldDataBlock
+
+            //User Content
+            F.Field_Data = data;
+            F.Label = label;
+            F.Complex = true;
+            F.Type_Text = Reference_Tables.Field_Types[F.Type];
+
+            //Offsets
+            int Off = data.Size + 4;
+            LabelOffset += 12;
+            FieldDataOffset += 12;
+            FieldIndicesOffset += 12 + Off;
+            ListIndicesOffset += 12 + Off;
+
+            FieldCount++;
+
+            Field_Array.Add(F);
+        }
+        /// <summary>
+        /// Adds a new field to the <see cref="Field_Array"/>.
+        /// </summary>
+        /// <param name="data">The <see cref="CResRef"/> data stored within this field</param>
+        /// <param name="label">The Label of the field being added</param>
+        public void add_field(CResRef data, string label)
+        {
+            Field F = new Field();
+
+            //Binary Content
+            F.Type = 11;
+
+            if (Label_Array.Contains(label)) { F.LabelIndex = Label_Array.IndexOf(label); }
+            else { F.LabelIndex = add_label(label); }
+
+            F.DataOrDataOffset = FieldIndicesOffset - FieldDataOffset; //Because the new data will be added at the end of the FieldDataBlock
+
+            //User Content
+            F.Field_Data = data;
+            F.Label = label;
+            F.Complex = true;
+            F.Type_Text = Reference_Tables.Field_Types[F.Type];
+            
+            //Offsets
+            LabelOffset += 12;
+            FieldDataOffset += 12;
+            FieldIndicesOffset += 12 + data.Size + 1;
+            ListIndicesOffset += 12 + data.Size + 1;
+
+            FieldCount++;
+
+            Field_Array.Add(F);
+        }
+        /// <summary>
+        /// Adds a new field to the <see cref="Field_Array"/>.
+        /// </summary>
+        /// <param name="data">The <see cref="CExoLocString"/> data stored within this field</param>
+        /// <param name="label">The Label of the field being added</param>
+        public void add_field(CExoLocString data, string label)
+        {
+            Field F = new Field();
+
+            //Binary Content
+            F.Type = 12;
+
+            if (Label_Array.Contains(label)) { F.LabelIndex = Label_Array.IndexOf(label); }
+            else { F.LabelIndex = add_label(label); }
+
+            F.DataOrDataOffset = FieldIndicesOffset - FieldDataOffset; //Because the new data will be added at the end of the FieldDataBlock
+
+            //User Content
+            F.Field_Data = data;
+            F.Label = label;
+            F.Complex = true;
+            F.Type_Text = Reference_Tables.Field_Types[F.Type];
+
+            //Offsets
+            int Off = 4 + data.Total_Size;
+            LabelOffset += 12;
+            FieldDataOffset += 12;
+            FieldIndicesOffset += 12 + Off;
+            ListIndicesOffset += 12 + Off;
+
+            FieldCount++;
+
+            Field_Array.Add(F);
+        }
+        /// <summary>
+        /// Adds a new field to the <see cref="Field_Array"/>.
+        /// </summary>
+        /// <param name="data">The <see cref="Void_Binary"/> data stored within this field</param>
+        /// <param name="label">The Label of the field being added</param>
+        public void add_field(Void_Binary data, string label)
+        {
+            Field F = new Field();
+
+            //Binary Content
+            F.Type = 13;
+
+            if (Label_Array.Contains(label)) { F.LabelIndex = Label_Array.IndexOf(label); }
+            else { F.LabelIndex = add_label(label); }
+
+            F.DataOrDataOffset = FieldIndicesOffset - FieldDataOffset; //Because the new data will be added at the end of the FieldDataBlock
+
+            //User Content
+            F.Field_Data = data;
+            F.Label = label;
+            F.Complex = true;
+            F.Type_Text = Reference_Tables.Field_Types[F.Type];
+
+            //Offsets
+            LabelOffset += 12;
+            FieldDataOffset += 12;
+            FieldIndicesOffset += 12 + data.Size + 4;
+            ListIndicesOffset += 12 + data.Size + 4;
+
+            FieldCount++;
+
+            Field_Array.Add(F);
+        }
+        /// <summary>
+        /// Adds a new field to the <see cref="Field_Array"/>.
+        /// </summary>
+        /// <param name="data">The <see cref="GFFStruct"/> data stored within this field. <para/> NOTE: <see cref="GFFStruct"/> must exist in the <see cref="Struct_Array"/>.</param>
+        /// <param name="label">The Label of the field being added</param>
+        public void add_field(GFFStruct data, string label)
+        {
+            Field F = new Field();
+
+            //Binary Content
+            F.Type = 14;
+
+            if (Label_Array.Contains(label)) { F.LabelIndex = Label_Array.IndexOf(label); }
+            else { F.LabelIndex = add_label(label); }
+
+            if (Struct_Array.Contains(data)) { F.DataOrDataOffset = Struct_Array.IndexOf(data); }
+            else { throw new Exception("GFF Struct does not yet exist, please see the GFF.add_struct method."); }
+
+            //User Content
+            F.Field_Data = data;
+            F.Label = label;
+            F.Complex = true;
+            F.Type_Text = Reference_Tables.Field_Types[F.Type];
+
+            //Offsets
+            LabelOffset += 12;
+            FieldDataOffset += 12;
+            FieldIndicesOffset += 12;
+            ListIndicesOffset += 12;
+
+            FieldCount++;
+
+            Field_Array.Add(F);
+        }
+        /// <summary>
+        /// Adds a new field to the <see cref="Field_Array"/>.
+        /// </summary>
+        /// <param name="data">The list of structs stored within this field. NOTE: The <see cref="GFFStruct"/>s must exist in the <see cref="Struct_Array"/>.</param>
+        /// <param name="label">The Label of the field being added</param>
+        public void add_field(List<GFFStruct> data, string label)
+        {
+            Field F = new Field();
+
+            //Binary Content
+            F.Type = 15;
+
+            if (Label_Array.Contains(label)) { F.LabelIndex = Label_Array.IndexOf(label); }
+            else { F.LabelIndex = add_label(label); }
+
+            F.DataOrDataOffset = ListIndicesOffset + ListIndicesCount; //End of the listIndices array
+
+            //List Indices
+            List_Index LI = new List_Index();
+            LI.Size = 0;
+            foreach (GFFStruct GS in data)
+            {
+                LI.Size++;
+                LI.Indices.Add(Struct_Array.IndexOf(GS));
+            }
+            List_Indices.Add(LI);
+
+            //User Content
+            F.Field_Data = data;
+            F.Label = label;
+            F.Complex = true;
+            F.Type_Text = Reference_Tables.Field_Types[F.Type];
+
+            //Offsets
+            LabelOffset += 12;
+            FieldDataOffset += 12;
+            FieldIndicesOffset += 12;
+            ListIndicesOffset += 12;
+            ListIndicesCount += 4 + (4 * LI.Size);
+
+            FieldCount++;
+
+            Field_Array.Add(F);
+        }
+
+
+
+        /// <summary>
+        /// Adds a new label to the <see cref="Label_Array"/>. <para/> Returns the index of this new label.
+        /// </summary>
+        /// <param name="label">The field label to be added to <see cref="Label_Array"/>. Must be 16 <see cref="char"/>s or less</param>
+        /// <returns></returns>
+        public int add_label(string label)
+        {
+            if (label.Length > 16) { throw new Exception("Label length must be less than 16"); }
+            LabelCount++;
+            Label_Array.Add(label.PadRight(16, '\0'));
+            FieldDataOffset += 16;
+            FieldIndicesOffset += 16;
+            ListIndicesOffset += 16;
+            return Label_Array.IndexOf(Label_Array.Last());
+        }
     }
 
     /// <summary>
