@@ -2075,6 +2075,61 @@ namespace KotOR_IO
 
 
         }
+
+        /// <summary>
+        /// Returns the index of the nth occurance of a field with the specified label.
+        /// </summary>
+        /// <param name="label">The <see cref="Field"/> label.</param>
+        /// <param name="occurance">The nth occurance the check</param>
+        /// <returns></returns>
+        public int get_Field_Index(string label, int occurance)
+        {
+            return Field_Array.IndexOf(Field_Array.Where(f => f.Label == label).ToArray()[occurance]);
+        }
+        /// <summary>
+        /// Returns the index of of the given field.
+        /// </summary>
+        /// <param name="F"></param>
+        /// <returns></returns>
+        public int get_Field_Index(Field F)
+        {
+            return Field_Array.IndexOf(F);
+        }
+
+        /// <summary>
+        /// Add a new <see cref="GFFStruct"/> to the end of the <see cref="Struct_Array"/> given the indices of the containing fields.
+        /// </summary>
+        /// <param name="_Type">Programmer-defined integer ID for the struct type. Varies from from file to file.</param>
+        /// <param name="_Field_Indices">An array of integer index values that reference different feilds in the <see cref="Field_Array"/> block.
+        /// <para/> SEE: <see cref="get_Field_Index(Field)"/> for finding field indices
+        /// </param>
+        public void add_struct(int _Type, params int[] _Field_Indices)
+        {
+            GFFStruct GF = new GFFStruct();
+            GF.Type = _Type;
+            GF.FieldCount = _Field_Indices.Length;
+
+            FieldOffset += 12;
+            LabelOffset += 12;
+            FieldDataOffset += 12;
+            FieldIndicesOffset += 12;
+
+            if (GF.FieldCount == 1)
+            {
+                GF.DataOrDataOffset = _Field_Indices[0];
+                ListIndicesOffset += 12;
+            }
+            else
+            {
+                GF.DataOrDataOffset = ListIndicesOffset; //Using this before the list offset is set to represent end of FieldIndices Array, where the new indices will be appended.
+                Field_Indices.AddRange(_Field_Indices);
+                ListIndicesOffset += 12 + (4 * GF.FieldCount);
+            }
+
+            Struct_Array.Add(GF);
+        }
+
+
     }
 
     /// <summary>
