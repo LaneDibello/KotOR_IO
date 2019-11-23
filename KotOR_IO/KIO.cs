@@ -416,7 +416,29 @@ namespace KotOR_IO
                             }
                             GF.Field_Data = LGS;
                             break;
-                        #endregion
+                        case 16:
+                            GFF.Orientation OR = new GFF.Orientation();
+                            OR.float1 = br.ReadSingle();
+                            OR.float2 = br.ReadSingle();
+                            OR.float3 = br.ReadSingle();
+                            OR.float4 = br.ReadSingle();
+                            GF.Field_Data = OR;
+                            break;
+                        case 17:
+                            GFF.Vector VC = new GFF.Vector();
+                            VC.x_component = br.ReadSingle();
+                            VC.y_component = br.ReadSingle();
+                            VC.z_component = br.ReadSingle();
+                            GF.Field_Data = VC;
+                            break;
+                        case 18:
+                            GFF.StrRef SR = new GFF.StrRef();
+                            SR.leading_value = br.ReadInt32();
+                            SR.reference = br.ReadInt32();
+                            GF.Field_Data = SR;
+                            break;
+                            #endregion
+                        
                     }
                 }
             }
@@ -925,6 +947,21 @@ namespace KotOR_IO
                         case 13:
                             bw.Write((GF.Field_Data as GFF.Void_Binary).Size);
                             bw.Write((GF.Field_Data as GFF.Void_Binary).Data);
+                            break;
+                        case 16:
+                            bw.Write((GF.Field_Data as GFF.Orientation).float1);
+                            bw.Write((GF.Field_Data as GFF.Orientation).float2);
+                            bw.Write((GF.Field_Data as GFF.Orientation).float3);
+                            bw.Write((GF.Field_Data as GFF.Orientation).float4);
+                            break;
+                        case 17:
+                            bw.Write((GF.Field_Data as GFF.Vector).x_component);
+                            bw.Write((GF.Field_Data as GFF.Vector).y_component);
+                            bw.Write((GF.Field_Data as GFF.Vector).z_component);
+                            break;
+                        case 18:
+                            bw.Write((GF.Field_Data as GFF.StrRef).leading_value);
+                            bw.Write((GF.Field_Data as GFF.StrRef).reference);
                             break;
                         default:
                             break;
@@ -2047,6 +2084,42 @@ namespace KotOR_IO
         }
         #endregion
 
+        /// <summary>
+        /// Field Type used in later version of The Aurora Engine Contains four float values of currently unclear purpose.
+        /// </summary>
+        public class Orientation
+        {
+            /// <summary> Unknown float 1 </summary>
+            public float float1;
+            /// <summary> Unknown float 2 </summary>
+            public float float2;
+            /// <summary> Unknown float 3 </summary>
+            public float float3;
+            /// <summary> Unknown float 4 </summary>
+            public float float4;
+        }
+
+        /// <summary>A 3-dimensional vector made of 3 single precision components</summary>
+        public class Vector
+        {
+            /// <summary>The 'X' component of this vector</summary>
+            public float x_component;
+            /// <summary>The 'Y' component of this vector</summary>
+            public float y_component;
+            /// <summary>The 'Z' component of this vector</summary>
+            public float z_component;
+        }
+
+        /// <summary
+        public class StrRef
+        {
+            /// <summary>An interger value of unknown purpose that appears to be always '4'</summary>
+            public int leading_value;
+            /// <summary>The integer reference to the string in question from dialogue.tlk</summary>
+            public int reference;
+        }
+
+
         ///<summary>Initiates a new instance of the <see cref="GFF"/> class.</summary>
         public GFF() { }
 
@@ -2736,8 +2809,108 @@ namespace KotOR_IO
 
             Field_Array.Add(F);
         }
+        /// <summary>
+        /// Adds a new field to the <see cref="Field_Array"/>.
+        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int)"/>
+        /// </summary>
+        /// <param name="data">The <see cref="Orientation"/> data stored within this field</param>
+        /// <param name="label">The Label of the field being added</param>
+        public void add_field(Orientation data, string label)
+        {
+            Field F = new Field();
 
+            //Binary Content
+            F.Type = 16;
 
+            if (Label_Array.Contains(label)) { F.LabelIndex = Label_Array.IndexOf(label); }
+            else { F.LabelIndex = add_label(label); }
+
+            F.DataOrDataOffset = FieldIndicesOffset - FieldDataOffset; //Because the new data will be added at the end of the FieldDataBlock
+
+            //User Content
+            F.Field_Data = data;
+            F.Label = label;
+            F.Complex = true;
+            F.Type_Text = Reference_Tables.Field_Types[F.Type];
+
+            //Offsets
+            LabelOffset += 12;
+            FieldDataOffset += 12;
+            FieldIndicesOffset += 28;
+            ListIndicesOffset += 28;
+
+            FieldCount++;
+
+            Field_Array.Add(F);
+        }
+        /// <summary>
+        /// Adds a new field to the <see cref="Field_Array"/>.
+        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int)"/>
+        /// </summary>
+        /// <param name="data">The <see cref="Vector"/> data stored within this field</param>
+        /// <param name="label">The Label of the field being added</param>
+        public void add_field(Vector data, string label)
+        {
+            Field F = new Field();
+
+            //Binary Content
+            F.Type = 17;
+
+            if (Label_Array.Contains(label)) { F.LabelIndex = Label_Array.IndexOf(label); }
+            else { F.LabelIndex = add_label(label); }
+
+            F.DataOrDataOffset = FieldIndicesOffset - FieldDataOffset; //Because the new data will be added at the end of the FieldDataBlock
+
+            //User Content
+            F.Field_Data = data;
+            F.Label = label;
+            F.Complex = true;
+            F.Type_Text = Reference_Tables.Field_Types[F.Type];
+
+            //Offsets
+            LabelOffset += 12;
+            FieldDataOffset += 12;
+            FieldIndicesOffset += 24;
+            ListIndicesOffset += 24;
+
+            FieldCount++;
+
+            Field_Array.Add(F);
+        }
+        /// <summary>
+        /// Adds a new field to the <see cref="Field_Array"/>.
+        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int)"/>
+        /// </summary>
+        /// <param name="data">The <see cref="StrRef"/> data stored within this field</param>
+        /// <param name="label">The Label of the field being added</param>
+        public void add_field(StrRef data, string label)
+        {
+            Field F = new Field();
+
+            //Binary Content
+            F.Type = 18;
+
+            if (Label_Array.Contains(label)) { F.LabelIndex = Label_Array.IndexOf(label); }
+            else { F.LabelIndex = add_label(label); }
+
+            F.DataOrDataOffset = FieldIndicesOffset - FieldDataOffset; //Because the new data will be added at the end of the FieldDataBlock
+
+            //User Content
+            F.Field_Data = data;
+            F.Label = label;
+            F.Complex = true;
+            F.Type_Text = Reference_Tables.Field_Types[F.Type];
+
+            //Offsets
+            LabelOffset += 12;
+            FieldDataOffset += 12;
+            FieldIndicesOffset += 20;
+            ListIndicesOffset += 20;
+
+            FieldCount++;
+
+            Field_Array.Add(F);
+        }
 
         /// <summary>
         /// Adds a new label to the <see cref="Label_Array"/>. <para/> Returns the index of this new label.
@@ -3324,7 +3497,7 @@ namespace KotOR_IO
         /// <summary> Dictionary for conversion of GFF Field Type IDs to GFF Field data type text. </summary>
         public static Dictionary<int, string> Field_Types = new Dictionary<int, string>() { { 0, "BYTE" }, { 1, "CHAR" }, { 2, "WORD" }, { 3, "SHORT" }, { 4, "DWORD" }, { 5, "INT" }, { 6, "DWORD64" }, { 7, "INT64" }, { 8, "FLOAT" }, { 9, "DOUBLE" }, { 10, "CExoString" }, { 11, "ResRef" }, { 12, "CExoLocString" }, { 13, "VOID" }, { 14, "Struct" }, { 15, "List" }, { 16, "Orientation"}, { 17, "Vector"}, { 18, "StrRef"} };
         /// <summary> List of GFF Field Types that are marked by the interpreter as "complex". </summary>
-        public static List<int> Complex_Field_Types = new List<int>() { 6, 7, 9, 10, 11, 12, 13, 14, 15 };
+        public static List<int> Complex_Field_Types = new List<int>() { 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18 };
         /// <summary> List of Default Fields in Sound set files. </summary>
         public static List<string> SSFields = new List<string>() { "Battlecry 1", "Battlecry 2", "Battlecry 3", "Battlecry 4", "Battlecry 5", "Battlecry 6", "Select 1", "Select 2", "Select 3", "Attack Grunt 1", "Attack Grunt 2", "Attack Grunt 3","Pain Grunt 1", "Pain Grunt 2", "Low Health", "Dead", "Critical Hit", "Target Immune to Assault", "Lay Mine", "Disarm Mine", "Begin Stealth", "Begin Search", "Begin Unlock", "Unlock Failed", "Unlock Success", "Separate from Party", "Rejoin Party", "Poisoned"};
         /// <summary> Dictionary for conversion of 4 char FileTypes into resource IDs</summary>
