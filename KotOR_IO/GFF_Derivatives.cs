@@ -109,55 +109,64 @@ namespace KotOR_IO
         /// </summary>
         public class UTD : GFF
         {
-            public byte KeyRequired;
-            public byte TrapFlag;
-            public byte TrapOneShot;
-            public byte DisarmDC;
-            public string Description;
-            public string OnTrapTriggered;
-            public string Comment;
-            public string OnFailToOpen;
-            public byte OpenLockDC;
-            public byte Locked;
-            public string Conversation;
-            public string OnMeleeAttacked;
-            public string Portrait;
-            public byte Interruptable;
+            //Basic
+            public string LocName;
+            public string Tag;
             public string TemplateResRef;
-            public byte TrapDisarmable;
+            public byte GenericType;
+            public bool Plot;
+            public byte Hardness;
+            public short HP;
+            public byte Fort;
+            public byte Ref;
+            public byte Will;
+            public int Faction;
+            public string Conversation;
+            public byte Interruptable;
+            public byte AnimationState;
+
+            //Lock
+            public bool Locked;
+            public bool Lockable;
+            public byte OpenLockDC;
+            public byte CloseLockDC;
+            public byte AutoRemoveKey;
+            public byte KeyRequired;
+            public string KeyName;
+
+            //Scripts
+            public string OnDisarm;
+            public string OnDeath;
+            public string OnClick;
+            public string OnClosed;
+            public string OnUserDefined;
+            public string OnLock;
+            public string OnUnlock;
             public string OnHeartbeat;
             public string OnSpellCastAt;
             public string OnDamaged;
             public string OnOpen;
-            public byte Hardness;
-            public byte AnimationState;
-            public string OnLock;
-            public byte GenericType;
-            public string OnUnlock;
-            public byte Will;
+            public string OnMeleeAttacked;
+            public string OnFailToOpen;
+            public string OnTrapTriggered;
+
+            //Other
+
+            public byte TrapFlag;
+            public byte TrapOneShot;
+            public byte DisarmDC;
+            public string Description;
+            public string Comment;
+            public string Portrait;
+            public byte TrapDisarmable;
             public byte TrapDetectable;
             public byte LinkedToFlags;
             public byte TrapType;
-            public byte Lockable;
-            public short HP;
-            public string OnUserDefined;
-            public int Faction;
             public byte PaletteID;
-            public byte Plot;
             public string LinkedTo;
             public byte TrapDetectDC;
-            public string LocName;
             public int Appearance;
-            public string KeyName;
-            public string OnClosed;
             public short CurrentHP;
-            public byte AutoRemoveKey;
-            public string OnDisarm;
-            public byte Fort;
-            public string OnDeath;
-            public string Tag;
-            public string OnClick;
-            public byte CloseLockDC;
         }
 
         /// <summary>
