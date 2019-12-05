@@ -2516,6 +2516,7 @@ namespace KotOR_IO
             //Offsets
             LabelOffset += 12;
             FieldDataOffset += 12;
+            FieldDataCount += 8;
             FieldIndicesOffset += 20;
             ListIndicesOffset += 20;
 
@@ -2550,6 +2551,7 @@ namespace KotOR_IO
             //Offsets
             LabelOffset += 12;
             FieldDataOffset += 12;
+            FieldDataCount += 8;
             FieldIndicesOffset += 20;
             ListIndicesOffset += 20;
 
@@ -2584,6 +2586,7 @@ namespace KotOR_IO
             //Offsets
             LabelOffset += 12;
             FieldDataOffset += 12;
+            FieldDataCount += 8;
             FieldIndicesOffset += 20;
             ListIndicesOffset += 20;
 
@@ -2619,6 +2622,7 @@ namespace KotOR_IO
             int Off = data.Size + 4;
             LabelOffset += 12;
             FieldDataOffset += 12;
+            FieldDataCount += Off;
             FieldIndicesOffset += 12 + Off;
             ListIndicesOffset += 12 + Off;
 
@@ -2653,6 +2657,7 @@ namespace KotOR_IO
             //Offsets
             LabelOffset += 12;
             FieldDataOffset += 12;
+            FieldDataCount += data.Size + 1;
             FieldIndicesOffset += 12 + data.Size + 1;
             ListIndicesOffset += 12 + data.Size + 1;
 
@@ -2688,6 +2693,7 @@ namespace KotOR_IO
             int Off = 4 + data.Total_Size;
             LabelOffset += 12;
             FieldDataOffset += 12;
+            FieldDataCount += Off;
             FieldIndicesOffset += 12 + Off;
             ListIndicesOffset += 12 + Off;
 
@@ -2722,6 +2728,7 @@ namespace KotOR_IO
             //Offsets
             LabelOffset += 12;
             FieldDataOffset += 12;
+            FieldDataCount += data.Size + 4;
             FieldIndicesOffset += 12 + data.Size + 4;
             ListIndicesOffset += 12 + data.Size + 4;
 
@@ -2836,6 +2843,7 @@ namespace KotOR_IO
             //Offsets
             LabelOffset += 12;
             FieldDataOffset += 12;
+            FieldDataCount += 16;
             FieldIndicesOffset += 28;
             ListIndicesOffset += 28;
 
@@ -2870,6 +2878,7 @@ namespace KotOR_IO
             //Offsets
             LabelOffset += 12;
             FieldDataOffset += 12;
+            FieldDataCount += 12;
             FieldIndicesOffset += 24;
             ListIndicesOffset += 24;
 
@@ -2904,12 +2913,102 @@ namespace KotOR_IO
             //Offsets
             LabelOffset += 12;
             FieldDataOffset += 12;
+            FieldDataCount += 8;
             FieldIndicesOffset += 20;
             ListIndicesOffset += 20;
 
             FieldCount++;
 
             Field_Array.Add(F);
+        }
+        /// <summary>
+        /// Deletes a nth occurance of a field with the given label.
+        /// </summary>
+        /// <param name="label">The label of the field to be deleted</param>
+        /// <param name="occurance">The occurance of this label in the field array.</param>
+        public void delete_field(string label, int occurance)
+        {
+            int index = get_Field_Index(label, occurance);
+
+            //STRUCT HANDLING
+
+            //General Offset adjustments
+            LabelOffset -= 12;
+            FieldDataOffset -= 12;
+            FieldIndicesOffset -= 12;
+            ListIndicesOffset -= 12;
+
+            //Complex Offset Adjustments
+            int Off;
+            switch (Field_Array[index].Type)
+            {
+                case 6:
+                case 7:
+                case 9:
+                    FieldDataCount -= 8;
+                    FieldIndicesOffset -= 8;
+                    ListIndicesOffset -= 8;
+                    break;
+                case 10:
+                    Off = (Field_Array[index].Field_Data as CExoString).Size + 4;
+                    FieldDataCount -= Off;
+                    FieldIndicesOffset -= Off;
+                    ListIndicesOffset -= Off;
+                    break;
+                case 11:
+                    Off = (Field_Array[index].Field_Data as CResRef).Size + 1;
+                    FieldDataCount -= Off;
+                    FieldIndicesOffset -= Off;
+                    ListIndicesOffset -= Off;
+                    break;
+                case 12:
+                    Off = (Field_Array[index].Field_Data as CExoLocString).Total_Size + 4;
+                    FieldDataCount -= Off;
+                    FieldIndicesOffset -= Off;
+                    ListIndicesOffset -= Off;
+                    break;
+                case 13:
+                    Off = (Field_Array[index].Field_Data as Void_Binary).Size + 4;
+                    FieldDataCount -= Off;
+                    FieldIndicesOffset -= Off;
+                    ListIndicesOffset -= Off;
+                    break;
+                case 14:
+                    break; //No offset adjustments for struct
+                case 15:
+                    int li_index = get_ListIndices_superIndex(Field_Array[index].DataOrDataOffset); //List need to remove indices
+                    ListIndicesCount -= 4 + (4 * List_Indices[li_index].Size);
+                    List_Indices.RemoveAt(li_index);
+                    break;
+                case 16:
+                    FieldDataCount -= 16;
+                    FieldIndicesOffset -= 16;
+                    ListIndicesOffset -= 16;
+                    break;
+                case 17:
+                    FieldDataCount -= 12;
+                    FieldIndicesOffset -= 12;
+                    ListIndicesOffset -= 12;
+                    break;
+                case 18:
+                    FieldDataCount -= 8;
+                    FieldIndicesOffset -= 8;
+                    ListIndicesOffset -= 8;
+                    break;
+                default:
+                    break;
+            }
+
+            //Proper field removal
+            FieldCount--;
+
+            Field_Array.RemoveAt(index);
+
+            //Potential Label Removal
+            if (Field_Array.Where(x => x.Label == label).Count() == 0)
+            {
+                delete_label(label);
+            }
         }
 
         /// <summary>
@@ -2927,45 +3026,38 @@ namespace KotOR_IO
             ListIndicesOffset += 16;
             return Label_Array.IndexOf(Label_Array.Last());
         }
-
-        public void delete_field(string label, int occurance)
+        /// <summary>
+        /// Deletes a label that is attached to no existing fields.
+        /// </summary>
+        /// <param name="label">The label to be deleted</param>
+        public void delete_label(string label)
         {
-            int index = get_Field_Index(label, occurance);
-
-            
-
-            if (!Field_Array[index].Complex)
+            if (Field_Array.Where(x => x.Label == label).Count() == 1)
             {
-                LabelOffset -= 12;
-                FieldDataOffset -= 12;
-                FieldIndicesOffset -= 12;
-                ListIndicesOffset -= 12;
-            }
-            else
-            {
-                switch (Field_Array[index].Type)
-                {
-                    case 6:
-                    //Work out offset change
-                    //remove from field data block
-                    case 7:
-                    case 9:
-                    case 10:
-                    case 11:
-                    case 12:
-                    case 13:
-                    case 14:
-                    case 15:
-                    case 16:
-                    case 17:
-                    case 18:
-                        break;
-                }
+                new Exception("This label is currently is use by another field!");
             }
 
-            FieldCount--;
+            Label_Array.Remove(label);
+            FieldDataOffset -= 16;
+            FieldIndicesOffset -= 16;
+            ListIndicesOffset -= 16;
+            LabelCount--;
+        }
 
-            Field_Array.RemoveAt(index);
+
+        private int get_ListIndices_superIndex(int dataOffset)
+        {
+            int LI_off = dataOffset; //byte offset from start of Listindices block
+            int Elapsed_off = 0; //The amount of bytes that have been iterated past.
+            int LI_super_index = 0; //The index in the List_Indices Object.
+            foreach (List_Index li in List_Indices)
+            {
+                if (LI_off == Elapsed_off) { break; }
+
+                Elapsed_off += li.Size + 4;
+                LI_super_index++;
+            }
+            return LI_super_index;
         }
     }
 
