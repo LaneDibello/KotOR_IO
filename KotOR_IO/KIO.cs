@@ -453,10 +453,13 @@ namespace KotOR_IO
                 else if (GS.FieldCount > 1)
                 {
                     List<GFF.Field> LGF = new List<GFF.Field>();
+                    int temp_field_index = 0;
                     for (int i = 0; i < GS.FieldCount; i++)
                     {
                         br.BaseStream.Seek(GS.DataOrDataOffset + g.FieldIndicesOffset, SeekOrigin.Begin);
-                        LGF.Add(g.Field_Array[br.ReadInt32()]);
+                        temp_field_index = br.ReadInt32();
+                        LGF.Add(g.Field_Array[temp_field_index]);
+                        GS.Field_Indexes.Add(temp_field_index);
                     }
                     GS.StructData = LGF;
                 }
@@ -887,6 +890,7 @@ namespace KotOR_IO
             bw.Seek(g.StructOffset, SeekOrigin.Begin);
             foreach (GFF.GFFStruct GS in g.Struct_Array)
             {
+                if (GS.StructData == null) {continue;}
                 bw.Write(GS.Type);
                 bw.Write(GS.DataOrDataOffset);
                 bw.Write(GS.FieldCount);
@@ -1930,13 +1934,15 @@ namespace KotOR_IO
             public int DataOrDataOffset;
             ///<summary>Number of fields in this Struct</summary>
             public int FieldCount;
+            ///<summary>The numeric Indexes of each field.</summary>
+            public List<int> Field_Indexes = new List<int>();
             ///<summary>The data stored in this Struct, populated from DataOrDataOffset. Usually takes the form of a <see cref="Field"/> or <see cref="List{Field}"/></summary>
             public object StructData;
 
             /// <summary>
             /// Adds the specified Field to the Struct
             /// </summary>
-            /// <param name="field_index"></param>
+            /// <param name="field_index">The Index of the Field on the <see cref="GFF.Field_Array"/></param>
             /// <param name="g">The GFF that contains this Struct</param>
             public void add_field(int field_index, GFF g)
             {
@@ -1948,6 +1954,8 @@ namespace KotOR_IO
                     StructData = new List<Field>();
                     (StructData as List<Field>).Add(old);
                     (StructData as List<Field>).Add(g.Field_Array[field_index]);
+                    Field_Indexes.Add(DataOrDataOffset);
+                    Field_Indexes.Add(field_index);
                     DataOrDataOffset = g.ListIndicesOffset - g.FieldIndicesOffset; //Using this before the list offset is set to represent end of FieldIndices Array, where the new indices will be appended.
                     g.Field_Indices.Add(g.Field_Array.IndexOf(old));
                     g.Field_Indices.Add(field_index);
@@ -1957,6 +1965,7 @@ namespace KotOR_IO
                 else
                 {
                     (StructData as List<Field>).Add(g.Field_Array[field_index]);
+                    Field_Indexes.Add(field_index);
                     int insert_index = (DataOrDataOffset / 4) + FieldCount;
                     g.Field_Indices.Insert(insert_index, field_index);
 
@@ -1971,8 +1980,42 @@ namespace KotOR_IO
 
                 FieldCount++;
             }
+
+            public void add_field(Field F, GFF g) 
+            {
+                add_field(g.get_Field_Index(F), g);
+            }
+
+            /// <summary>
+            /// Deletes a field from the Struct (Should not be called by end user)
+            /// </summary>
+            /// <param name="F">Field being removed</param>
+            /// <param name="field_index">The Index of teh feild in <see cref="GFF.Field_Array"/></param>
+            public void delete_field(Field F, int field_index)
+            {
+                FieldCount--;
+                if (FieldCount > 1)
+                {
+                    (StructData as List<Field>).Remove(F);
+                    Field_Indexes.Remove(field_index);
+                }
+                else if (FieldCount == 1)
+                {
+                    (StructData as List<Field>).Remove(F);
+                    Field temp = (StructData as List<Field>).FirstOrDefault();
+                    StructData = temp;
+                    Field_Indexes.Remove(field_index);
+                    DataOrDataOffset = Field_Indexes.FirstOrDefault();
+                }
+                else
+                {
+                    StructData = null;
+                    DataOrDataOffset = 0;
+                    //Struct should be marked for deletion
+                } 
+            }
         }
-        /// <summary>The array of all of teh GFF Structs stored in this file, this is where the bulk of the data will be stored</summary>
+        /// <summary>The array of all of the GFF Structs stored in this file, this is where the bulk of the data will be stored</summary>
         public List<GFFStruct> Struct_Array = new List<GFFStruct>();
 
         //Field Array
@@ -2110,7 +2153,7 @@ namespace KotOR_IO
             public float z_component;
         }
 
-        /// <summary
+        /// <summary>???</summary>
         public class StrRef
         {
             /// <summary>An interger value of unknown purpose that appears to be always '4'</summary>
@@ -2930,13 +2973,52 @@ namespace KotOR_IO
         {
             int index = get_Field_Index(label, occurance);
 
-            //STRUCT HANDLING
+            foreach (GFFStruct GS in Struct_Array)
+            {
+                if (GS.FieldCount == 1)
+                {
+                    if (GS.DataOrDataOffset == index)
+                    {
+                        GS.delete_field(Field_Array[index], index);
+                    }
+                    else if (GS.DataOrDataOffset > index)
+                    {
+                        GS.DataOrDataOffset--;
+                    }
+                    else
+                    {
+                        continue;
+                    }
+                }
+                else if (GS.FieldCount > 1)
+                {
+                    if ((GS.StructData as List<Field>).Contains(Field_Array[index]))
+                    {
+                        GS.delete_field(Field_Array[index], index);
+                    }
+                }
+            }
+
+            //Field Indices Adjustment
+            int Field_Indices_Removed = 0;
+            for(int i = 0; i < Field_Indices.Count(); i++)
+            {
+                if (Field_Indices[i] == index)
+                {
+                    Field_Indices.RemoveAt(i);
+                    Field_Indices_Removed++;
+                }
+                else if (Field_Indices[i] > index)
+                {
+                    Field_Indices[i]--;
+                }
+            }
 
             //General Offset adjustments
             LabelOffset -= 12;
             FieldDataOffset -= 12;
             FieldIndicesOffset -= 12;
-            ListIndicesOffset -= 12;
+            ListIndicesOffset -= (12 + 4 * Field_Indices_Removed); //need to subtract out the number of occurances in Field indices deleted
 
             //Complex Offset Adjustments
             int Off;

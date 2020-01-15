@@ -43,6 +43,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Temporary.cs" />
     <Compile Include="GFF_Derivatives.cs" />
     <Compile Include="KIO.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
