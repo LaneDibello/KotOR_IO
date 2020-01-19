@@ -136,6 +136,7 @@ namespace KotOR_IO_Refracter
                         return FSt;
                     case 15:
 
+                        
                         break;
                     case 16:
 
@@ -284,7 +285,7 @@ namespace KotOR_IO_Refracter
 
         public static class GFFFieldReader
         {
-            public static ReadByte(Stream s, int index)
+            //public static ReadByte(Stream s, int index)
         }
     }
    public class GFF : KotOR_IO.KFile
