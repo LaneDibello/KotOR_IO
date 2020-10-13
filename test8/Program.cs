@@ -61,73 +61,50 @@ namespace test8
 
         static void Main(string[] args)
         {
-            Random rng = new Random(55);
-            DirectoryInfo di = new DirectoryInfo("L:\\laned\\Documents\\kotor stuffs\\DumbIdea\\modules");
-            foreach (FileInfo f in di.EnumerateFiles())
-            {
-                RIM r = KReader.ReadRIM(f.OpenRead());
 
-                foreach (RIM.rFile rf in r.File_Table.Where(k => k.TypeID == 2027))
-                {
-                    GFF g = new GFF(rf.File_Data);
-
-                    int temp = rng.Next(1, 508);
-                    if (temp == 0 || temp == 29 || temp == 82) { temp = 200; }
-                    g.Field_Array.Where(k => k.Label == "Appearance_Type").FirstOrDefault().Field_Data = temp;
-                    g.Field_Array.Where(k => k.Label == "Appearance_Type").FirstOrDefault().DataOrDataOffset = temp;
-
-                    MemoryStream ms = new MemoryStream();
-
-                    kWriter.Write(g, ms);
-
-                    rf.File_Data = ms.ToArray();
-                }
-                
-                kWriter.Write(r, f.OpenWrite());
-
-            }
-
-            
-
-            Console.WriteLine();
-
-            
-
-
-            //BIF b = KReader.ReadBIF(File.OpenRead("L:\\laned\\Documents\\kotor stuffs\\Biff Reader Test\\tes\\2da.bif"));
-            //KEY k = KReader.ReadKEY(File.OpenRead("L:\\laned\\Documents\\kotor stuffs\\Biff Reader Test\\tes\\chitin.key"));
-            //b.attachKey(k, "data\\2da.bif");
-            //Console.WriteLine();
-            //Stream s = new MemoryStream(b.Variable_Resource_Table[8].Entry_Data);
-
-            //TwoDA t = KReader.Read2DA(s);
-
-            //int n = t.Row_Count;
-
-            //while (n > 1)
-            //{
-            //    n--;
-            //    int l = ThreadSafeRandom.Rng.Next(n + 1);
-            //    object value = t["modela", l];
-            //    t["modela", l] = t["modela", n];
-            //    t["modela", n] = value;
-            //}
-
-
-            //kWriter.Write(t, File.OpenWrite("L:\\laned\\Documents\\kotor stuffs\\Biff Reader Test\\tes\\appearance.2da"));
-            //Console.WriteLine();
-
-            //MemoryStream ms = new MemoryStream();
-
-            //File.OpenRead("L:\\laned\\Documents\\kotor stuffs\\Biff Reader Test\\g_bandon.ute").CopyTo(ms);
-
-            //e.Append_File("g_bandon", ms.ToArray());
-
-            //byte[] b = e["g_bandon"];
+            //TwoDA_REFRACTOR t = new TwoDA_REFRACTOR(File.OpenRead("L:\\laned\\Documents\\kotor stuffs\\2da examples\\acbonus.2da"));
 
             //Console.Write("");
 
-            //GFF g = KReader.ReadGFF(File.OpenRead("L:\\laned\\Documents\\kotor stuffs\\Biff Reader Test\\g_bandon.ute"));
+            //t.write(File.OpenWrite("L:\\laned\\Documents\\kotor stuffs\\2da examples\\test.2da"));
+
+            //Console.Write("");
+
+
+            //Random rng = new Random(55);
+            //DirectoryInfo di = new DirectoryInfo("L:\\laned\\Documents\\kotor stuffs\\DumbIdea\\modules");
+            //foreach (FileInfo f in di.EnumerateFiles())
+            //{
+            //    RIM r = KReader.ReadRIM(f.OpenRead());
+
+            //    foreach (RIM.rFile rf in r.File_Table.Where(k => k.TypeID == 2044))
+            //    {
+            //        GFF g = new GFF(rf.File_Data);
+
+            //        int temp = rng.Next(1, 231);
+            //        if (temp == 115 || temp == 97 || temp == 94 || temp == 90 || temp == 78 || temp == 62 || temp == 47 || temp == 8 || temp == 9) { temp = 200; }
+            //        g.Field_Array.Where(k => k.Label == "Appearance").FirstOrDefault().Field_Data = temp;
+            //        g.Field_Array.Where(k => k.Label == "Appearance").FirstOrDefault().DataOrDataOffset = temp;
+
+            //        MemoryStream ms = new MemoryStream();
+
+            //        kWriter.Write(g, ms);
+
+            //        rf.File_Data = ms.ToArray();
+            //    }
+
+            //    kWriter.Write(r, f.OpenWrite());
+
+            //}
+
+
+
+
+            //var h = new Blueprint.UTC();
+
+            //Console.WriteLine();
+
+            //GFF g = KReader.ReadGFF(File.OpenRead("L:\\laned\\Documents\\kotor stuffs\\Biff Reader Test\\c_bantha.utc"));
 
             //foreach (GFF.Field gf in g.Field_Array)
             //{
@@ -185,10 +162,6 @@ namespace test8
 
 
             //}
-
-
-            //Console.ReadKey();
-
         }
     }
 }
