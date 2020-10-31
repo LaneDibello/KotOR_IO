@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KotOR_IO.File_Formats
+namespace KotOR_IO
 {
     /// <summary>
     /// BioWare Key Data.<para/>
@@ -18,78 +18,13 @@ namespace KotOR_IO.File_Formats
     /// </summary>
     public class KEY : KFile
     {
-        #region Properties
-
-        //FileType & Version in superclass
-        /// <summary>The number of <see cref="BIF"/> files this key controls.</summary>
-        public int BIFCount { get; set; }
-        /// <summary>The Number of resources in all of the <see cref="BIF"/>s linked to this key.</summary>
-        public int KeyCount { get; set; }
-        /// <summary>Byte offset to the <see cref="FileTable"/> from beginning of the file</summary>
-        public int OffsetToFileTable { get; set; }
-        /// <summary>Byte offset to the <see cref="KeyTable"/> from beginning of the file</summary>
-        public int OffsetToKeyTable { get; set; }
-        ///<summary>The number of years after 1900 that the KEY file was built. (i.e. 2019 == 119)</summary>
-        public int BuildYear { get; set; }
-        ///<summary>The number of days after January 1st the ERF file was built. (i.e. October 5th == 277)</summary>
-        public int BuildDay { get; set; }
-        /// <summary>32 (usually) empty bytes reserved for future use.</summary>
-        public byte[] Reserved { get; set; }
-        /// <summary>A List containing all of the <see cref="FileEntry"/>s associated with the linked <see cref="BIF"/> files.</summary>
-        public List<FileEntry> FileTable { get; set; } = new List<FileEntry>();
-        /// <summary>A list of all the <see cref="KeyEntry"/>s associted with the linked <see cref="BIF"/> files.</summary>
-        public List<KeyEntry> KeyTable { get; set; } = new List<KeyEntry>();
-
-        #endregion
-
-        #region Nested Classes
-
-        //File Table
-        /// <summary>An Entry that describes basic info about a <see cref="BIF"/> file</summary>
-        public class FileEntry
-        {
-            ///<summary>The size of the <see cref="BIF"/> file in bytes.</summary>
-            public int FileSize;
-            ///<summary>The byte offset from the start of the file to the <see cref="BIF"/>'s filename.</summary>
-            public int FilenameOffset;
-            ///<summary>The size of the filename in <see cref="char"/>s</summary>
-            public short FilenameSize;
-            ///<summary>A 16-bit number representing which drive the <see cref="BIF"/> is installed on.</summary>
-            public short Drives;
-
-            ///<summary>The Filename of the <see cref="BIF"/> as a path from the <see cref="KEY"/>'s root directory</summary>
-            public string Filename;
-        }
-
-        //Key Table
-        /// <summary>An entry containing every resources string reference, Type, and ID.</summary>
-        public class KeyEntry
-        {
-            ///<summary>The name of the resource. (16 <see cref="char"/>s)</summary>
-            public string ResRef;
-            ///<summary>The Resource Type ID of this resource. See: <see cref="Reference_Tables.Res_Types"/> </summary>
-            public short ResourceType;
-            ///<summary>The file extension representation of this resource. Obtained from <see cref="Reference_Tables.Res_Types"/> </summary>
-            public string Type_Text; //Populated from Reference_Tables.Res_types[ResourceType]
-            ///<summary>
-            ///A unique ID number that denotes both which BIF this resource refers to, and the index of this resource in the <see cref="BIF.Variable_Resource_Table"/>
-            ///<para/> ResID = (x &lt;&lt; 20) + y
-            ///<para/> Where y is an index into <see cref="FileTable"/> to specify a <see cref="BIF"/>, and x is an index into that <see cref="BIF"/>'s <see cref="BIF.Variable_Resource_Table"/>.
-            /// </summary>
-            public int ResID;
-
-            ///<summary>The x component of <see cref="ResID"/> which references an index in the <see cref="FileTable"/></summary>
-            public int IDx;
-            ///<summary>The y component of <see cref="ResID"/> which is an index into the <see cref="BIF.Variable_Resource_Table"/></summary>
-            public int IDy;
-        }
-
-        #endregion
-
-        #region Constructors
-
-        ///<summary>Initiates a new instance of the <see cref="KEY"/> class.</summary>
-        public KEY() { }
+        /// <summary>
+        /// Reads the given BioWare KEY File
+        /// </summary>
+        /// <param name="path"></param>
+        public KEY(string path)
+            : this(File.OpenRead(path))
+        { }
 
         /// <summary>
         /// Reads Bioware Key Files
@@ -99,7 +34,7 @@ namespace KotOR_IO.File_Formats
         {
             using (BinaryReader br = new BinaryReader(s))
             {
-                //header
+                // Header
                 FileType = new string(br.ReadChars(4));
                 Version = new string(br.ReadChars(4));
                 BIFCount = br.ReadInt32();
@@ -110,7 +45,7 @@ namespace KotOR_IO.File_Formats
                 BuildDay = br.ReadInt32();
                 Reserved = br.ReadBytes(32);
 
-                //File Table
+                // File Table
                 br.BaseStream.Seek(OffsetToFileTable, SeekOrigin.Begin);
                 for (int i = 0; i < BIFCount; i++)
                 {
@@ -122,14 +57,14 @@ namespace KotOR_IO.File_Formats
                     FileTable.Add(FE);
                 }
 
-                //Filenames
+                // Filenames
                 foreach (KEY.FileEntry FE in FileTable)
                 {
                     br.BaseStream.Seek(FE.FilenameOffset, SeekOrigin.Begin);
                     FE.Filename = new string(br.ReadChars(FE.FilenameSize));
                 }
 
-                //Key Table
+                // Key Table
                 br.BaseStream.Seek(OffsetToKeyTable, SeekOrigin.Begin);
                 for (int i = 0; i < KeyCount; i++)
                 {
@@ -142,20 +77,44 @@ namespace KotOR_IO.File_Formats
                     KE.IDy = KE.ResID - (KE.IDx << 20);
 
                     KeyTable.Add(KE);
-
                 }
             }
         }
 
-        #endregion
+        // FileType & Version in superclass
 
-        #region Methods
+        /// <summary> The number of <see cref="BIF"/> files this key controls. </summary>
+        public int BIFCount { get; set; }
+
+        /// <summary> The Number of resources in all of the <see cref="BIF"/>s linked to this key. </summary>
+        public int KeyCount { get; set; }
+
+        /// <summary> Byte offset to the <see cref="FileTable"/> from beginning of the file. </summary>
+        public int OffsetToFileTable { get; set; }
+
+        /// <summary> Byte offset to the <see cref="KeyTable"/> from beginning of the file. </summary>
+        public int OffsetToKeyTable { get; set; }
+
+        /// <summary> The number of years after 1900 that the KEY file was built. (i.e. 2019 == 119) </summary>
+        public int BuildYear { get; set; }
+
+        /// <summary> The number of days after January 1st the ERF file was built. (i.e. October 5th == 277) </summary>
+        public int BuildDay { get; set; }
+
+        /// <summary> 32 (usually) empty bytes reserved for future use. </summary>
+        public byte[] Reserved { get; set; }
+
+        /// <summary> A List containing all of the <see cref="FileEntry"/>s associated with the linked <see cref="BIF"/> files. </summary>
+        public List<FileEntry> FileTable { get; set; } = new List<FileEntry>();
+
+        /// <summary> A list of all the <see cref="KeyEntry"/>s associted with the linked <see cref="BIF"/> files. </summary>
+        public List<KeyEntry> KeyTable { get; set; } = new List<KeyEntry>();
 
         /// <summary>
         /// Writes Bioware Key File data
         /// </summary>
         /// <param name="s">The Stream to which the File will be written</param>
-        public override void Write(Stream s)
+        internal override void Write(Stream s)
         {
             using (BinaryWriter bw = new BinaryWriter(s))
             {
@@ -198,6 +157,53 @@ namespace KotOR_IO.File_Formats
             }
         }
 
-        #endregion
+        /// <summary>
+        /// Writes a file to the given path using the Name property in this class object.
+        /// </summary>
+        /// <param name="path">Path to the file to write.</param>
+        public void WriteToFile(string path)
+        {
+            Write(File.OpenWrite(path));
+        }
+
+        // File Table
+        /// <summary> An Entry that describes basic info about a <see cref="BIF"/> file. </summary>
+        public class FileEntry
+        {
+            ///<summary>The size of the <see cref="BIF"/> file in bytes.</summary>
+            public int FileSize;
+            ///<summary>The byte offset from the start of the file to the <see cref="BIF"/>'s filename.</summary>
+            public int FilenameOffset;
+            ///<summary>The size of the filename in <see cref="char"/>s</summary>
+            public short FilenameSize;
+            ///<summary>A 16-bit number representing which drive the <see cref="BIF"/> is installed on.</summary>
+            public short Drives;
+
+            ///<summary>The Filename of the <see cref="BIF"/> as a path from the <see cref="KEY"/>'s root directory</summary>
+            public string Filename;
+        }
+
+        // Key Table
+        /// <summary> An entry containing every resources string reference, Type, and ID. </summary>
+        public class KeyEntry
+        {
+            ///<summary>The name of the resource. (16 <see cref="char"/>s)</summary>
+            public string ResRef;
+            ///<summary>The Resource Type ID of this resource. See: <see cref="Reference_Tables.Res_Types"/> </summary>
+            public short ResourceType;
+            ///<summary>The file extension representation of this resource. Obtained from <see cref="Reference_Tables.Res_Types"/> </summary>
+            public string Type_Text; //Populated from Reference_Tables.Res_types[ResourceType]
+            ///<summary>
+            ///A unique ID number that denotes both which BIF this resource refers to, and the index of this resource in the <see cref="BIF.VariableResourceTable"/>
+            ///<para/> ResID = (x &lt;&lt; 20) + y
+            ///<para/> Where y is an index into <see cref="FileTable"/> to specify a <see cref="BIF"/>, and x is an index into that <see cref="BIF"/>'s <see cref="BIF.VariableResourceTable"/>.
+            /// </summary>
+            public int ResID;
+
+            ///<summary>The x component of <see cref="ResID"/> which references an index in the <see cref="FileTable"/></summary>
+            public int IDx;
+            ///<summary>The y component of <see cref="ResID"/> which is an index into the <see cref="BIF.VariableResourceTable"/></summary>
+            public int IDy;
+        }
     }
 }

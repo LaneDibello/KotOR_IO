@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KotOR_IO.File_Formats
+namespace KotOR_IO
 {
     /// <summary>
     /// BioWare Talk Table Data.<para/>
@@ -18,96 +18,14 @@ namespace KotOR_IO.File_Formats
     /// </summary>
     public class TLK : KFile
     {
-        #region Properties
+        /// <summary>
+        /// Reads the given BioWare BIF File
+        /// </summary>
+        /// <param name="path"></param>
+        public TLK(string path)
+            : this(File.OpenRead(path))
+        { }
         
-        //FileType & Version in superclass
-        ///<summary>The numerical ID for the Language that the string entries in this Talk Table will be in. <para/>See: 
-        ///<see cref="Reference_Tables.Language_IDs"/></summary>
-        public int LanguageID;
-        ///<summary>The number of strings in this Talk Table</summary>
-        public int StringCount;
-        ///<summary>The byte offset from the start of the file to the String Entries</summary>
-        public int StringEntriesOffset;
-
-        /// <summary>The tabel containing all of the <see cref="String_Data"/> elements. This is the primary property of the <see cref="TLK"/>.</summary>
-        public List<String_Data> String_Data_Table = new List<String_Data>();
-
-        #endregion
-
-        #region Nested Classes
-
-        //String Data Table
-        /// <summary>An element on the <see cref="String_Data_Table"/>.</summary>
-        public class String_Data
-        {
-            #region Properties
-
-            /// <summary>Bitwise Flags about this string reference. See: <see cref="TEXT_PRESENT"/>, <see cref="SND_PRESENT"/>, and <see cref="SNDLENGTH_PRESENT"/></summary>
-            public int Flags;
-            /// <summary>16 character resource reference for the wave file associated with this sound</summary>
-            public string SoundResRef; //char[16]
-            /// <summary>Marked as not used by the documentation, but presumably adjust volume.</summary>
-            public int VolumeVariance;
-            /// <summary>Marked as not used by the documentation, but presumably adjust pitch.</summary>
-            public int PitchVariance;
-            /// <summary>Byte offset from <see cref="StringEntriesOffset"/> to the string's text.</summary>
-            public int OffsetToString;
-            /// <summary>The size of the string in <see cref="char"/>s.</summary>
-            public int StringSize;
-            /// <summary>The duration of the sound in seconds</summary>
-            public float SoundLength;
-
-            /// <summary>Whether or not text exist for the string. *Note: these flags don't see much use in KotOR</summary>
-            public bool TEXT_PRESENT = false;
-            /// <summary>Whether or not a Sound exist for the string. *Note: these flags don't see much use in KotOR</summary>
-            public bool SND_PRESENT = false;
-            /// <summary>Whether or not a sound length is present for this string. *Note: these flags don't see much use in KotOR</summary>
-            public bool SNDLENGTH_PRESENT = false;
-
-            /// <summary>The text associated with the string.</summary>
-            public string StringText;
-
-            #endregion
-
-            #region Constructors
-
-            /// <summary>
-            /// Initiates a new instance of the <see cref="TLK.String_Data"/> class.
-            /// </summary>
-            public String_Data() { }
-
-            /// <summary>
-            /// Initiates a new instance of the <see cref="TLK.String_Data"/> class from text and sound information. <para/> NOTE: This feature is experimental and may not work properly.
-            /// </summary>
-            /// <param name="StringText">The Text contained in the string</param>
-            /// <param name="SoundResRef">The 16 character reference for the sound file, if none exist set value to ""</param>
-            /// <param name="SoundLength">The duration in seconds of the sound, if none sxist set to zero</param>
-            public String_Data(string StringText, string SoundResRef, float SoundLength)
-            {
-                //**NOTE: all Caps flags don't appear to be used in Kotor, but be mindful of their implementation in other games.
-                Flags = 7;
-                this.SoundResRef = SoundResRef;
-                VolumeVariance = 0;
-                PitchVariance = 0;
-                //OffsetToString should be calculated elsewhere.
-                StringSize = StringText.Length;
-                this.SoundLength = SoundLength;
-                TEXT_PRESENT = true;
-                SND_PRESENT = true;
-                SNDLENGTH_PRESENT = true;
-                this.StringText = StringText;
-            }
-
-            #endregion
-        }
-
-        #endregion
-
-        #region Constructors
-
-        ///<summary>Initiates a new instance of the <see cref="TLK"/> class.</summary>
-        public TLK() { }
-
         /// <summary>
         /// Reads Bioware Talk Table Files
         /// </summary>
@@ -116,17 +34,17 @@ namespace KotOR_IO.File_Formats
         {
             using (BinaryReader br = new BinaryReader(s))
             {
-                //header
+                // Header
                 FileType = new string(br.ReadChars(4));
                 Version = new string(br.ReadChars(4));
                 LanguageID = br.ReadInt32();
                 StringCount = br.ReadInt32();
                 StringEntriesOffset = br.ReadInt32();
 
-                //String Data Table
+                // String Data Table
                 for (int i = 0; i < StringCount; i++)
                 {
-                    TLK.String_Data SD = new TLK.String_Data();
+                    String_Data SD = new String_Data();
                     SD.Flags = br.ReadInt32();
                     int tempFlags = SD.Flags;
                     if (tempFlags >= 4) { SD.SNDLENGTH_PRESENT = true; tempFlags -= 4; }
@@ -142,8 +60,8 @@ namespace KotOR_IO.File_Formats
                     String_Data_Table.Add(SD);
                 }
 
-                //populating String text from string entires
-                foreach (TLK.String_Data SD in String_Data_Table)
+                // Populating String text from string entires
+                foreach (String_Data SD in String_Data_Table)
                 {
                     br.BaseStream.Seek(StringEntriesOffset + SD.OffsetToString, SeekOrigin.Begin);
                     SD.StringText = new string(br.ReadChars(SD.StringSize));
@@ -151,9 +69,20 @@ namespace KotOR_IO.File_Formats
             }
         }
 
-        #endregion
+        // FileType & Version in superclass
 
-        #region Methods
+        /// <summary> The numerical ID for the Language that the string entries in this Talk Table will be in.
+        /// <para/>See: <see cref="Reference_Tables.Language_IDs"/>. </summary>
+        public int LanguageID;
+
+        /// <summary> The number of strings in this Talk Table. </summary>
+        public int StringCount;
+
+        /// <summary> The byte offset from the start of the file to the String Entries. </summary>
+        public int StringEntriesOffset;
+
+        /// <summary> The tabel containing all of the <see cref="String_Data"/> elements. This is the primary property of the <see cref="TLK"/>. </summary>
+        public List<String_Data> String_Data_Table = new List<String_Data>();
 
         /// <summary>
         /// Gets a particular string from a string reference
@@ -182,19 +111,19 @@ namespace KotOR_IO.File_Formats
         /// Writes Bioware Talk Table data
         /// </summary>
         /// <param name="s">The Stream to which the File will be written</param>
-        public override void Write(Stream s)
+        internal override void Write(Stream s)
         {
             using (BinaryWriter bw = new BinaryWriter(s))
             {
-                //Header
+                // Header
                 bw.Write(FileType.ToArray());
                 bw.Write(Version.ToArray());
                 bw.Write(LanguageID);
                 bw.Write(StringCount);
                 bw.Write(StringEntriesOffset);
 
-                //string data table
-                foreach (TLK.String_Data SD in String_Data_Table)
+                // String data table
+                foreach (String_Data SD in String_Data_Table)
                 {
                     bw.Write(SD.Flags);
                     bw.Write(SD.SoundResRef.PadRight(16, '\0').ToArray());
@@ -205,8 +134,8 @@ namespace KotOR_IO.File_Formats
                     bw.Write(SD.SoundLength);
                 }
 
-                //string text
-                foreach (TLK.String_Data SD in String_Data_Table)
+                // String text
+                foreach (String_Data SD in String_Data_Table)
                 {
                     bw.Seek(StringEntriesOffset + SD.OffsetToString, SeekOrigin.Begin);
 
@@ -215,6 +144,63 @@ namespace KotOR_IO.File_Formats
             }
         }
 
-        #endregion
+        // String Data Table
+        /// <summary>
+        /// An element on the <see cref="String_Data_Table"/>.
+        /// </summary>
+        public class String_Data
+        {
+            /// <summary>
+            /// Initiates a new instance of the <see cref="String_Data"/> class.
+            /// </summary>
+            public String_Data() { }
+
+            /// <summary>
+            /// Initiates a new instance of the <see cref="String_Data"/> class from text and sound information. <para/> NOTE: This feature is experimental and may not work properly.
+            /// </summary>
+            /// <param name="StringText">The Text contained in the string</param>
+            /// <param name="SoundResRef">The 16 character reference for the sound file, if none exist set value to ""</param>
+            /// <param name="SoundLength">The duration in seconds of the sound, if none sxist set to zero</param>
+            public String_Data(string StringText, string SoundResRef, float SoundLength)
+            {
+                //**NOTE: all Caps flags don't appear to be used in Kotor, but be mindful of their implementation in other games.
+                Flags = 7;
+                this.SoundResRef = SoundResRef;
+                VolumeVariance = 0;
+                PitchVariance = 0;
+                //OffsetToString should be calculated elsewhere.
+                StringSize = StringText.Length;
+                this.SoundLength = SoundLength;
+                TEXT_PRESENT = true;
+                SND_PRESENT = true;
+                SNDLENGTH_PRESENT = true;
+                this.StringText = StringText;
+            }
+
+            /// <summary> Bitwise Flags about this string reference. See: <see cref="TEXT_PRESENT"/>, <see cref="SND_PRESENT"/>, and <see cref="SNDLENGTH_PRESENT"/>. </summary>
+            public int Flags;
+            /// <summary> 16 character resource reference for the wave file associated with this sound. </summary>
+            public string SoundResRef; //char[16]
+            /// <summary> Marked as not used by the documentation, but presumably adjust volume. </summary>
+            public int VolumeVariance;
+            /// <summary> Marked as not used by the documentation, but presumably adjust pitch. </summary>
+            public int PitchVariance;
+            /// <summary> Byte offset from <see cref="StringEntriesOffset"/> to the string's text. </summary>
+            public int OffsetToString;
+            /// <summary> The size of the string in <see cref="char"/>s. </summary>
+            public int StringSize;
+            /// <summary> The duration of the sound in seconds. </summary>
+            public float SoundLength;
+
+            /// <summary> Whether or not text exist for the string. *Note: these flags don't see much use in KotOR. </summary>
+            public bool TEXT_PRESENT = false;
+            /// <summary> Whether or not a Sound exist for the string. *Note: these flags don't see much use in KotOR. </summary>
+            public bool SND_PRESENT = false;
+            /// <summary> Whether or not a sound length is present for this string. *Note: these flags don't see much use in KotOR. </summary>
+            public bool SNDLENGTH_PRESENT = false;
+
+            /// <summary> The text associated with the string. </summary>
+            public string StringText;
+        }
     }
 }

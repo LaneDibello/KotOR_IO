@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KotOR_IO.File_Formats
+namespace KotOR_IO
 {
     /// <summary>
     /// BioWare General File Format Data. <para/>
@@ -17,287 +17,6 @@ namespace KotOR_IO.File_Formats
     /// </summary>
     public class GFF : KFile
     {
-        #region Properties
-
-        //FileType & Version in superclass
-        ///<summary>Offset of Struct array as bytes from the beginning of the file</summary>
-        public int StructOffset;
-        ///<summary>Number of elements in Struct array</summary>
-        public int StructCount;
-        ///<summary>Offset of Field array as bytes from the beginning of the file</summary>
-        public int FieldOffset;
-        ///<summary>Number of elements in Field array</summary>
-        public int FieldCount;
-        ///<summary>Offset of Label array as bytes from the beginning of the file</summary>
-        public int LabelOffset;
-        ///<summary>Number of elements in Label array</summary>
-        public int LabelCount;
-        ///<summary>Offset of Field Data as bytes from the beginning of the file</summary>
-        public int FieldDataOffset;
-        ///<summary>Number of bytes in Field Data block</summary>
-        public int FieldDataCount;
-        ///<summary>Offset of Field Indices array as bytes from the beginning of the file</summary>
-        public int FieldIndicesOffset;
-        ///<summary>Number of bytes in Field Indices array</summary>
-        public int FieldIndicesCount;
-        ///<summary>Offset of List Indices array as bytes from the beginning of the file</summary>
-        public int ListIndicesOffset;
-        ///<summary>Number of bytes in List Indices array</summary>
-        public int ListIndicesCount;
-
-        /// <summary>The array of all of the GFF Structs stored in this file, this is where the bulk of the data will be stored</summary>
-        public List<GFFStruct> Struct_Array = new List<GFFStruct>();
-        /// <summary>The array of all fields contained withing the GFF</summary>
-        public List<Field> Field_Array = new List<Field>();
-        //Label Array
-        /// <summary>The array of all Field labels (aka variable names) in the GFF</summary>
-        public List<string> Label_Array = new List<string>();
-        //Field_Indices
-        /// <summary>A list of Index references used to assign fields to structs.</summary>
-        public List<int> Field_Indices = new List<int>();
-        /// <summary>The array contianing all of the <see cref="List_Index"/> elements.</summary>
-        public List<List_Index> List_Indices = new List<List_Index>();
-
-        #endregion
-
-        #region Nested Classes
-
-        //Struct Array
-        ///<summary>A GFF object that holds a set of <see cref="Field"/>s, each having there own type and data.</summary>
-        public class GFFStruct
-        {
-            #region Properties
-
-            ///<summary>Programmer-defined integer ID for the struct type. Varies from from File to file, though the Top-level struct (0) always has a type equal to 0xFFFFFFFF</summary>
-            public int Type;
-            ///<summary>
-            ///<para>If FieldCount = 1, this is an index into the Field Array.</para>
-            ///<para>If FieldCount > 1, this is a byte offset into the Field Indices array</para>
-            /// </summary>
-            public int DataOrDataOffset;
-            ///<summary>Number of fields in this Struct</summary>
-            public int FieldCount;
-            ///<summary>The numeric Indexes of each field.</summary>
-            public List<int> Field_Indexes = new List<int>();
-            ///<summary>The data stored in this Struct, populated from DataOrDataOffset. Usually takes the form of a <see cref="Field"/> or <see cref="List{Field}"/></summary>
-            public object StructData;
-
-            #endregion
-
-            #region Methods
-
-            /// <summary>
-            /// Adds the specified Field to the Struct
-            /// </summary>
-            /// <param name="field_index">The Index of the Field on the <see cref="GFF.Field_Array"/></param>
-            /// <param name="g">The GFF that contains this Struct</param>
-            public void add_field(int field_index, GFF g)
-            {
-
-                if (FieldCount == 0) { DataOrDataOffset = field_index; StructData = g.Field_Array[field_index]; }
-                else if (FieldCount == 1)
-                {
-                    Field old = StructData as Field;
-                    StructData = new List<Field>();
-                    (StructData as List<Field>).Add(old);
-                    (StructData as List<Field>).Add(g.Field_Array[field_index]);
-                    Field_Indexes.Add(DataOrDataOffset);
-                    Field_Indexes.Add(field_index);
-                    DataOrDataOffset = g.ListIndicesOffset - g.FieldIndicesOffset; //Using this before the list offset is set to represent end of FieldIndices Array, where the new indices will be appended.
-                    g.Field_Indices.Add(g.Field_Array.IndexOf(old));
-                    g.Field_Indices.Add(field_index);
-                    g.FieldIndicesCount += 8;
-                    g.ListIndicesOffset += 8;
-                }
-                else
-                {
-                    (StructData as List<Field>).Add(g.Field_Array[field_index]);
-                    Field_Indexes.Add(field_index);
-                    int insert_index = (DataOrDataOffset / 4) + FieldCount;
-                    g.Field_Indices.Insert(insert_index, field_index);
-
-                    foreach (GFFStruct gs in g.Struct_Array.Where(s => s.DataOrDataOffset > DataOrDataOffset))
-                    {
-                        gs.DataOrDataOffset += 4;
-                    }
-
-                    g.FieldIndicesCount += 4;
-                    g.ListIndicesOffset += 4;
-                }
-
-                FieldCount++;
-            }
-
-            public void add_field(Field F, GFF g)
-            {
-                add_field(g.get_Field_Index(F), g);
-            }
-
-            /// <summary>
-            /// Deletes a field from the Struct (Should not be called by end user)
-            /// </summary>
-            /// <param name="F">Field being removed</param>
-            /// <param name="field_index">The Index of teh feild in <see cref="GFF.Field_Array"/></param>
-            public void delete_field(Field F, int field_index)
-            {
-                FieldCount--;
-                if (FieldCount > 1)
-                {
-                    (StructData as List<Field>).Remove(F);
-                    Field_Indexes.Remove(field_index);
-                }
-                else if (FieldCount == 1)
-                {
-                    (StructData as List<Field>).Remove(F);
-                    Field temp = (StructData as List<Field>).FirstOrDefault();
-                    StructData = temp;
-                    Field_Indexes.Remove(field_index);
-                    DataOrDataOffset = Field_Indexes.FirstOrDefault();
-                }
-                else
-                {
-                    StructData = null;
-                    DataOrDataOffset = 0;
-                    //Struct should be marked for deletion
-                }
-            }
-
-            #endregion
-        }
-
-        //Field Array
-        /// <summary>A field is essentially a property or variable value stored within structs.</summary>
-        public class Field
-        {
-            /// <summary>Data type. See: 
-            /// <see cref="Reference_Tables.Field_Types"/>
-            /// </summary>
-            public int Type;
-            /// <summary>Index into the Label Array</summary>
-            public int LabelIndex;
-            /// <summary>
-            /// <para>If the field data type is not listed as complex, this is the actual value of the field</para>
-            /// <para>If the field data type is listed as complex, this is an offset into another data block.</para>
-            /// See:
-            /// <see cref="Reference_Tables.Complex_Field_Types"/>,
-            /// <see cref="Reference_Tables.Field_Types"/>
-            /// </summary>
-            public int DataOrDataOffset;
-
-            /// <summary>
-            /// This text is taken from <see cref="LabelIndex"/> in the <seealso cref="Label_Array"/>.
-            /// </summary>
-            public string Label;
-
-            /// <summary>The actual data in the field of the type associated with <see cref="Type"/>, and populated from <see cref="DataOrDataOffset"/></summary>
-            public object Field_Data;
-
-            /// <summary>The string representation of <see cref="Type"/> from <see cref="Reference_Tables.Field_Types"/></summary>
-            public string Type_Text;
-            /// <summary>Whether or not the <see cref="Type"/> is complex according to <see cref="Reference_Tables.Complex_Field_Types"/> </summary>
-            public bool Complex;
-        }
-
-        //List Indices
-        /// <summary>Describes a 'List' field as struct indexs prefixed with a 'size'</summary>
-        public class List_Index
-        {
-            /// <summary>The number of <see cref="GFFStruct"/>s in the list</summary>
-            public int Size;
-            /// <summary>Index vaules representing which <see cref="GFFStruct"/>s from <see cref="Struct_Array"/> are present in the list.</summary>
-            public List<int> Indices = new List<int>();
-        }
-
-        //Complex Data Types
-        /// <summary>A chacrter string prefixed with a size.</summary>
-        public class CExoString
-        {
-            /// <summary>The length of the string.</summary>
-            public int Size;
-            /// <summary>The string, obatined from a <see cref="char"/> array of length <see cref="Size"/></summary>
-            public string Text;
-        }
-
-        /// <summary>Virtually identical to <see cref="CExoString"/>, however it is capped at a size of 16.</summary>
-        public class CResRef
-        {
-            /// <summary>The length of the string. *This can be no larger than 16</summary>
-            public byte Size;
-            /// <summary>The string, obatined from a <see cref="char"/> array of length <see cref="Size"/></summary>
-            public string Text; //Obtained from a char[] of size 'Size'
-        }
-
-        /// <summary>A set of localized string that contains language data in addition to the content of <see cref="CExoString"/></summary>
-        public class CExoLocString
-        {
-            /// <summary>Total number of bytes in the object, not including these.</summary>
-            public int Total_Size;
-            /// <summary>The reference of the string into a relevant Talk table (<see cref="TLK"/>). If this is -1 it does not reference a string.</summary>
-            public int StringRef;
-            /// <summary>The number of <see cref="SubString"/>s contained.</summary>
-            public int StringCount;
-            /// <summary>Nearly Identical to a <see cref="CExoString"/> be is prefixed by an ID.</summary>
-            public class SubString
-            {
-                /// <summary>An identify that is calulated by multiplying the <see cref="Reference_Tables.Language_IDs"/> ID by 2, and adding 1 if the speaker if feminine.
-                /// <para/>For example, a line spoken by an Italien Male would have an ID of 6
-                /// </summary>
-                public int StringID;
-                /// <summary>The length of the string in characters</summary>
-                public int StringLength;
-                /// <summary>The string contained</summary>
-                public string Text; //Obtained from a char[] of size 'StringLength'
-            }
-            /// <summary>The list containing the <see cref="SubString"/>s contained.</summary>
-            public List<SubString> SubStringList = new List<SubString>();
-        }
-
-        /// <summary>A byte array prefixed with size.</summary>
-        public class Void_Binary
-        {
-            /// <summary>The sive of teh void object in bytes</summary>
-            public int Size;
-            /// <summary>The raw byte data of the object, with a length of <see cref="Size"/></summary>
-            public byte[] Data;
-        }
-
-        /// <summary>
-        /// Field Type used in later version of The Aurora Engine Contains four float values of currently unclear purpose.
-        /// </summary>
-        public class Orientation
-        {
-            /// <summary> Unknown float 1 </summary>
-            public float float1;
-            /// <summary> Unknown float 2 </summary>
-            public float float2;
-            /// <summary> Unknown float 3 </summary>
-            public float float3;
-            /// <summary> Unknown float 4 </summary>
-            public float float4;
-        }
-
-        /// <summary>A 3-dimensional vector made of 3 single precision components</summary>
-        public class Vector
-        {
-            /// <summary>The 'X' component of this vector</summary>
-            public float x_component;
-            /// <summary>The 'Y' component of this vector</summary>
-            public float y_component;
-            /// <summary>The 'Z' component of this vector</summary>
-            public float z_component;
-        }
-
-        /// <summary>???</summary>
-        public class StrRef
-        {
-            /// <summary>An interger value of unknown purpose that appears to be always '4'</summary>
-            public int leading_value;
-            /// <summary>The integer reference to the string in question from dialogue.tlk</summary>
-            public int reference;
-        }
-
-        #endregion
-
         #region Constructors
         
         ///<summary>Initiates a new instance of the <see cref="GFF"/> class.</summary>
@@ -548,13 +267,56 @@ namespace KotOR_IO.File_Formats
 
         #endregion
 
+        #region Properties
+
+        //FileType & Version in superclass
+        ///<summary>Offset of Struct array as bytes from the beginning of the file</summary>
+        public int StructOffset;
+        ///<summary>Number of elements in Struct array</summary>
+        public int StructCount;
+        ///<summary>Offset of Field array as bytes from the beginning of the file</summary>
+        public int FieldOffset;
+        ///<summary>Number of elements in Field array</summary>
+        public int FieldCount;
+        ///<summary>Offset of Label array as bytes from the beginning of the file</summary>
+        public int LabelOffset;
+        ///<summary>Number of elements in Label array</summary>
+        public int LabelCount;
+        ///<summary>Offset of Field Data as bytes from the beginning of the file</summary>
+        public int FieldDataOffset;
+        ///<summary>Number of bytes in Field Data block</summary>
+        public int FieldDataCount;
+        ///<summary>Offset of Field Indices array as bytes from the beginning of the file</summary>
+        public int FieldIndicesOffset;
+        ///<summary>Number of bytes in Field Indices array</summary>
+        public int FieldIndicesCount;
+        ///<summary>Offset of List Indices array as bytes from the beginning of the file</summary>
+        public int ListIndicesOffset;
+        ///<summary>Number of bytes in List Indices array</summary>
+        public int ListIndicesCount;
+
+        /// <summary>The array of all of the GFF Structs stored in this file, this is where the bulk of the data will be stored</summary>
+        public List<GFFStruct> Struct_Array = new List<GFFStruct>();
+        /// <summary>The array of all fields contained withing the GFF</summary>
+        public List<Field> Field_Array = new List<Field>();
+        //Label Array
+        /// <summary>The array of all Field labels (aka variable names) in the GFF</summary>
+        public List<string> Label_Array = new List<string>();
+        //Field_Indices
+        /// <summary>A list of Index references used to assign fields to structs.</summary>
+        public List<int> Field_Indices = new List<int>();
+        /// <summary>The array contianing all of the <see cref="List_Index"/> elements.</summary>
+        public List<List_Index> List_Indices = new List<List_Index>();
+
+        #endregion
+
         #region Methods
 
         /// <summary>
         /// Writes Bioware General File Format data
         /// </summary>
         /// <param name="s">The Stream to which the File will be written</param>
-        public override void Write(Stream s)
+        internal override void Write(Stream s)
         {
             using (BinaryWriter bw = new BinaryWriter(s))
             {
@@ -783,7 +545,7 @@ namespace KotOR_IO.File_Formats
 
         /// <summary>
         /// Adds a new field to the <see cref="Field_Array"/>.
-        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int)"/>
+        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int, GFF)"/>
         /// </summary>
         /// <param name="data">The <see cref="byte"/> data stored within this field</param>
         /// <param name="label">The Label of the field being added</param>
@@ -817,7 +579,7 @@ namespace KotOR_IO.File_Formats
         }
         /// <summary>
         /// Adds a new field to the <see cref="Field_Array"/>.
-        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int)"/>
+        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int, GFF)"/>
         /// </summary>
         /// <param name="data">The <see cref="char"/> data stored within this field</param>
         /// <param name="label">The Label of the field being added</param>
@@ -851,7 +613,7 @@ namespace KotOR_IO.File_Formats
         }
         /// <summary>
         /// Adds a new field to the <see cref="Field_Array"/>.
-        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int)"/>
+        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int, GFF)"/>
         /// </summary>
         /// <param name="data">The <see cref="ushort"/> data stored within this field</param>
         /// <param name="label">The Label of the field being added</param>
@@ -885,7 +647,7 @@ namespace KotOR_IO.File_Formats
         }
         /// <summary>
         /// Adds a new field to the <see cref="Field_Array"/>.
-        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int)"/>
+        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int, GFF)"/>
         /// </summary>
         /// <param name="data">The <see cref="short"/> data stored within this field</param>
         /// <param name="label">The Label of the field being added</param>
@@ -919,7 +681,7 @@ namespace KotOR_IO.File_Formats
         }
         /// <summary>
         /// Adds a new field to the <see cref="Field_Array"/>.
-        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int)"/>
+        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int, GFF)"/>
         /// </summary>
         /// <param name="data">The <see cref="uint"/> data stored within this field</param>
         /// <param name="label">The Label of the field being added</param>
@@ -953,7 +715,7 @@ namespace KotOR_IO.File_Formats
         }
         /// <summary>
         /// Adds a new field to the <see cref="Field_Array"/>.
-        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int)"/>
+        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int, GFF)"/>
         /// </summary>
         /// <param name="data">The <see cref="int"/> data stored within this field</param>
         /// <param name="label">The Label of the field being added</param>
@@ -987,7 +749,7 @@ namespace KotOR_IO.File_Formats
         }
         /// <summary>
         /// Adds a new field to the <see cref="Field_Array"/>.
-        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int)"/>
+        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int, GFF)"/>
         /// </summary>
         /// <param name="data">The <see cref="float"/> data stored within this field</param>
         /// <param name="label">The Label of the field being added</param>
@@ -1021,7 +783,7 @@ namespace KotOR_IO.File_Formats
         }
         /// <summary>
         /// Adds a new field to the <see cref="Field_Array"/>.
-        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int)"/>
+        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int, GFF)"/>
         /// </summary>
         /// <param name="data">The <see cref="ulong"/> data stored within this field</param>
         /// <param name="label">The Label of the field being added</param>
@@ -1056,7 +818,7 @@ namespace KotOR_IO.File_Formats
         }
         /// <summary>
         /// Adds a new field to the <see cref="Field_Array"/>.
-        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int)"/>
+        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int, GFF)"/>
         /// </summary>
         /// <param name="data">The <see cref="long"/> data stored within this field</param>
         /// <param name="label">The Label of the field being added</param>
@@ -1091,7 +853,7 @@ namespace KotOR_IO.File_Formats
         }
         /// <summary>
         /// Adds a new field to the <see cref="Field_Array"/>.
-        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int)"/>
+        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int, GFF)"/>
         /// </summary>
         /// <param name="data">The <see cref="double"/> data stored within this field</param>
         /// <param name="label">The Label of the field being added</param>
@@ -1126,7 +888,7 @@ namespace KotOR_IO.File_Formats
         }
         /// <summary>
         /// Adds a new field to the <see cref="Field_Array"/>.
-        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int)"/>
+        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int, GFF)"/>
         /// </summary>
         /// <param name="data">The <see cref="CExoString"/> data stored within this field</param>
         /// <param name="label">The Label of the field being added</param>
@@ -1162,7 +924,7 @@ namespace KotOR_IO.File_Formats
         }
         /// <summary>
         /// Adds a new field to the <see cref="Field_Array"/>.
-        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int)"/>
+        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int, GFF)"/>
         /// </summary>
         /// <param name="data">The <see cref="CResRef"/> data stored within this field</param>
         /// <param name="label">The Label of the field being added</param>
@@ -1197,7 +959,7 @@ namespace KotOR_IO.File_Formats
         }
         /// <summary>
         /// Adds a new field to the <see cref="Field_Array"/>.
-        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int)"/>
+        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int, GFF)"/>
         /// </summary>
         /// <param name="data">The <see cref="CExoLocString"/> data stored within this field</param>
         /// <param name="label">The Label of the field being added</param>
@@ -1233,7 +995,7 @@ namespace KotOR_IO.File_Formats
         }
         /// <summary>
         /// Adds a new field to the <see cref="Field_Array"/>.
-        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int)"/>
+        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int, GFF)"/>
         /// </summary>
         /// <param name="data">The <see cref="Void_Binary"/> data stored within this field</param>
         /// <param name="label">The Label of the field being added</param>
@@ -1268,7 +1030,7 @@ namespace KotOR_IO.File_Formats
         }
         /// <summary>
         /// Adds a new field to the <see cref="Field_Array"/>.
-        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int)"/>
+        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int, GFF)"/>
         /// </summary>
         /// <param name="data">The <see cref="GFFStruct"/> data stored within this field. <para/> NOTE: <see cref="GFFStruct"/> must exist in the <see cref="Struct_Array"/>.</param>
         /// <param name="label">The Label of the field being added</param>
@@ -1303,7 +1065,7 @@ namespace KotOR_IO.File_Formats
         }
         /// <summary>
         /// Adds a new field to the <see cref="Field_Array"/>.
-        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int)"/>
+        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int, GFF)"/>
         /// </summary>
         /// <param name="data">The list of structs stored within this field. NOTE: The <see cref="GFFStruct"/>s must exist in the <see cref="Struct_Array"/>.</param>
         /// <param name="label">The Label of the field being added</param>
@@ -1348,7 +1110,7 @@ namespace KotOR_IO.File_Formats
         }
         /// <summary>
         /// Adds a new field to the <see cref="Field_Array"/>.
-        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int)"/>
+        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int, GFF)"/>
         /// </summary>
         /// <param name="data">The <see cref="Orientation"/> data stored within this field</param>
         /// <param name="label">The Label of the field being added</param>
@@ -1383,7 +1145,7 @@ namespace KotOR_IO.File_Formats
         }
         /// <summary>
         /// Adds a new field to the <see cref="Field_Array"/>.
-        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int)"/>
+        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int, GFF)"/>
         /// </summary>
         /// <param name="data">The <see cref="Vector"/> data stored within this field</param>
         /// <param name="label">The Label of the field being added</param>
@@ -1418,7 +1180,7 @@ namespace KotOR_IO.File_Formats
         }
         /// <summary>
         /// Adds a new field to the <see cref="Field_Array"/>.
-        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int)"/>
+        /// <para/> NOTE: This adds the field to the array, but it will not be initiallized until it is added to a struct. See <see cref="GFFStruct.add_field(int, GFF)"/>
         /// </summary>
         /// <param name="data">The <see cref="StrRef"/> data stored within this field</param>
         /// <param name="label">The Label of the field being added</param>
@@ -1631,6 +1393,268 @@ namespace KotOR_IO.File_Formats
             return LI_super_index;
         }
 
+
+        #endregion
+
+        #region Nested Classes
+
+        //Struct Array
+        /// <summary>
+        /// A GFF object that holds a set of <see cref="Field"/>s, each having there own type and data.
+        /// </summary>
+        public class GFFStruct
+        {
+            #region Properties
+
+            ///<summary>Programmer-defined integer ID for the struct type. Varies from from File to file, though the Top-level struct (0) always has a type equal to 0xFFFFFFFF</summary>
+            public int Type;
+            ///<summary>
+            ///<para>If FieldCount = 1, this is an index into the Field Array.</para>
+            ///<para>If FieldCount > 1, this is a byte offset into the Field Indices array</para>
+            /// </summary>
+            public int DataOrDataOffset;
+            ///<summary>Number of fields in this Struct</summary>
+            public int FieldCount;
+            ///<summary>The numeric Indexes of each field.</summary>
+            public List<int> Field_Indexes = new List<int>();
+            ///<summary>The data stored in this Struct, populated from DataOrDataOffset. Usually takes the form of a <see cref="Field"/> or <see cref="List{Field}"/></summary>
+            public object StructData;
+
+            #endregion
+
+            #region Methods
+
+            /// <summary>
+            /// Adds the specified Field to the Struct
+            /// </summary>
+            /// <param name="field_index">The Index of the Field on the <see cref="GFF.Field_Array"/></param>
+            /// <param name="g">The GFF that contains this Struct</param>
+            public void add_field(int field_index, GFF g)
+            {
+
+                if (FieldCount == 0) { DataOrDataOffset = field_index; StructData = g.Field_Array[field_index]; }
+                else if (FieldCount == 1)
+                {
+                    Field old = StructData as Field;
+                    StructData = new List<Field>();
+                    (StructData as List<Field>).Add(old);
+                    (StructData as List<Field>).Add(g.Field_Array[field_index]);
+                    Field_Indexes.Add(DataOrDataOffset);
+                    Field_Indexes.Add(field_index);
+                    DataOrDataOffset = g.ListIndicesOffset - g.FieldIndicesOffset; //Using this before the list offset is set to represent end of FieldIndices Array, where the new indices will be appended.
+                    g.Field_Indices.Add(g.Field_Array.IndexOf(old));
+                    g.Field_Indices.Add(field_index);
+                    g.FieldIndicesCount += 8;
+                    g.ListIndicesOffset += 8;
+                }
+                else
+                {
+                    (StructData as List<Field>).Add(g.Field_Array[field_index]);
+                    Field_Indexes.Add(field_index);
+                    int insert_index = (DataOrDataOffset / 4) + FieldCount;
+                    g.Field_Indices.Insert(insert_index, field_index);
+
+                    foreach (GFFStruct gs in g.Struct_Array.Where(s => s.DataOrDataOffset > DataOrDataOffset))
+                    {
+                        gs.DataOrDataOffset += 4;
+                    }
+
+                    g.FieldIndicesCount += 4;
+                    g.ListIndicesOffset += 4;
+                }
+
+                FieldCount++;
+            }
+
+            /// <summary>
+            /// Adds the specified Field to the Struct
+            /// </summary>
+            /// <param name="F"></param>
+            /// <param name="g"></param>
+            public void add_field(Field F, GFF g)
+            {
+                add_field(g.get_Field_Index(F), g);
+            }
+
+            /// <summary>
+            /// Deletes a field from the Struct (Should not be called by end user)
+            /// </summary>
+            /// <param name="F">Field being removed</param>
+            /// <param name="field_index">The Index of teh feild in <see cref="GFF.Field_Array"/></param>
+            public void delete_field(Field F, int field_index)
+            {
+                FieldCount--;
+                if (FieldCount > 1)
+                {
+                    (StructData as List<Field>).Remove(F);
+                    Field_Indexes.Remove(field_index);
+                }
+                else if (FieldCount == 1)
+                {
+                    (StructData as List<Field>).Remove(F);
+                    Field temp = (StructData as List<Field>).FirstOrDefault();
+                    StructData = temp;
+                    Field_Indexes.Remove(field_index);
+                    DataOrDataOffset = Field_Indexes.FirstOrDefault();
+                }
+                else
+                {
+                    StructData = null;
+                    DataOrDataOffset = 0;
+                    //Struct should be marked for deletion
+                }
+            }
+
+            #endregion
+        }
+
+        //Field Array
+        /// <summary>
+        /// A field is essentially a property or variable value stored within structs.
+        /// </summary>
+        public class Field
+        {
+            /// <summary> Data type. See: <see cref="Reference_Tables.Field_Types"/> </summary>
+            public int Type;
+            /// <summary> Index into the Label Array. </summary>
+            public int LabelIndex;
+
+            /// <summary>
+            /// <para>If the field data type is not listed as complex, this is the actual value of the field</para>
+            /// <para>If the field data type is listed as complex, this is an offset into another data block.</para>
+            /// See:
+            /// <see cref="Reference_Tables.Complex_Field_Types"/>,
+            /// <see cref="Reference_Tables.Field_Types"/>
+            /// </summary>
+            public int DataOrDataOffset;
+
+            /// <summary> This text is taken from <see cref="LabelIndex"/> in the <seealso cref="Label_Array"/>. </summary>
+            public string Label;
+
+            /// <summary> The actual data in the field of the type associated with <see cref="Type"/>, and populated from <see cref="DataOrDataOffset"/>. </summary>
+            public object Field_Data;
+
+            /// <summary> The string representation of <see cref="Type"/> from <see cref="Reference_Tables.Field_Types"/>. </summary>
+            public string Type_Text;
+
+            /// <summary> Whether or not the <see cref="Type"/> is complex according to <see cref="Reference_Tables.Complex_Field_Types"/>. </summary>
+            public bool Complex;
+        }
+
+        //List Indices
+        /// <summary>
+        /// Describes a 'List' field as struct indexs prefixed with a 'size'
+        /// </summary>
+        public class List_Index
+        {
+            /// <summary> The number of <see cref="GFFStruct"/>s in the list. </summary>
+            public int Size;
+            /// <summary> Index vaules representing which <see cref="GFFStruct"/>s from <see cref="Struct_Array"/> are present in the list. </summary>
+            public List<int> Indices = new List<int>();
+        }
+
+        //Complex Data Types
+        /// <summary>
+        /// A chacrter string prefixed with a size.
+        /// </summary>
+        public class CExoString
+        {
+            /// <summary> The length of the string. </summary>
+            public int Size;
+            /// <summary> The string, obatined from a <see cref="char"/> array of length <see cref="Size"/> </summary>
+            public string Text;
+        }
+
+        /// <summary>
+        /// Virtually identical to <see cref="CExoString"/>, however it is capped at a size of 16.
+        /// </summary>
+        public class CResRef
+        {
+            /// <summary> The length of the string. *This can be no larger than 16 </summary>
+            public byte Size;
+            /// <summary> The string, obatined from a <see cref="char"/> array of length <see cref="Size"/> </summary>
+            public string Text; //Obtained from a char[] of size 'Size'
+        }
+
+        /// <summary>
+        /// A set of localized string that contains language data in addition to the content of <see cref="CExoString"/>.
+        /// </summary>
+        public class CExoLocString
+        {
+            /// <summary> Total number of bytes in the object, not including these. </summary>
+            public int Total_Size;
+            /// <summary> The reference of the string into a relevant Talk table (<see cref="TLK"/>). If this is -1 it does not reference a string. </summary>
+            public int StringRef;
+            /// <summary> The number of <see cref="SubString"/>s contained. </summary>
+            public int StringCount;
+            /// <summary> The list containing the <see cref="SubString"/>s contained. </summary>
+            public List<SubString> SubStringList = new List<SubString>();
+
+            /// <summary>
+            /// Nearly Identical to a <see cref="CExoString"/> be is prefixed by an ID.
+            /// </summary>
+            public class SubString
+            {
+                /// <summary>An identify that is calulated by multiplying the <see cref="Reference_Tables.Language_IDs"/> ID by 2, and adding 1 if the speaker if feminine.
+                /// <para/>For example, a line spoken by an Italien Male would have an ID of 6
+                /// </summary>
+                public int StringID;
+                /// <summary>The length of the string in characters</summary>
+                public int StringLength;
+                /// <summary>The string contained</summary>
+                public string Text; //Obtained from a char[] of size 'StringLength'
+            }
+        }
+
+        /// <summary>
+        /// A byte array prefixed with size.
+        /// </summary>
+        public class Void_Binary
+        {
+            /// <summary> The sive of teh void object in bytes </summary>
+            public int Size;
+            /// <summary> The raw byte data of the object, with a length of <see cref="Size"/> </summary>
+            public byte[] Data;
+        }
+
+        /// <summary>
+        /// Field Type used in later version of The Aurora Engine Contains four float values of currently unclear purpose.
+        /// </summary>
+        public class Orientation
+        {
+            /// <summary> Unknown float 1 </summary>
+            public float float1;
+            /// <summary> Unknown float 2 </summary>
+            public float float2;
+            /// <summary> Unknown float 3 </summary>
+            public float float3;
+            /// <summary> Unknown float 4 </summary>
+            public float float4;
+        }
+
+        /// <summary>
+        /// A 3-dimensional vector made of 3 single precision components
+        /// </summary>
+        public class Vector
+        {
+            /// <summary> The 'X' component of this vector </summary>
+            public float x_component;
+            /// <summary> The 'Y' component of this vector </summary>
+            public float y_component;
+            /// <summary> The 'Z' component of this vector </summary>
+            public float z_component;
+        }
+
+        /// <summary>
+        /// ???
+        /// </summary>
+        public class StrRef
+        {
+            /// <summary> An interger value of unknown purpose that appears to be always '4' </summary>
+            public int leading_value;
+            /// <summary> The integer reference to the string in question from dialogue.tlk </summary>
+            public int reference;
+        }
 
         #endregion
     }

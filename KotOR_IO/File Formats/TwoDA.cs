@@ -6,11 +6,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KotOR_IO.File_Formats
+namespace KotOR_IO
 {
     /// <summary>
     /// <para>BioWare 2-Dimensional Array Data</para>
-    /// See: <see cref="TwoDA(Stream)"/>, 
+    /// See: <see cref="TwoDA(Stream, string)"/>, 
     /// <seealso  cref="Write(Stream)"/>
     /// <remarks>
     /// <para>2DA data is generally presented in a spreadsheet format. It is used by the game engine to reference various values and constants for task ranging from name generation, to item properties.</para>
@@ -19,106 +19,52 @@ namespace KotOR_IO.File_Formats
     /// </summary>
     public class TwoDA : KFile
     {
-        #region Constants
+        /// <summary> String used as the key for the row index. </summary>
         private readonly string ROW_INDEX_KEY = "row_index";
-        private const byte BYTE_0 = 0;   // Should use a name that represents its usage.
-        private const byte BYTE_9 = 9;   // Should use a name that represents its usage.
-        private const byte BYTE_10 = 10; // Should use a name that represents its usage.
-        #endregion
-
-        #region Constructors
 
         /// <summary>
         /// Initiates a new instance of the <see cref="TwoDA"/> class.
         /// </summary>
-        public TwoDA() { }
+        /// <param name="name">The resource reference string for this 2DA</param>
+        public TwoDA(string name = null)
+        {
+            Name = name;
+        }
 
         /// <summary>
-        /// Initiates a new instance of the <see cref="TwoDA"/> class, given column names and 2-deminsional data.
+        /// 
         /// </summary>
-        /// <param name="columns">A string array containing the names of the columns</param>
-        /// <param name="data">The 2-dimensional data</param>
-        /// <param name="isParsed">Whether the data has been parsed into different formats. If False, then all data is in string format.</param>
-        public TwoDA(string[] columns, object[,] data, bool isParsed)
-        {
-            if (columns.Length != data.GetLength(1))
-            {
-                throw new IndexOutOfRangeException("Length of columns should be equal to the number of columns in data.");
-            }
-
-            // Header info
-            FileType = "2DA ";
-            Version = "V2.b";
-
-            // Columns
-            Columns.AddRange(columns);
-
-            // Row count
-            RowCount = data.GetLength(0);
-
-            // Offsets
-            List<object> UniqueValues = new List<object>();
-            List<int> IndexOffsets = new List<int>();
-
-            int totaloffset = 0;
-            foreach (object o in data)
-            {
-                if (!UniqueValues.Contains(o))
-                {
-                    UniqueValues.Add(o);
-                    IndexOffsets.Add(totaloffset);
-                    totaloffset += GetDataSize(o) + 1;
-                }
-
-                Offsets.Add((short)(IndexOffsets[UniqueValues.IndexOf(o)]));
-            }
-
-            Offsets.Add((short)totaloffset);
-
-            // Data
-            // Generate index column
-            List<object> index_list = new List<object>();
-            for (int i = 0; i < RowCount; i++) { index_list.Add(Convert.ToString(i)); }
-            Data.Add("row_index", index_list);
-
-            foreach (string c in columns)
-            {
-                List<object> tempCol = new List<object>();
-                int colIndex = Array.IndexOf(columns, c);
-
-                for (int i = 0; i < RowCount; i++)
-                {
-                    tempCol.Add(data[i, colIndex]);
-                }
-
-                Data.Add(c, tempCol);
-            }
-
-            // Parsing
-            IsParsed = isParsed;
-        }
+        /// <param name="rawData"></param>
+        /// <param name="name"></param>
+        public TwoDA(byte[] rawData, string name = null)
+            : this(new MemoryStream(rawData), name)
+        { }
 
         /// <summary>
         /// Reads Bioware 2-Dimensional Array (v2.b) files
         /// </summary>
         /// <param name="s">The Stream from which the File will be Read</param>
-        public TwoDA(Stream s)
+        /// <param name="name">The resource reference string for this 2DA</param>
+        public TwoDA(Stream s, string name = null)
+            : this(name)
         {
             using (BinaryReader br = new BinaryReader(s))
             {
-                // Get header info
+                // Get header info.
                 FileType = new string(br.ReadChars(4));
                 Version = new string(br.ReadChars(4));
 
                 br.ReadByte();
 
-                // Get Column Labels
+                // Get Column Labels.
                 StringBuilder sb = new StringBuilder();
 
-                while (br.PeekChar() != 0)
+                while (br.PeekChar() != ASCII_NULL)
                 {
                     sb.Clear();
-                    while (br.PeekChar() != 9) // May have to make this go one past the current limit
+
+                    // May have to make this go one past the current limit.
+                    while (br.PeekChar() != ASCII_TAB)
                     {
                         sb.Append(br.ReadChar());
                     }
@@ -127,44 +73,48 @@ namespace KotOR_IO.File_Formats
                 }
 
                 br.ReadByte();
+                RowCount = br.ReadInt32();  // Get row count.
 
-                // Get row count
-                RowCount = br.ReadInt32();
-
-                // Skip row indexes (maybe a bad idea, but who cares)
+                // Skip row indexes (maybe a bad idea, but who cares).
                 for (int i = 0; i < RowCount; i++)
                 {
-                    while (br.PeekChar() != 9)
+                    while (br.PeekChar() != ASCII_TAB)
                     {
                         br.ReadByte();
                     }
                     br.ReadByte();
                 }
 
-                // Generate index column
-                List<object> index_list = new List<object>();
+                // Generate index column.
+                List<string> index_list = new List<string>();
                 for (int i = 0; i < RowCount; i++) { index_list.Add(Convert.ToString(i)); }
                 Data.Add(ROW_INDEX_KEY, index_list);
 
-                // Populate column keys
-                foreach (string c in Columns) { List<object> tempColumn = new List<object>(); Data.Add(c, tempColumn); }
-
-                // Get offsets
-                for (int i = 0; i < (1 + (RowCount * Columns.Count())); i++) // iterates through the number of cells
+                // Populate column keys.
+                foreach (string c in Columns)
                 {
-                    Offsets.Add(br.ReadInt16());
+                    List<string> tempColumn = new List<string>();
+                    Data.Add(c, tempColumn);
+                }
+
+                var offsets = new List<short>();
+
+                // Get offsets. Iterates through the number of cells.
+                for (int i = 0; i < (1 + (RowCount * Columns.Count())); i++)
+                {
+                    offsets.Add(br.ReadInt16());
                 }
                 int DataOffset = (int)br.BaseStream.Position;
 
-                // Populate data
+                // Populate data.
                 int OffsetIndex = 0;
                 for (int i = 0; i < RowCount; i++)
                 {
                     for (int k = 0; k < Columns.Count(); k++)
                     {
-                        br.BaseStream.Seek(DataOffset + Offsets[OffsetIndex], SeekOrigin.Begin);
+                        br.BaseStream.Seek(DataOffset + offsets[OffsetIndex], SeekOrigin.Begin);
                         sb.Clear();
-                        while (br.PeekChar() != 0)
+                        while (br.PeekChar() != ASCII_NULL)
                         {
                             sb.Append(br.ReadChar());
                         }
@@ -173,56 +123,34 @@ namespace KotOR_IO.File_Formats
                         OffsetIndex++;
                     }
                 }
-                IsParsed = false;
             }
         }
 
-        #endregion
+        /// <summary> The resource reference string for this 2DA </summary>
+        public string Name { get; }
 
-        #region Methods
+        /// <summary> List of Column Headers. Generally used as the keys for Data </summary>
+        public List<string> Columns { get; set; } = new List<string>();
 
-        /// <summary>
-        /// Gets the size of the object as it would be stored in a file.
-        /// </summary>
-        /// <returns>Length of the object in string format</returns>
-        private static int GetDataSize(object o)
-        {
-            return Convert.ToString(o).Length;
-        }
+        /// <summary> The Number of rows in the array </summary>
+        public int RowCount { get; set; } = 0;
 
-        /// <summary>
-        /// Parses the default string data into either <see cref="int"/>, <see cref="float"/>, hex data, or <see cref="string"/> depending on each column's contents.
-        /// </summary>
-        public void ParseData()
-        {
-            if (!IsParsed)
-            {
-                int IScrap = 0;
-                float IFcrap = 0;
-                foreach (List<object> column in Data.Values)
-                {
-                    int i = 0;
-                    while (column[i] as string == "") { i++; if (i >= column.Count) { break; } } // iterate to the first non null value
-                    if (i >= column.Count) { for (int k = 0; k < column.Count; k++) { if (column[k] as string == "") { column[k] = null; } } continue; }
-                    bool IntColumn = Int32.TryParse(column[i] as string, out IScrap);
-                    bool FloatColumn = Single.TryParse(column[i] as string, out IFcrap);
-                    bool HexColumn = Int32.TryParse((column[i] as string).TrimStart('0', 'x'), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out IScrap);
+        ///// <summary> A list of data offsets, one for each cell of the array </summary>
+        //public List<short> Offsets { get; set; } = new List<short>();
 
-                    if (IntColumn) { for (int k = 0; k < column.Count; k++) { if (column[k] as string != "") { column[k] = Convert.ToInt32(column[k]); } else { column[k] = null; } } }
-                    else if (FloatColumn) { for (int k = 0; k < column.Count; k++) { if (column[k] as string != "") { column[k] = Convert.ToSingle(column[k]); } else { column[k] = null; } } }
-                    else if (HexColumn) { for (int k = 0; k < column.Count; k++) { if (column[k] as string != "") { column[k] = Int32.Parse((column[k] as string).TrimStart('0', 'x'), NumberStyles.HexNumber); } else { column[k] = null; } } }
-                    else { for (int k = 0; k < column.Count; k++) { if (column[k] as string == "") { column[k] = null; } } }
-                }
-            }
-            IsParsed = true;
-        }
+        /// <summary> The Full 2D-Array with columns for keys, rows for values that each indexe from 0 to RowCount - 1.
+        /// The first column with <c>"row_indexs"</c> is an index of each row. </summary>
+        public Dictionary<string, List<string>> Data { get; set; } = new Dictionary<string, List<string>>();
+
+        ///// <summary> Denotes rather or not the default string data has been parsed to numerical data where appropriate. </summary>
+        //public bool IsParsed { get; set; } = false;
 
         /// <summary>
         /// Indexer for 2DA data
         /// </summary>
         /// <param name="columnLabel">The label of the column in the <see cref="TwoDA"/>.</param>
         /// <param name="rowIndex">The index of the row in <see cref="Data"/>.</param>
-        public object this[string columnLabel, int rowIndex] //maybe switch first vaule to column
+        public string this[string columnLabel, int rowIndex] //maybe switch first vaule to column
         {
             get
             {
@@ -235,201 +163,116 @@ namespace KotOR_IO.File_Formats
                     throw new IndexOutOfRangeException("Column label and row index must exist in the 2DA.");
                 }
             }
-            set
-            {
-                if (Data.Keys.Contains(columnLabel) && rowIndex < RowCount)
-                {
-                    short offset = Offsets[Columns.IndexOf(columnLabel) + rowIndex * Columns.Count];
-                    object oldValue = Data[columnLabel][rowIndex];
-                    Data[columnLabel][rowIndex] = value;
-                    //int offsetDifference = Convert.ToString(value).Length - Convert.ToString(oldValue).Length;
-                    int offsetDifference = GetDataSize(value) - GetDataSize(oldValue);
+            //set
+            //{
+            //    if (Data.Keys.Contains(columnLabel) && rowIndex < RowCount)
+            //    {
+            //        short offset = Offsets[Columns.IndexOf(columnLabel) + rowIndex * Columns.Count];
+            //        object oldValue = Data[columnLabel][rowIndex];
+            //        Data[columnLabel][rowIndex] = value;
+            //        //int offsetDifference = Convert.ToString(value).Length - Convert.ToString(oldValue).Length;
+            //        int offsetDifference = GetDataSize(value) - GetDataSize(oldValue);
 
-                    // Could simplify using a query.
-                    for (int i = 0; i < Offsets.Count; i++)
-                    {
-                        if (Offsets[i] > offset)
-                        {
-                            Offsets[i] += (short)offsetDifference;
-                        }
-                    }
+            //        // Could simplify using a query.
+            //        for (int i = 0; i < Offsets.Count; i++)
+            //        {
+            //            if (Offsets[i] > offset)
+            //            {
+            //                Offsets[i] += (short)offsetDifference;
+            //            }
+            //        }
 
-                }
-                else
-                {
-                    throw new IndexOutOfRangeException("Column Label and row index must exist in the 2DA.");
-                }
-            }
+            //    }
+            //    else
+            //    {
+            //        throw new IndexOutOfRangeException("Column Label and row index must exist in the 2DA.");
+            //    }
+            //}
         }
 
         /// <summary>
-        /// Adds a new collumn onto <see cref="Data"/>
+        /// Gets the size of the object as it would be stored in a file.
         /// </summary>
-        /// <param name="label">The Label or Header for the collumn</param>
-        /// <param name="data">The list of objects to be seeded in the collumn</param>
-        public void AddColumn(string label, object[] data)
+        /// <returns>Length of the object in string format</returns>
+        private static int GetDataSize(object o)
         {
-            if (data.Length > RowCount) { throw new IndexOutOfRangeException("Data extends beyond Row_Count"); }
-            List<object> tmpCol = new List<object>(data);
-            Data.Add(label, tmpCol);
-            Columns.Add(label);
-            Offsets.Clear();
-
-            //Offsets
-            List<object> UniqueValues = new List<object>();
-            List<int> IndexOffsets = new List<int>();
-
-            int totaloffset = 0;
-            for (int row = 0; row < Data[ROW_INDEX_KEY].Count; row++)
-            {
-                bool indexColSkipped = false;
-                foreach (List<object> col in Data.Values)
-                {
-                    if (!indexColSkipped) { indexColSkipped = true; continue; }
-                    if (!UniqueValues.Contains(col[row]))
-                    {
-                        UniqueValues.Add(col[row]);
-                        IndexOffsets.Add(totaloffset);
-                        totaloffset += GetDataSize(col[row]) + 1;
-                    }
-
-                    Offsets.Add((short)(IndexOffsets[UniqueValues.IndexOf(col[row])]));
-                }
-            }
-            Offsets.Add((short)totaloffset);
+            return Convert.ToString(o).Length;
         }
 
         /// <summary>
         /// Writes BioWare 2-Dimensional Array (v2.b) data
         /// </summary>
         /// <param name="s">The Stream to which the File will be written</param>
-        public override void Write(Stream s)
+        internal override void Write(Stream s)
         {
             using (BinaryWriter bw = new BinaryWriter(s))
             {
-                //Header
+                // Header
                 bw.Write(FileType.ToArray());
                 bw.Write(Version.ToArray());
+                bw.Write(ASCII_NEWLINE);
 
-                bw.Write((byte)10);
-
-                //Column Labels
+                // Column Labels
                 foreach (string c in Columns)
                 {
                     bw.Write(c.ToArray());
-                    bw.Write((byte)9);
+                    bw.Write(ASCII_TAB);
                 }
+                bw.Write(ASCII_NULL);
 
-                bw.Write((byte)0);
-
-                //Row Count
+                // Row Count
                 bw.Write(RowCount);
 
-                //Row Indexs
+                // Row Indices
                 for (int i = 0; i < RowCount; i++)
                 {
                     bw.Write(Convert.ToString(i).ToArray());
-                    bw.Write((byte)9);
+                    bw.Write(ASCII_TAB);
                 }
 
-                //Offsets
-                foreach (short sh in Offsets)
+                // Offsets
+                List<string> allValues = new List<string>();
+                foreach (string c in Columns)
                 {
-                    bw.Write(sh);
+                    allValues.AddRange(Data[c].Distinct());
+                }
+                allValues = allValues.Distinct().ToList();
+
+                Dictionary<string, short> offsetTable = new Dictionary<string, short>();
+
+                short currentOffset = 0;
+                foreach (string v in allValues)
+                {
+                    offsetTable.Add(v, currentOffset);
+                    currentOffset += (short)v.Length;
+                    currentOffset++;
                 }
 
-                int DataOffset = (int)bw.BaseStream.Position;
-
-                //Data
-                List<short> CheckedOffsets = new List<short>();
-                int row_index = 0;
-                int col_index = 0;
-                foreach (short sh in Offsets)
+                for (int i = 0; i < RowCount; i++)
                 {
-                    if (!CheckedOffsets.Contains(sh))
+                    foreach (string c in Columns)
                     {
-                        string tempData = Convert.ToString(Data[Columns[col_index]][row_index]);
-                        bw.Seek(DataOffset + sh, SeekOrigin.Begin);
-                        bw.Write(tempData.ToArray());
-                        bw.Write((byte)0);
-                        CheckedOffsets.Add(sh);
+                        bw.Write(offsetTable[Data[c][i]]);
                     }
-                    col_index++;
+                }
+                bw.Write(currentOffset);
 
-                    if (col_index == Columns.Count)
-                    {
-                        col_index = 0;
-                        row_index++;
-                        if (row_index == RowCount) { break; }
-                    }
+                foreach (string k in offsetTable.Keys)
+                {
+                    bw.Write(k.ToArray());
+                    bw.Write('\0');
                 }
             }
         }
 
         /// <summary>
-        /// Adds a row to the 2DA
+        /// Writes a file to the given directory using the Name property in this class object.
         /// </summary>
-        /// <param name="data">The Data to be seeded to that row (from left to right).</param>
-        public void AddRow(object[] data)
+        /// <param name="directory">Directory to write a file to.</param>
+        public void WriteToDirectory(string directory)
         {
-            if (data.Length > Columns.Count) { throw new IndexOutOfRangeException("Data contains more columns than are present in the 2DA."); }
-            Data[ROW_INDEX_KEY].Add(RowCount);
-            RowCount++;
-            int colIndex = 0;
-            foreach (object o in data)
-            {
-                Data[Columns[colIndex]].Add(o);
-                colIndex++;
-            }
-            Offsets.Clear();
-
-            //Offsets
-            List<object> UniqueValues = new List<object>();
-            List<int> IndexOffsets = new List<int>();
-
-            int totaloffset = 0;
-            for (int row = 0; row < Data[ROW_INDEX_KEY].Count; row++)
-            {
-                bool indexColSkipped = false;
-                foreach (List<object> col in Data.Values)
-                {
-                    if (!indexColSkipped) { indexColSkipped = true; continue; }
-                    if (!UniqueValues.Contains(col[row]))
-                    {
-                        UniqueValues.Add(col[row]);
-                        IndexOffsets.Add(totaloffset);
-                        totaloffset += GetDataSize(col[row]) + 1;
-                    }
-
-                    Offsets.Add((short)(IndexOffsets[UniqueValues.IndexOf(col[row])]));
-                }
-            }
-            Offsets.Add((short)totaloffset);
-
+            var path = Path.Combine(directory, $"{Name}.2da");
+            Write(File.OpenWrite(path));
         }
-
-        #endregion
-
-        #region Properties
-
-        // FileType & Version in superclass
-
-        /// <summary>List of Column Headers. Generally used as the keys for Data</summary>
-        public List<string> Columns { get; set; } = new List<string>();
-
-        /// <summary>The Number of rows in the array</summary>
-        public int RowCount { get; set; } = 0;
-
-        /// <summary>A list of data offsets, one for each cell of the array</summary>
-        public List<short> Offsets { get; set; } = new List<short>();
-
-        /// <summary>The Full 2D-Array with columns for keys, rows for values that each indexe from 0 to RowCount - 1.
-        /// The first column with <c>"row_indexs"</c> is an index of each row.</summary>
-        public Dictionary<string, List<object>> Data { get; set; } = new Dictionary<string, List<object>>();
-
-        /// <summary>Denotes rather or not the default string data has been parsed to numerical data where appropriate.</summary>
-        public bool IsParsed { get; set; } = false;
-
-        #endregion
     }
 }

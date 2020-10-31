@@ -5,73 +5,25 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KotOR_IO.File_Formats
+namespace KotOR_IO
 {
     /// <summary>
     /// Letter-combo probability info for name generation.
     /// </summary>
     public class LTR : KFile
     {
-        #region Properties
-
-        private List<char> letters = new List<char>("abcdefghijklmnopqrstuvwxyz'-".ToArray());
+        private static readonly List<char> letters = new List<char>("abcdefghijklmnopqrstuvwxyz'-".ToArray());
 
         //Header
         byte num_letters;
 
+        /// <summary> Letter data </summary>
         public ltrdata data = new ltrdata();
 
-        #endregion
-
-        #region Nested Classes
-
-        public struct cdf
-        {
-            public float[] start;
-            public float[] middle;
-            public float[] end;
-
-            public cdf(int numletters)
-            {
-                start = new float[numletters];
-                middle = new float[numletters];
-                end = new float[numletters];
-            }
-        }
-
-        public struct ltrdata
-        {
-            public cdf singles;
-            public cdf[] doubles;
-            public cdf[][] triples;
-
-            public ltrdata(int numletters)
-            {
-                singles = new cdf(numletters);
-
-                doubles = new cdf[numletters];
-                for (int i = 0; i < numletters; i++)
-                {
-                    doubles[i] = new cdf(numletters);
-                }
-
-                triples = new cdf[numletters][];
-                for (int i = 0; i < numletters; i++)
-                {
-                    triples[i] = new cdf[numletters];
-                    for (int j = 0; j < numletters; j++)
-                    {
-                        triples[i][j] = new cdf(numletters);
-                    }
-                }
-
-            }
-        }
-
-        #endregion
-
-        #region Constructors
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="names"></param>
         public LTR(List<string> names)
         {
             FileType = "LTR ";
@@ -172,18 +124,13 @@ namespace KotOR_IO.File_Formats
                     }
                 }
             }
-
         }
-
-        #endregion
-
-        #region Methods
 
         /// <summary>
         /// Writes Letter Data
         /// </summary>
         /// <param name="s">The Stream to which the File will be written</param>
-        public override void Write(Stream s)
+        internal override void Write(Stream s)
         {
             using (BinaryWriter bw = new BinaryWriter(s))
             {
@@ -245,6 +192,56 @@ namespace KotOR_IO.File_Formats
             }
         }
 
-        #endregion
+        /// <summary>
+        /// Writes a file to the given path using the Name property in this class object.
+        /// </summary>
+        /// <param name="path">Path to the file to write.</param>
+        public void WriteToFile(string path)
+        {
+            Write(File.OpenWrite(path));
+        }
+
+        public struct cdf
+        {
+            public float[] start;
+            public float[] middle;
+            public float[] end;
+
+            public cdf(int numletters)
+            {
+                start = new float[numletters];
+                middle = new float[numletters];
+                end = new float[numletters];
+            }
+        }
+
+        public struct ltrdata
+        {
+            public cdf singles;
+            public cdf[] doubles;
+            public cdf[][] triples;
+
+            public ltrdata(int numletters)
+            {
+                singles = new cdf(numletters);
+
+                doubles = new cdf[numletters];
+                for (int i = 0; i < numletters; i++)
+                {
+                    doubles[i] = new cdf(numletters);
+                }
+
+                triples = new cdf[numletters][];
+                for (int i = 0; i < numletters; i++)
+                {
+                    triples[i] = new cdf[numletters];
+                    for (int j = 0; j < numletters; j++)
+                    {
+                        triples[i][j] = new cdf(numletters);
+                    }
+                }
+
+            }
+        }
     }
 }

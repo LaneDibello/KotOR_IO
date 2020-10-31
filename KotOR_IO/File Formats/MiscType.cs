@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KotOR_IO.File_Formats
+namespace KotOR_IO
 {
     /// <summary>
     /// Represents other Kotor source files that aren't yet implemented. Contains only raw byte data.
@@ -15,24 +15,20 @@ namespace KotOR_IO.File_Formats
     /// </summary>
     public class MiscType : KFile
     {
-        #region Properties
-
-        ///<summary>The raw byte data for this source file.</summary>
-        public byte[] Data { get; protected set; }
-
-        #endregion
-
-        #region Constructors
-
-        ///<summary>Initiates a new instance of the <see cref="MiscType"/> class.</summary>
-        public MiscType() { }
-
         /// <summary>
         /// Initiates a new instance of the <see cref="MiscType"/> class from byte data
         /// </summary>
         /// <param name="data">A byte array containing the file data.</param>
         public MiscType(byte[] data)
             : this(new MemoryStream(data))
+        { }
+
+        /// <summary>
+        /// Reads the given miscellaneous file
+        /// </summary>
+        /// <param name="path"></param>
+        public MiscType(string path)
+            : this(File.OpenRead(path))
         { }
 
         /// <summary>
@@ -54,15 +50,14 @@ namespace KotOR_IO.File_Formats
             }
         }
 
-        #endregion
-
-        #region Methods
+        /// <summary> The raw byte data for this source file. </summary>
+        public byte[] Data { get; protected set; }
 
         /// <summary>
-        /// Writes a miscellaneous KotOR source file data
+        /// Writes a miscellaneous KotOR source file data.
         /// </summary>
         /// <param name="s">The Stream to which the File will be written</param>
-        public override void Write(Stream s)
+        internal override void Write(Stream s)
         {
             using (BinaryWriter bw = new BinaryWriter(s))
             {
@@ -70,7 +65,5 @@ namespace KotOR_IO.File_Formats
                 bw.Write(Data);
             }
         }
-
-        #endregion
     }
 }
