@@ -20,9 +20,17 @@ namespace KotOR_IO
     public class BIF : KFile
     {
         /// <summary>
+        /// Initiates a new instance of the <see cref="BIF"/> class from raw byte data.
+        /// </summary>
+        /// <param name="rawData">A byte array containing the file data.</param>
+        public BIF(byte[] rawData)
+            : this(new MemoryStream(rawData))
+        { }
+
+        /// <summary>
         /// Reads the given BioWare BIF File
         /// </summary>
-        /// <param name="path"></param>
+        /// <param name="path">File path to read.</param>
         public BIF(string path)
             : this(File.OpenRead(path))
         { }
@@ -31,60 +39,54 @@ namespace KotOR_IO
         /// Reads Bioware Built In Files
         /// </summary>
         /// <param name="s">The Stream from which the File will be Read</param>
-        public BIF(Stream s)
+        protected BIF(Stream s)
         {
             using (BinaryReader br = new BinaryReader(s))
             {
-                //Get header info
+                // Get header info
                 FileType = new string(br.ReadChars(4));
                 Version = new string(br.ReadChars(4));
                 VariableResourceCount = br.ReadInt32();
                 FixedResourceCount = br.ReadInt32();
                 VariableTableOffset = br.ReadInt32();
 
-                //Get Variable Resource Table
+                // Get Variable Resource Table
                 for (int i = 0; i < VariableResourceCount; i++)
                 {
-                    VariableResourceEntry VRE = new VariableResourceEntry();
-                    VRE.ID = br.ReadInt32();
-                    VRE.IDx = VRE.ID >> 20;
-                    VRE.IDy = VRE.ID - (VRE.IDx << 20);
-
-                    VRE.Offset = br.ReadInt32();
-
-                    VRE.File_Size = br.ReadInt32();
-                    VRE.Entry_Data = new byte[VRE.File_Size];
-
-                    VRE.Resource_Type_code = br.ReadInt32();
-                    VRE.ResourceType = (ResourceType)VRE.Resource_Type_code;
-
+                    VariableResourceEntry VRE = new VariableResourceEntry(br.ReadInt32(), br.ReadInt32(), br.ReadInt32(), br.ReadInt32());
+                    //VRE.ID = br.ReadInt32();
+                    //VRE.IDx = VRE.ID >> 20;
+                    //VRE.IDy = VRE.ID - (VRE.IDx << 20);
+                    //VRE.Offset = br.ReadInt32();
+                    //VRE.FileSize = br.ReadInt32();
+                    //VRE.EntryData = new byte[VRE.FileSize];
+                    //VRE.ResourceType = (ResourceType)br.ReadInt32();
                     VariableResourceTable.Add(VRE);
                 }
 
-                //Get Fixed Resource Table
+                // Get Fixed Resource Table
                 for (int i = 0; i < FixedResourceCount; i++)
                 {
-                    FixedResourceEntry FRE = new FixedResourceEntry();
-                    FRE.ID = br.ReadInt32();
-                    FRE.Offset = br.ReadInt32();
-                    FRE.PartCount = br.ReadInt32();
-                    FRE.File_Size = br.ReadInt32();
-                    FRE.Resource_Type_code = br.ReadInt32();
-                    FRE.ResourceType = (ResourceType)FRE.Resource_Type_code;
-                    FRE.Entry_Data = new byte[FRE.File_Size];
-                    Fixed_Resource_Table.Add(FRE);
+                    FixedResourceEntry FRE = new FixedResourceEntry(br.ReadInt32(), br.ReadInt32(), br.ReadInt32(), br.ReadInt32(), br.ReadInt32());
+                    //FRE.ID = br.ReadInt32();
+                    //FRE.Offset = br.ReadInt32();
+                    //FRE.PartCount = br.ReadInt32();
+                    //FRE.FileSize = br.ReadInt32();
+                    //FRE.ResourceType = (ResourceType)br.ReadInt32();
+                    //FRE.EntryData = new byte[FRE.FileSize];
+                    FixedResourceTable.Add(FRE);
                 }
 
-                //Populate Variable Resource Data
+                // Populate Variable Resource Data
                 foreach (VariableResourceEntry VRE in VariableResourceTable)
                 {
-                    VRE.Entry_Data = br.ReadBytes(VRE.File_Size);
+                    VRE.EntryData = br.ReadBytes(VRE.FileSize);
                 }
 
-                //Populate Fixed Resource Data
-                foreach (FixedResourceEntry FRE in Fixed_Resource_Table)
+                // Populate Fixed Resource Data
+                foreach (FixedResourceEntry FRE in FixedResourceTable)
                 {
-                    FRE.Entry_Data = br.ReadBytes(FRE.File_Size);
+                    FRE.EntryData = br.ReadBytes(FRE.FileSize);
                 }
             }
         }
@@ -107,7 +109,7 @@ namespace KotOR_IO
         public List<VariableResourceEntry> VariableResourceTable { get; set; } = new List<VariableResourceEntry>();
 
         ///<summary>The Table Containing all of the Fixed Variable Resources. *NOTE: Fixed Resources are not used by KotOR</summary>
-        public List<FixedResourceEntry> Fixed_Resource_Table = new List<FixedResourceEntry>();
+        public List<FixedResourceEntry> FixedResourceTable { get; set; } = new List<FixedResourceEntry>();
 
         /// <summary>
         /// Takes data from a given KEY class and uses it to populate the data in the BIF file. 
@@ -122,7 +124,7 @@ namespace KotOR_IO
         {
             Name = Filename;
 
-            //Get index the BIF file
+            // Get index the BIF file
             int xIndex = 0;
 
             foreach (KEY.FileEntry FE in k.FileTable)
@@ -137,10 +139,10 @@ namespace KotOR_IO
                 }
             }
 
-            //parse the list down to just the section the bif cares about
+            // parse the list down to just the section the bif cares about
             var BifSectionX = k.KeyTable.Where(ke => ke.IDx == xIndex);
 
-            //Compare each VariableResourceEntry to each Key_entry to match up IDy and assign its ResRef
+            // Compare each VariableResourceEntry to each Key_entry to match up IDy and assign its ResRef
             foreach (VariableResourceEntry VRE in VariableResourceTable)
             {
                 var BifSectionY = BifSectionX.Where(ke => ke.IDy == VRE.IDy);
@@ -159,122 +161,147 @@ namespace KotOR_IO
         {
             using (BinaryWriter bw = new BinaryWriter(s))
             {
-                //Header
+                // Header
                 bw.Write(FileType.ToArray());
                 bw.Write(Version.ToArray());
                 bw.Write(VariableResourceCount);
                 bw.Write(FixedResourceCount);
                 bw.Write(VariableTableOffset);
 
-                //Variable Resource Tabale
+                // Variable Resource Tabale
                 bw.Seek(VariableTableOffset, SeekOrigin.Begin);
                 foreach (VariableResourceEntry VRE in VariableResourceTable)
                 {
                     bw.Write(VRE.ID);
                     bw.Write(VRE.Offset);
-                    bw.Write(VRE.File_Size);
-                    bw.Write(VRE.Resource_Type_code);
+                    bw.Write(VRE.FileSize);
+                    bw.Write((int)VRE.ResourceType);
                 }
 
-                //Fixed Resource Table *NOT USED*
-                foreach (FixedResourceEntry FRE in Fixed_Resource_Table)
+                // Fixed Resource Table *NOT USED*
+                foreach (FixedResourceEntry FRE in FixedResourceTable)
                 {
                     bw.Write(FRE.ID);
                     bw.Write(FRE.Offset);
                     bw.Write(FRE.PartCount);
-                    bw.Write(FRE.File_Size);
-                    bw.Write(FRE.Resource_Type_code);
+                    bw.Write(FRE.FileSize);
+                    bw.Write((int)FRE.ResourceType);
                 }
 
-                //Variable resource Data
+                // Variable resource Data
                 foreach (VariableResourceEntry VRE in VariableResourceTable)
                 {
-                    bw.Write(VRE.Entry_Data);
+                    bw.Write(VRE.EntryData);
                 }
 
-                //Fixed Resource Data
-                foreach (FixedResourceEntry FRE in Fixed_Resource_Table)
+                // Fixed Resource Data
+                foreach (FixedResourceEntry FRE in FixedResourceTable)
                 {
-                    bw.Write(FRE.Entry_Data);
+                    bw.Write(FRE.EntryData);
                 }
             }
         }
 
+        // Variable Resource Table
         /// <summary>
-        /// Writes a file to the given path using the Name property in this class object.
+        /// One of the elements that makes up the Variable Resource Table. Contains basic meta data for each resource a resource in the BIF.
         /// </summary>
-        /// <param name="path">Path to the file to write.</param>
-        public void WriteToFile(string path)
-        {
-            Write(File.OpenWrite(path));
-        }
-
-        //Variable Resource Table
-        ///<summary>One of the elements that makes up the Variable Resource Table. Contains basic meta data for each resource a resource in the BIF.</summary>
         public class VariableResourceEntry
         {
-            ///<summary>
-            ///<para>A unique ID number for this resource.</para>
-            ///<para>It Contains two parts (x and y) which denote Resource index, as well as combatibility with Key files.</para>
+            /// <summary>
+            /// Creates instance of VariableResourceEntry
             /// </summary>
+            /// <param name="id">ID, which is separated into IDx and IDy</param>
+            /// <param name="offset">Offset</param>
+            /// <param name="filesize">Size of the entry data</param>
+            /// <param name="type">Int representation of the ResourceType</param>
+            public VariableResourceEntry(int id, int offset, int filesize, int type)
+            {
+                ID = id;
+                IDx = ID >> 20;
+                IDy = ID - (IDx << 20);
+                Offset = offset;
+                EntryData = new byte[FileSize];
+                FileSize = filesize;
+                ResourceType = (ResourceType)type;
+            }
+
+            /// <summary>
+            /// <para>A unique ID number for this resource.</para>
+            /// <para>It Contains two parts (x and y) which denote Resource index, as well as combatibility with Key files.</para>
+            ///  </summary>
             public int ID { get; set; }
 
-            ///<summary>Byte offset from the start of teh BIF to the data for this resource.</summary>
+            /// <summary>Byte offset from the start of teh BIF to the data for this resource.</summary>
             public int Offset { get; set; }
 
-            ///<summary>The size in bytes of this resource</summary>
-            public int File_Size { get; set; }
-
-            ///<summary>An integer representing the file type of this resource. See: 
-            ///<see cref="Reference_Tables.Res_Types"/></summary>
-            public int Resource_Type_code { get; set; }
+            /// <summary>The size in bytes of this resource</summary>
+            public int FileSize { get; set; }
 
             /// <summary> Enum representation of the file type of this resource. </summary>
             public ResourceType ResourceType { get; set; }
 
-            ///<summary>
-            ///The X component of the ID. This is rather useless in BIF files, however is included for consitancy with Key files.
-            ///<para>It is calculated by bit shifting ID right by 20. (ID &gt;&gt; 20)</para>
+            /// <summary>
+            /// The X component of the ID. This is rather useless in BIF files, however is included for consitancy with Key files.
+            /// <para>It is calculated by bit shifting ID right by 20. (ID &gt;&gt; 20)</para>
             /// </summary>
             public int IDx { get; set; }
 
-            ///<summary>
-            ///The Y component of the ID. This denotes an index of this resource entry in the BIF. This value will match the repective ID in this BIF's Key file.
-            ///<para>This is calculated by subtracting the X component bit shifted left 20 from the ID. (ID - (x &lt;&lt; 20))</para>
-            ///</summary>
+            /// <summary>
+            /// The Y component of the ID. This denotes an index of this resource entry in the BIF. This value will match the repective ID in this BIF's Key file.
+            /// <para>This is calculated by subtracting the X component bit shifted left 20 from the ID. (ID - (x &lt;&lt; 20))</para>
+            /// </summary>
             public int IDy { get; set; }
 
-            ///<summary>The raw byte data of this resource.</summary>
-            public byte[] Entry_Data { get; set; }
+            /// <summary>The raw byte data of this resource.</summary>
+            public byte[] EntryData { get; set; }
 
-            ///<summary>Resource Reference string (aka filename) of this resource. This is populated when Attaching Key data. </summary>
-            public string ResRef { get; set; }
+            /// <summary>Resource Reference string (aka filename) of this resource. This is populated when Attaching Key data. </summary>
+            public string ResRef { get; set; } = null;
         }
 
-        //Fixed Resource Table
-        ///<summary>Fixed Variable Resource. *NOTE: Fixed Resources are not used by KotOR, therefore no further documentation will be provided.</summary>
+        // Fixed Resource Table
+        /// <summary>
+        /// Fixed Variable Resource. *NOTE: Fixed Resources are not used by KotOR, therefore no further documentation will be provided.
+        /// </summary>
         public class FixedResourceEntry
         {
-            ///<summary></summary>
+            /// <summary>
+            /// Creates instance of FixedResourceEntry
+            /// </summary>
+            /// <param name="id"></param>
+            /// <param name="offset"></param>
+            /// <param name="partCount"></param>
+            /// <param name="filesize"></param>
+            /// <param name="type"></param>
+            public FixedResourceEntry(int id, int offset, int partCount, int filesize, int type)
+            {
+                ID = id;
+                Offset = offset;
+                PartCount = partCount;
+                FileSize = filesize;
+                EntryData = new byte[FileSize];
+                ResourceType = (ResourceType)type;
+            }
+
+            /// <summary></summary>
             public int ID { get; set; }
-            ///<summary></summary>
+            /// <summary></summary>
             public int Offset { get; set; }
-            ///<summary></summary>
+            /// <summary></summary>
             public int PartCount { get; set; }
-            ///<summary></summary>
-            public int File_Size { get; set; }
-            ///<summary></summary>
-            public int Resource_Type_code { get; set; }
+            /// <summary></summary>
+            public int FileSize { get; set; }
             /// <summary></summary>
             public ResourceType ResourceType { get; set; }
 
-            ///<summary></summary>
+            /// <summary></summary>
             public int IDx { get; set; }
-            ///<summary></summary>
+            /// <summary></summary>
             public int IDy { get; set; }
 
-            ///<summary></summary>
-            public byte[] Entry_Data { get; set; }
+            /// <summary></summary>
+            public byte[] EntryData { get; set; }
         }
     }
 }

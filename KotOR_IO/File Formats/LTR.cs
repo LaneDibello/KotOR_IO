@@ -192,15 +192,6 @@ namespace KotOR_IO
             }
         }
 
-        /// <summary>
-        /// Writes a file to the given path using the Name property in this class object.
-        /// </summary>
-        /// <param name="path">Path to the file to write.</param>
-        public void WriteToFile(string path)
-        {
-            Write(File.OpenWrite(path));
-        }
-
         public struct cdf
         {
             public float[] start;

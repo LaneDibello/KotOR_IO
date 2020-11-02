@@ -19,9 +19,17 @@ namespace KotOR_IO
     public class RIM : KFile
     {
         /// <summary>
+        /// Initiates a new instance of the <see cref="RIM"/> class from raw byte data.
+        /// </summary>
+        /// <param name="rawData">A byte array containing the file data.</param>
+        public RIM(byte[] rawData)
+            : this(new MemoryStream(rawData))
+        { }
+
+        /// <summary>
         /// Reads the given BioWare RIM File.
         /// </summary>
-        /// <param name="path"></param>
+        /// <param name="path">File path to read.</param>
         public RIM(string path)
             : this(File.OpenRead(path))
         { }
@@ -30,7 +38,7 @@ namespace KotOR_IO
         /// Reads Bioware "RIM" Files.
         /// </summary>
         /// <param name="s">The Stream from which the File will be Read</param>
-        public RIM(Stream s)
+        protected RIM(Stream s)
         {
             using (BinaryReader br = new BinaryReader(s))
             {
@@ -161,40 +169,37 @@ namespace KotOR_IO
         /// <returns></returns>
         public KFile GetKFile(int index)
         {
-            using (MemoryStream ms = new MemoryStream(File_Table[index].File_Data))
+            var file = File_Table[index];
+            switch ((ResourceType)file.TypeID)
             {
-                if (File_Table[index].TypeID == 2017)
-                {
-                    return new TwoDA(ms);
-                }
-                else if (File_Table[index].TypeID == 9998)
-                {
-                    return new BIF(ms);
-                }
-                else if (Reference_Tables.ERFResTypes.Contains(File_Table[index].TypeID))
-                {
-                    return new ERF(ms);
-                }
-                else if (Reference_Tables.GFFResTypes.Contains(File_Table[index].TypeID))
-                {
-                    return new GFF(ms);
-                }
-                else if (File_Table[index].TypeID == 3002)
-                {
-                    return new RIM(ms);
-                }
-                else if (File_Table[index].TypeID == 2060)
-                {
-                    return new SSF(ms);
-                }
-                else if (File_Table[index].TypeID == 2018)
-                {
-                    return new TLK(ms);
-                }
-                else
-                {
-                    return new MiscType(ms);
-                }
+                case ResourceType.TwoDA:
+                    return new TwoDA(file.File_Data);
+
+                case ResourceType.TLK:
+                    return new TLK(file.File_Data);
+
+                case ResourceType.SSF:
+                    return new SSF(file.File_Data);
+
+                case ResourceType.RIM:
+                    return new RIM(file.File_Data);
+
+                case ResourceType.BIF:
+                    return new BIF(file.File_Data);
+
+                default:
+                    if (Reference_Tables.ERFResourceTypes.Contains((ResourceType)file.TypeID))
+                    {
+                        return new ERF(file.File_Data);
+                    }
+                    else if (Reference_Tables.GFFResourceTypes.Contains((ResourceType)file.TypeID))
+                    {
+                        return new GFF(file.File_Data);
+                    }
+                    else
+                    {
+                        return new MiscType(file.File_Data);
+                    }
             }
         }
 
@@ -241,20 +246,11 @@ namespace KotOR_IO
             }
         }
 
-        /// <summary>
-        /// Writes a file to the given path using the Name property in this class object.
-        /// </summary>
-        /// <param name="path">Path to the file to write.</param>
-        public void WriteToFile(string path)
-        {
-            Write(File.OpenWrite(path));
-        }
-
         // File Table
         /// <summary>
         /// A File contained within the <see cref="RIM"/>.
         /// </summary>
-        public class rFile
+        public class rFile // todo: create constructor?
         {
             ///<summary> The file's name. (max 16 <see cref="char"/>s) </summary>
             public string Label;

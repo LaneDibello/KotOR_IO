@@ -19,9 +19,17 @@ namespace KotOR_IO
     public class SSF : KFile
     {
         /// <summary>
+        /// Initiates a new instance of the <see cref="SSF"/> class from raw byte data.
+        /// </summary>
+        /// <param name="rawData">A byte array containing the file data.</param>
+        public SSF(byte[] rawData)
+            : this(new MemoryStream(rawData))
+        { }
+
+        /// <summary>
         /// Reads the given BioWare SSF File
         /// </summary>
-        /// <param name="path"></param>
+        /// <param name="path">File path to read.</param>
         public SSF(string path)
             : this(File.OpenRead(path))
         { }
@@ -30,7 +38,7 @@ namespace KotOR_IO
         /// Reads Bioware Sound Set Format (v1.1) Files.
         /// </summary>
         /// <param name="s">The Stream from which the File will be Read</param>
-        public SSF(Stream s)
+        protected SSF(Stream s)
         {
             using (BinaryReader br = new BinaryReader(s))
             {

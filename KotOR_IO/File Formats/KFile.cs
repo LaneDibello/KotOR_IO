@@ -40,8 +40,10 @@ namespace KotOR_IO
         /// <summary> The 4 char file version. </summary>
         public string Version { get; protected set; }
 
-        /// <summary></summary>
-        /// <returns></returns>
+        /// <summary>
+        /// Returns the raw byte data for this source file.
+        /// </summary>
+        /// <returns>Raw byte data for this source file</returns>
         public virtual byte[] ToRawData()
         {
             using (System.IO.MemoryStream ms = new System.IO.MemoryStream())
@@ -51,8 +53,19 @@ namespace KotOR_IO
             }
         }
 
-        /// <summary> Writes BioWare File data. </summary>
+        /// <summary>
+        /// Writes BioWare File data.
+        /// </summary>
         /// <param name="s">The Stream to which the File will be written.</param>
         internal abstract void Write(System.IO.Stream s);
+
+        /// <summary>
+        /// Writes the byte data for this file to the given path.
+        /// </summary>
+        /// <param name="path">Path to the file to write.</param>
+        public virtual void WriteToFile(string path)
+        {
+            Write(System.IO.File.OpenWrite(path));
+        }
     }
 }

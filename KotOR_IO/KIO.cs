@@ -239,7 +239,7 @@ namespace KotOR_IO
     /// <summary>
     /// IDs for Supported Languages
     /// </summary>
-    public enum LanguageIDs
+    public enum LanguageID : int
     {
         /// <summary>English</summary>
         English = 0,
@@ -266,7 +266,7 @@ namespace KotOR_IO
     /// <summary>
     /// Lookup for GFF Field Type ID based on Field Data Type Text
     /// </summary>
-    public enum GffFieldTypes
+    public enum GffFieldType : int
     {
         /// <summary>Byte</summary>
         BYTE = 0,
@@ -326,18 +326,18 @@ namespace KotOR_IO
         public static List<int> Complex_Field_Types = new List<int>() { 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18 };
 
         /// <summary> List of GFF Field Types that are marked by the interpreter as "complex". </summary>
-        public static List<GffFieldTypes> ComplexFieldTypes = new List<GffFieldTypes>()
+        public static List<GffFieldType> ComplexFieldTypes = new List<GffFieldType>()
         {
-            GffFieldTypes.CExoString,
-            GffFieldTypes.DOUBLE,
-            GffFieldTypes.DWORD64,
-            GffFieldTypes.INT64,
-            GffFieldTypes.List,
-            GffFieldTypes.Orientation,
-            GffFieldTypes.StrRef,
-            GffFieldTypes.Struct,
-            GffFieldTypes.Vector,
-            GffFieldTypes.VOID,
+            GffFieldType.CExoString,
+            GffFieldType.DOUBLE,
+            GffFieldType.DWORD64,
+            GffFieldType.INT64,
+            GffFieldType.List,
+            GffFieldType.Orientation,
+            GffFieldType.StrRef,
+            GffFieldType.Struct,
+            GffFieldType.Vector,
+            GffFieldType.VOID,
         };
 
         /// <summary> List of Default Fields in Sound set files. </summary>

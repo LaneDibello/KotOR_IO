@@ -19,18 +19,26 @@ namespace KotOR_IO
     public class ERF : KFile
     {
         /// <summary>
+        /// Initiates a new instance of the <see cref="ERF"/> class from raw byte data.
+        /// </summary>
+        /// <param name="rawData">A byte array containing the file data.</param>
+        public ERF(byte[] rawData)
+            : this(new MemoryStream(rawData))
+        { }
+
+        /// <summary>
         /// Reads the given BioWare ERF File
         /// </summary>
-        /// <param name="path"></param>
+        /// <param name="path">File path to read.</param>
         public ERF(string path)
             : this(File.OpenRead(path))
         { }
-        
+
         /// <summary>
         /// Reads Bioware Encapsulated Resource Files
         /// </summary>
         /// <param name="s">The Stream from which the File will be Read</param>
-        public ERF(Stream s)
+        protected ERF(Stream s)
         {
             using (BinaryReader br = new BinaryReader(s))
             {
@@ -90,43 +98,43 @@ namespace KotOR_IO
 
         // FileType & Version in superclass
         /// <summary> The number of strings in the Localized String List. </summary>
-        public int LanguageCount;
+        public int LanguageCount { get; set; }
 
         /// <summary> The Total size (bytes) of Localized String List. </summary>
-        public int LocalizedStringSize;
+        public int LocalizedStringSize { get; set; }
 
         /// <summary> The number of files packed into the ERF. </summary>
-        public int EntryCount;
+        public int EntryCount { get; set; }
 
         /// <summary> The byte offset from the start of the file to the Localized String List. </summary>
-        public int OffsetToLocalizedStrings;
+        public int OffsetToLocalizedStrings { get; set; }
 
         /// <summary> The byte offset from the start of the file to the Key List. </summary>
-        public int OffsetToKeyList;
+        public int OffsetToKeyList { get; set; }
 
         /// <summary> The byte offset from the start of the file to the Resource List. </summary>
-        public int OffsetToResourceList;
+        public int OffsetToResourceList { get; set; }
 
         /// <summary> The number of years after 1900 that the ERF file was built. (i.e. 2019 == 119) </summary>
-        public int BuildYear;
+        public int BuildYear { get; set; }
 
         /// <summary> The number of days after January 1st the ERF file was built. (i.e. October 5th == 277) </summary>
-        public int BuildDay;
+        public int BuildDay { get; set; }
 
         /// <summary> A numerical string reference to a talk table (<see cref="TLK"/>) for the file description if one exist. </summary>
-        public int DescriptionStrRef;
+        public int DescriptionStrRef { get; set; }
 
         /// <summary> A block of 116 (usually null) bytes that are reserved for future backwards compatibility. </summary>
-        public byte[] Reserved_block = new byte[116];
+        public byte[] Reserved_block { get; set; } = new byte[116];
 
         /// <summary> List of localized strings. Used of descriptive content for the ERF file. (Not always present) </summary>
-        public List<String_List_Element> Localized_String_List = new List<String_List_Element>();
+        public List<String_List_Element> Localized_String_List { get; set; } = new List<String_List_Element>();
 
         /// <summary> The List containing all of the Resource Reference Keys for the files in this ERF. (Used for populated Filenames and Types) </summary>
-        public List<Key> Key_List = new List<Key>();
+        public List<Key> Key_List { get; set; } = new List<Key>();
 
         /// <summary> The list containing all of the resources. This contians all of the data for the files within this ERF. </summary>
-        public List<Resource> Resource_List = new List<Resource>();
+        public List<Resource> Resource_List { get; set; } = new List<Resource>();
 
         /// <summary>
         /// Gets the <see cref="byte"/> data for the specified resource, given the resource reference. (filename)
@@ -248,15 +256,6 @@ namespace KotOR_IO
                     bw.Write(ER.Resource_data);
                 }
             }
-        }
-
-        /// <summary>
-        /// Writes a file to the given path using the Name property in this class object.
-        /// </summary>
-        /// <param name="path">Path to the file to write.</param>
-        public void WriteToFile(string path)
-        {
-            Write(File.OpenWrite(path));
         }
 
         /// <summary>

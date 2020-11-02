@@ -18,15 +18,15 @@ namespace KotOR_IO
         /// <summary>
         /// Initiates a new instance of the <see cref="MiscType"/> class from byte data
         /// </summary>
-        /// <param name="data">A byte array containing the file data.</param>
-        public MiscType(byte[] data)
-            : this(new MemoryStream(data))
+        /// <param name="rawData">A byte array containing the file data.</param>
+        public MiscType(byte[] rawData)
+            : this(new MemoryStream(rawData))
         { }
 
         /// <summary>
-        /// Reads the given miscellaneous file
+        /// Reads the given miscellaneous file.
         /// </summary>
-        /// <param name="path"></param>
+        /// <param name="path">File path to read.</param>
         public MiscType(string path)
             : this(File.OpenRead(path))
         { }
@@ -35,8 +35,7 @@ namespace KotOR_IO
         /// Reads miscellaneous Kotor source Files into a <see cref="MiscType"/> class.
         /// </summary>
         /// <param name="s">The Stream from which the File will be Read</param>
-        /// <returns></returns>
-        public MiscType(Stream s)
+        protected MiscType(Stream s)
         {
             using (BinaryReader br = new BinaryReader(s))
             {
@@ -52,6 +51,15 @@ namespace KotOR_IO
 
         /// <summary> The raw byte data for this source file. </summary>
         public byte[] Data { get; protected set; }
+
+        /// <summary>
+        /// Returns the raw byte data for this source file.
+        /// </summary>
+        /// <returns>Raw byte data for this source file</returns>
+        public override byte[] ToRawData()
+        {
+            return Data;
+        }
 
         /// <summary>
         /// Writes a miscellaneous KotOR source file data.

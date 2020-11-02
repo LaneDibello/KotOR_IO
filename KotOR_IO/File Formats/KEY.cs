@@ -19,9 +19,17 @@ namespace KotOR_IO
     public class KEY : KFile
     {
         /// <summary>
-        /// Reads the given BioWare KEY File
+        /// Initiates a new instance of the <see cref="KEY"/> class from raw byte data.
         /// </summary>
-        /// <param name="path"></param>
+        /// <param name="rawData">A byte array containing the file data.</param>
+        public KEY(byte[] rawData)
+            : this(new MemoryStream(rawData))
+        { }
+
+        /// <summary>
+        /// Reads the given BioWare KEY File.
+        /// </summary>
+        /// <param name="path">File path to read.</param>
         public KEY(string path)
             : this(File.OpenRead(path))
         { }
@@ -30,7 +38,7 @@ namespace KotOR_IO
         /// Reads Bioware Key Files
         /// </summary>
         /// <param name="s">The Stream from which the File will be Read</param>
-        public KEY(Stream s)
+        protected KEY(Stream s)
         {
             using (BinaryReader br = new BinaryReader(s))
             {
@@ -155,15 +163,6 @@ namespace KotOR_IO
                     bw.Write(KE.ResID);
                 }
             }
-        }
-
-        /// <summary>
-        /// Writes a file to the given path using the Name property in this class object.
-        /// </summary>
-        /// <param name="path">Path to the file to write.</param>
-        public void WriteToFile(string path)
-        {
-            Write(File.OpenWrite(path));
         }
 
         // File Table

@@ -19,18 +19,26 @@ namespace KotOR_IO
     public class TLK : KFile
     {
         /// <summary>
-        /// Reads the given BioWare BIF File
+        /// Initiates a new instance of the <see cref="TLK"/> class from raw byte data.
         /// </summary>
-        /// <param name="path"></param>
+        /// <param name="rawData">A byte array containing the file data.</param>
+        public TLK(byte[] rawData)
+            : this(new MemoryStream(rawData))
+        { }
+
+        /// <summary>
+        /// Reads the given BioWare Talk Table File from a file path.
+        /// </summary>
+        /// <param name="path">File path to read.</param>
         public TLK(string path)
             : this(File.OpenRead(path))
         { }
-        
+
         /// <summary>
         /// Reads Bioware Talk Table Files
         /// </summary>
         /// <param name="s">The Stream from which the File will be Read</param>
-        public TLK(Stream s)
+        protected TLK(Stream s)
         {
             using (BinaryReader br = new BinaryReader(s))
             {
@@ -73,16 +81,16 @@ namespace KotOR_IO
 
         /// <summary> The numerical ID for the Language that the string entries in this Talk Table will be in.
         /// <para/>See: <see cref="Reference_Tables.Language_IDs"/>. </summary>
-        public int LanguageID;
+        public int LanguageID { get; set; }
 
         /// <summary> The number of strings in this Talk Table. </summary>
-        public int StringCount;
+        public int StringCount { get; set; }
 
         /// <summary> The byte offset from the start of the file to the String Entries. </summary>
-        public int StringEntriesOffset;
+        public int StringEntriesOffset { get; set; }
 
         /// <summary> The tabel containing all of the <see cref="String_Data"/> elements. This is the primary property of the <see cref="TLK"/>. </summary>
-        public List<String_Data> String_Data_Table = new List<String_Data>();
+        public List<String_Data> String_Data_Table { get; set; } = new List<String_Data>();
 
         /// <summary>
         /// Gets a particular string from a string reference

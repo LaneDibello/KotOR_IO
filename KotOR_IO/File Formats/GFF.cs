@@ -17,24 +17,32 @@ namespace KotOR_IO
     /// </summary>
     public class GFF : KFile
     {
-        #region Constructors
-        
-        ///<summary>Initiates a new instance of the <see cref="GFF"/> class.</summary>
-        public GFF() { }
+        /// <summary>
+        /// Initiates a new instance of the <see cref="GFF"/> class.
+        /// </summary>
+        protected GFF() { }
 
         /// <summary>
         /// Initiates a new instance of the <see cref="GFF"/> class from raw byte data.
         /// </summary>
-        /// <param name="raw_data"></param>
-        public GFF(byte[] raw_data)
-            : this(new MemoryStream(raw_data))
+        /// <param name="rawData">A byte array containing the file data.</param>
+        public GFF(byte[] rawData)
+            : this(new MemoryStream(rawData))
+        { }
+
+        /// <summary>
+        /// Initiates a new instance of the <see cref="GFF"/> class from file path.
+        /// </summary>
+        /// <param name="path">File path to read.</param>
+        public GFF(string path)
+            : this(File.OpenRead(path))
         { }
 
         /// <summary>
         /// Reads Bioware General File Format Files
         /// </summary>
-        /// <param name="s">The Stream from which the File will be Read</param>
-        public GFF(Stream s)
+        /// <param name="s">Stream from which the file will be read.</param>
+        protected GFF(Stream s)
         {
             using (BinaryReader br = new BinaryReader(s))
             {
@@ -265,10 +273,6 @@ namespace KotOR_IO
             }
         }
 
-        #endregion
-
-        #region Properties
-
         //FileType & Version in superclass
         ///<summary>Offset of Struct array as bytes from the beginning of the file</summary>
         public int StructOffset;
@@ -308,9 +312,38 @@ namespace KotOR_IO
         /// <summary>The array contianing all of the <see cref="List_Index"/> elements.</summary>
         public List<List_Index> List_Indices = new List<List_Index>();
 
-        #endregion
+        /// <summary>
+        /// Gets field data given a field label. If more than one fields have this label, type will be <see cref="List{object}"/>, otherwise type will be <see cref="object"/>
+        /// </summary>
+        /// <param name="Field_Label"></param>
+        /// <returns></returns>
+        public object this[string Field_Label]
+        {
+            get
+            {
+                int count = Field_Array.Where(p => p.Label == Field_Label).Count();
 
-        #region Methods
+                if (count == 0)
+                {
+                    throw new Exception("Field_Label \"" + Field_Label + "\" does not exist in this GFF");
+                }
+
+                else if (count == 1)
+                {
+                    return Field_Array.Where(p => p.Label == Field_Label).FirstOrDefault().Field_Data;
+                }
+
+                else if (count > 1)
+                {
+                    return Field_Array.Where(p => p.Label == Field_Label);
+                }
+
+                else
+                {
+                    throw new Exception("Something has gone seriously wrong. There should not be a negative quantity of Fields.");
+                }
+            }
+        }
 
         /// <summary>
         /// Writes Bioware General File Format data
@@ -368,26 +401,26 @@ namespace KotOR_IO
                     if (GF.Complex)
                     {
                         bw.Seek(FieldDataOffset + GF.DataOrDataOffset, SeekOrigin.Begin);
-                        switch (GF.Type)
+                        switch ((GffFieldType)GF.Type)
                         {
-                            case 6:
+                            case GffFieldType.DWORD64:
                                 bw.Write((ulong)GF.Field_Data);
                                 break;
-                            case 7:
+                            case GffFieldType.INT64:
                                 bw.Write((long)GF.Field_Data);
                                 break;
-                            case 9:
+                            case GffFieldType.DOUBLE:
                                 bw.Write((double)GF.Field_Data);
                                 break;
-                            case 10:
+                            case GffFieldType.CExoString:
                                 bw.Write((GF.Field_Data as CExoString).Size);
                                 bw.Write((GF.Field_Data as CExoString).Text.ToArray());
                                 break;
-                            case 11:
+                            case GffFieldType.ResRef:
                                 bw.Write((GF.Field_Data as CResRef).Size);
                                 bw.Write((GF.Field_Data as CResRef).Text.ToArray());
                                 break;
-                            case 12:
+                            case GffFieldType.CExoLocString:
                                 bw.Write((GF.Field_Data as CExoLocString).Total_Size);
                                 bw.Write((GF.Field_Data as CExoLocString).StringRef);
                                 bw.Write((GF.Field_Data as CExoLocString).StringCount);
@@ -398,22 +431,22 @@ namespace KotOR_IO
                                     bw.Write(SS.Text.ToArray());
                                 }
                                 break;
-                            case 13:
+                            case GffFieldType.VOID:
                                 bw.Write((GF.Field_Data as Void_Binary).Size);
                                 bw.Write((GF.Field_Data as Void_Binary).Data);
                                 break;
-                            case 16:
+                            case GffFieldType.Orientation:
                                 bw.Write((GF.Field_Data as Orientation).float1);
                                 bw.Write((GF.Field_Data as Orientation).float2);
                                 bw.Write((GF.Field_Data as Orientation).float3);
                                 bw.Write((GF.Field_Data as Orientation).float4);
                                 break;
-                            case 17:
+                            case GffFieldType.Vector:
                                 bw.Write((GF.Field_Data as Vector).x_component);
                                 bw.Write((GF.Field_Data as Vector).y_component);
                                 bw.Write((GF.Field_Data as Vector).z_component);
                                 break;
-                            case 18:
+                            case GffFieldType.StrRef:
                                 bw.Write((GF.Field_Data as StrRef).leading_value);
                                 bw.Write((GF.Field_Data as StrRef).reference);
                                 break;
@@ -440,39 +473,6 @@ namespace KotOR_IO
                 {
                     bw.Write(LI.Size);
                     foreach (int i in LI.Indices) { bw.Write(i); }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Gets field data given a field label. If more than one fields have this label, type will be <see cref="List{object}"/>, otherwise type will be <see cref="object"/>
-        /// </summary>
-        /// <param name="Field_Label"></param>
-        /// <returns></returns>
-        public object this[string Field_Label]
-        {
-            get
-            {
-                int count = Field_Array.Where(p => p.Label == Field_Label).Count();
-
-                if (count == 0)
-                {
-                    throw new Exception("Field_Label \"" + Field_Label + "\" does not exist in this GFF");
-                }
-
-                else if (count == 1)
-                {
-                    return Field_Array.Where(p => p.Label == Field_Label).FirstOrDefault().Field_Data;
-                }
-
-                else if (count > 1)
-                {
-                    return Field_Array.Where(p => p.Label == Field_Label);
-                }
-
-                else
-                {
-                    throw new Exception("Something has gone seriously wrong. There should not be a negative quantity of Fields.");
                 }
             }
         }
@@ -1394,18 +1394,12 @@ namespace KotOR_IO
         }
 
 
-        #endregion
-
-        #region Nested Classes
-
         //Struct Array
         /// <summary>
         /// A GFF object that holds a set of <see cref="Field"/>s, each having there own type and data.
         /// </summary>
         public class GFFStruct
         {
-            #region Properties
-
             ///<summary>Programmer-defined integer ID for the struct type. Varies from from File to file, though the Top-level struct (0) always has a type equal to 0xFFFFFFFF</summary>
             public int Type;
             ///<summary>
@@ -1419,10 +1413,6 @@ namespace KotOR_IO
             public List<int> Field_Indexes = new List<int>();
             ///<summary>The data stored in this Struct, populated from DataOrDataOffset. Usually takes the form of a <see cref="Field"/> or <see cref="List{Field}"/></summary>
             public object StructData;
-
-            #endregion
-
-            #region Methods
 
             /// <summary>
             /// Adds the specified Field to the Struct
@@ -1504,8 +1494,6 @@ namespace KotOR_IO
                     //Struct should be marked for deletion
                 }
             }
-
-            #endregion
         }
 
         //Field Array
@@ -1655,7 +1643,5 @@ namespace KotOR_IO
             /// <summary> The integer reference to the string in question from dialogue.tlk </summary>
             public int reference;
         }
-
-        #endregion
     }
 }

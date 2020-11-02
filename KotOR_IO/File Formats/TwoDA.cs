@@ -26,7 +26,7 @@ namespace KotOR_IO
         /// Initiates a new instance of the <see cref="TwoDA"/> class.
         /// </summary>
         /// <param name="name">The resource reference string for this 2DA</param>
-        public TwoDA(string name = null)
+        private TwoDA(string name = null)
         {
             Name = name;
         }
@@ -34,18 +34,27 @@ namespace KotOR_IO
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="rawData"></param>
-        /// <param name="name"></param>
+        /// <param name="rawData">A byte array containing the file data.</param>
+        /// <param name="name">The resource reference string for this 2DA</param>
         public TwoDA(byte[] rawData, string name = null)
             : this(new MemoryStream(rawData), name)
         { }
 
         /// <summary>
-        /// Reads Bioware 2-Dimensional Array (v2.b) files
+        /// Reads the given BioWare BIF File.
+        /// </summary>
+        /// <param name="path">File path to read.</param>
+        /// <param name="name">The resource reference string for this 2DA</param>
+        public TwoDA(string path, string name = null)
+            : this(File.OpenRead(path), name)
+        { }
+
+        /// <summary>
+        /// Reads Bioware 2-Dimensional Array (v2.b) files.
         /// </summary>
         /// <param name="s">The Stream from which the File will be Read</param>
         /// <param name="name">The resource reference string for this 2DA</param>
-        public TwoDA(Stream s, string name = null)
+        protected TwoDA(Stream s, string name = null)
             : this(name)
         {
             using (BinaryReader br = new BinaryReader(s))
