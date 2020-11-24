@@ -43,6 +43,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="File Formats\BIF.cs" />
+    <Compile Include="File Formats\ERF.cs" />
+    <Compile Include="File Formats\GFF.cs" />
+    <Compile Include="File Formats\KEY.cs" />
+    <Compile Include="File Formats\KFile.cs" />
+    <Compile Include="File Formats\LTR.cs" />
+    <Compile Include="File Formats\MiscType.cs" />
+    <Compile Include="File Formats\RIM.cs" />
+    <Compile Include="File Formats\SSF.cs" />
+    <Compile Include="File Formats\TLK.cs" />
+    <Compile Include="File Formats\TwoDA.cs" />
     <Compile Include="Temporary.cs" />
     <Compile Include="GFF_Derivatives.cs" />
     <Compile Include="KIO.cs" />
