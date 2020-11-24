@@ -264,6 +264,17 @@ namespace KotOR_IO
             public int DataSize;
             ///<summary> The data contained within this file. </summary>
             public byte[] File_Data; // Populated from the FileData block.
+
+            /// <summary>
+            /// Writes human readable summary of the rFile.
+            /// </summary>
+            /// <returns></returns>
+            public override string ToString()
+            {
+                return Enum.IsDefined(typeof(ResourceType), TypeID) ?
+                    $"{((ResourceType)TypeID).ToDescription()}({TypeID}), {Label}" :
+                    $"??? ({TypeID}), {Label}";
+            }
         }
     }
 }
