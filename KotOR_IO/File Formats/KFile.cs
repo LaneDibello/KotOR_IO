@@ -12,7 +12,7 @@ namespace KotOR_IO
     /// <see cref="TwoDA"/>, 
     /// <see cref="BIF"/>, 
     /// <see cref="ERF"/>, 
-    /// <see cref="GFF"/>, 
+    /// <see cref="GFF_old"/>, 
     /// <see cref="KEY"/>, 
     /// <see cref="LTR"/>, 
     /// <see cref="RIM"/>, 
