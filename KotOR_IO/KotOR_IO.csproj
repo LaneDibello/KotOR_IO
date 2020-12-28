@@ -45,7 +45,27 @@
   <ItemGroup>
     <Compile Include="File Formats\BIF.cs" />
     <Compile Include="File Formats\ERF.cs" />
+    <Compile Include="File Formats\GFF FieldTypes\I_StrRef.cs" />
+    <Compile Include="File Formats\GFF FieldTypes\H_Vector.cs" />
+    <Compile Include="File Formats\GFF FieldTypes\G_Orientation.cs" />
+    <Compile Include="File Formats\GFF FieldTypes\F_List.cs" />
+    <Compile Include="File Formats\GFF FieldTypes\E_Struct.cs" />
+    <Compile Include="File Formats\GFF FieldTypes\D_VOID.cs" />
+    <Compile Include="File Formats\GFF FieldTypes\C_CExoLocString.cs" />
+    <Compile Include="File Formats\GFF FieldTypes\B_ResRef.cs" />
+    <Compile Include="File Formats\GFF FieldTypes\A_CExoString.cs" />
+    <Compile Include="File Formats\GFF FieldTypes\9_DOUBLE.cs" />
+    <Compile Include="File Formats\GFF FieldTypes\8_FLOAT.cs" />
+    <Compile Include="File Formats\GFF FieldTypes\7_INT64.cs" />
+    <Compile Include="File Formats\GFF FieldTypes\6_DWORD64.cs" />
+    <Compile Include="File Formats\GFF FieldTypes\5_INT.cs" />
+    <Compile Include="File Formats\GFF FieldTypes\4_DWORD.cs" />
+    <Compile Include="File Formats\GFF FieldTypes\3_SHORT.cs" />
+    <Compile Include="File Formats\GFF FieldTypes\2_WORD.cs" />
+    <Compile Include="File Formats\GFF FieldTypes\1_CHAR.cs" />
+    <Compile Include="File Formats\GFF FieldTypes\0_BYTE.cs" />
     <Compile Include="File Formats\GFF.cs" />
+    <Compile Include="File Formats\GFF_old.cs" />
     <Compile Include="File Formats\KEY.cs" />
     <Compile Include="File Formats\KFile.cs" />
     <Compile Include="File Formats\LTR.cs" />
@@ -55,7 +75,6 @@
     <Compile Include="File Formats\TLK.cs" />
     <Compile Include="File Formats\TwoDA.cs" />
     <Compile Include="Temporary.cs" />
-    <Compile Include="GFF_Derivatives.cs" />
     <Compile Include="KIO.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">

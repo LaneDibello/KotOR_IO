@@ -194,7 +194,7 @@ namespace KotOR_IO
                     }
                     else if (Reference_Tables.GFFResourceTypes.Contains((ResourceType)file.TypeID))
                     {
-                        return new GFF(file.File_Data);
+                        return new GFF_old(file.File_Data);
                     }
                     else
                     {
