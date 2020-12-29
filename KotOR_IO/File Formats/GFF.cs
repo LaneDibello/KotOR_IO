@@ -8,7 +8,7 @@ namespace KotOR_IO
     /// <summary>
     /// General File Format - The Format used for about 50% of the files in this game. Including, but not limited to: Creatures, Doors, Placeables, Items, Dialogue, GUIs, and Module Layouts
     /// </summary>
-    public partial class GFF
+    public partial class GFF : KFile
     {
         //Type Definitions
         /// <summary>
@@ -25,7 +25,7 @@ namespace KotOR_IO
 
         //Declarations
         public string FileType;
-        public string FileVersion;
+        public string Version;
         public STRUCT Top_Level;
 
         //Construction
@@ -44,15 +44,15 @@ namespace KotOR_IO
             using (BinaryReader br = new BinaryReader(s))
             {
                 FileType = new string(br.ReadChars(4));
-                FileVersion = new string(br.ReadChars(4));
+                Version = new string(br.ReadChars(4));
 
                 Top_Level = new STRUCT(br, 0);
             }
 
         }
 
-        //Write Method
-        public void Write(Stream s)
+        //Write Methods
+        internal override void Write(Stream s)
         {
             //List out all the fields in the file, followed by their DataOrDataOffset, and then their HasCode.
             List<Tuple<FIELD, int, int>> Field_Array = new List<Tuple<FIELD, int, int>>();
@@ -165,7 +165,7 @@ namespace KotOR_IO
             {
                 //header
                 bw.Write(FileType.ToCharArray());
-                bw.Write(FileVersion.ToCharArray());
+                bw.Write(Version.ToCharArray());
                 bw.Write(StructOffset);
                 bw.Write(StructCount);
                 bw.Write(FieldOffset);
@@ -196,6 +196,20 @@ namespace KotOR_IO
 
                 //list indices
                 bw.Write(Raw_List_Indices_Array.ToArray());
+            }
+        }
+
+        public override void WriteToFile(string path)
+        {
+            Write(File.OpenWrite(path));
+        }
+
+        public override byte[] ToRawData()
+        {
+            using (MemoryStream ms = new MemoryStream())
+            {
+                Write(ms);
+                return ms.ToArray(); // Stream is closed, but the array is still available.
             }
         }
 
