@@ -33,6 +33,12 @@ namespace KotOR_IO
         {
             Top_Level = new STRUCT();
         }
+        public GFF(byte[] rawData)
+            : this(new MemoryStream(rawData))
+        { }
+        public GFF(string path)
+            : this(File.OpenRead(path))
+        { }
         public GFF(Stream s)
         {
             using (BinaryReader br = new BinaryReader(s))

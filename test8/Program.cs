@@ -61,9 +61,17 @@ namespace test8
 
         static void Main(string[] args)
         {
-            RIM r = new RIM("D:\\ExampleFiles\\danm13.rim");
-            r.WriteToFile("D:\\ExampleFiles\\danm13T.rim");
-            RIM r2 = new RIM("D:\\ExampleFiles\\danm13T.rim");
+            DirectoryInfo di = new DirectoryInfo("C:\\Program Files (x86)\\Steam\\steamapps\\common\\swkotor\\modules - Copy");
+            foreach (FileInfo fi in di.EnumerateFiles())
+            {
+                RIM r = new RIM(Path.Combine(fi.DirectoryName, fi.Name));
+                r.WriteToFile(Path.Combine("C:\\Program Files (x86)\\Steam\\steamapps\\common\\swkotor\\modules\\", fi.Name));
+            }
+
+
+            //RIM r = new RIM("D:\\ExampleFiles\\danm13.rim");
+            //r.WriteToFile("D:\\ExampleFiles\\danm13T.rim");
+            //RIM r2 = new RIM("D:\\ExampleFiles\\danm13T.rim");
             Console.Write("");
         }
     }
