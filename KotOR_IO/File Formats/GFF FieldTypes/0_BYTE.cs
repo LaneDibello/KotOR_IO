@@ -13,6 +13,13 @@ namespace KotOR_IO
 
             //Construction
             public BYTE() { }
+            public BYTE(string Label, byte value)
+            {
+                if (Label.Length > 16) { throw new Exception($"Label \"{Label}\" is longer than 16 characters, and is invalid."); }
+                this.Type = 0;
+                this.Label = Label;
+                this.value = value;
+            }
             public BYTE(BinaryReader br, int offset)
             {
                 //header info

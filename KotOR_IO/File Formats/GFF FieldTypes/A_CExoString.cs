@@ -12,7 +12,14 @@ namespace KotOR_IO
             public string CEString;
 
             public CExoString() { }
-            public CExoString(BinaryReader br, int offset)
+            public CExoString(string Label, string CEString)
+            {
+                this.Type = 10;
+                if (Label.Length > 16) { throw new Exception($"Label \"{Label}\" is longer than 16 characters, and is invalid."); }
+                this.Label = Label;
+                this.CEString = CEString;
+            }
+            internal CExoString(BinaryReader br, int offset)
             {
                 //Header Info
                 br.BaseStream.Seek(24, 0);

@@ -13,7 +13,14 @@ namespace KotOR_IO
 
             //Construction
             public WORD() { }
-            public WORD(BinaryReader br, int offset)
+            public WORD(string Label, ushort value)
+            {
+                this.Type = 2;
+                if (Label.Length > 16) { throw new Exception($"Label \"{Label}\" is longer than 16 characters, and is invalid."); }
+                this.Label = Label;
+                this.value = value;
+            }
+            internal WORD(BinaryReader br, int offset)
             {
                 //header info
                 br.BaseStream.Seek(24, 0);

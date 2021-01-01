@@ -12,7 +12,21 @@ namespace KotOR_IO
             public string Reference;
 
             public ResRef() { }
-            public ResRef(BinaryReader br, int offset)
+            public ResRef(string Label, string Reference)
+            {
+                this.Type = 11;
+                if (Label.Length > 16) { throw new Exception($"Label \"{Label}\" is longer than 16 characters, and is invalid."); }
+                this.Label = Label;
+                if (Reference.Length <= 16)
+                {
+                    this.Reference = Reference;
+                }
+                else
+                {
+                    throw new Exception($"Reference \"{Reference}\" with a length of {Reference.Length} is longer than 16, and cannot be used for GFF type ResRef");
+                }
+            }
+            internal ResRef(BinaryReader br, int offset)
             {
                 //Header Info
                 br.BaseStream.Seek(24, 0);

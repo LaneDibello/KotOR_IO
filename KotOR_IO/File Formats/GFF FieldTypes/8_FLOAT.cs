@@ -12,7 +12,14 @@ namespace KotOR_IO
             public float value;
 
             public FLOAT() { }
-            public FLOAT(BinaryReader br, int offset)
+            public FLOAT(string Label, float value)
+            {
+                this.Type = 8;
+                if (Label.Length > 16) { throw new Exception($"Label \"{Label}\" is longer than 16 characters, and is invalid."); }
+                this.Label = Label;
+                this.value = value;
+            }
+            internal FLOAT(BinaryReader br, int offset)
             {
                 //header info
                 br.BaseStream.Seek(24, 0);

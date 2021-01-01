@@ -12,7 +12,14 @@ namespace KotOR_IO
             public long value;
 
             public INT64() { }
-            public INT64(BinaryReader br, int offset)
+            public INT64(string Label, long value)
+            {
+                this.Type = 7;
+                if (Label.Length > 16) { throw new Exception($"Label \"{Label}\" is longer than 16 characters, and is invalid."); }
+                this.Label = Label;
+                this.value = value;
+            }
+            internal INT64(BinaryReader br, int offset)
             {
                 //Header Info
                 br.BaseStream.Seek(24, 0);

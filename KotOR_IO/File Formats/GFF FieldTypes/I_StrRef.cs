@@ -13,7 +13,15 @@ namespace KotOR_IO
             public int reference;
 
             public StrRef() { }
-            public StrRef(BinaryReader br, int offset)
+            public StrRef(string Label, int leading_value, int reference)
+            {
+                this.Type = 18;
+                if (Label.Length > 16) { throw new Exception($"Label \"{Label}\" is longer than 16 characters, and is invalid."); }
+                this.Label = Label;
+                this.leading_value = leading_value;
+                this.reference = reference;
+            }
+            internal StrRef(BinaryReader br, int offset)
             {
                 //Header Info
                 br.BaseStream.Seek(24, 0);

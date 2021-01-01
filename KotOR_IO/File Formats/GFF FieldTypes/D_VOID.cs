@@ -12,7 +12,14 @@ namespace KotOR_IO
             public List<byte> data = new List<byte>();
 
             public VOID() { }
-            public VOID(BinaryReader br, int offset)
+            public VOID(string Label, List<byte> data)
+            {
+                this.Type = 13;
+                if (Label.Length > 16) { throw new Exception($"Label \"{Label}\" is longer than 16 characters, and is invalid."); }
+                this.Label = Label;
+                this.data = data;
+            }
+            internal VOID(BinaryReader br, int offset)
             {
                 //Header Info
                 br.BaseStream.Seek(24, 0);
