@@ -20,7 +20,7 @@ namespace KotOR_IO
                 this.Label = Label;
                 this.value = value;
             }
-            public BYTE(BinaryReader br, int offset)
+            internal BYTE(BinaryReader br, int offset)
             {
                 //header info
                 br.BaseStream.Seek(24, 0);

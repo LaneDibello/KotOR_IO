@@ -33,6 +33,12 @@ namespace KotOR_IO
         {
             Top_Level = new STRUCT();
         }
+        public GFF(string FileType, string Version, STRUCT Top_Level)
+        {
+            this.FileType = FileType;
+            this.Version = Version;
+            this.Top_Level = Top_Level;
+        }
         public GFF(byte[] rawData)
             : this(new MemoryStream(rawData))
         { }
