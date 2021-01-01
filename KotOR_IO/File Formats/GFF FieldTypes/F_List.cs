@@ -12,7 +12,14 @@ namespace KotOR_IO
             public List<STRUCT> Structs = new List<STRUCT>();
 
             public LIST() { }
-            public LIST(BinaryReader br, int offset)
+            public LIST(string Label, List<STRUCT> Structs)
+            {
+                this.Type = 15;
+                if (Label.Length > 16) { throw new Exception($"Label \"{Label}\" is longer than 16 characters, and is invalid."); }
+                this.Label = Label;
+                this.Structs = Structs;
+            }
+            internal LIST(BinaryReader br, int offset)
             {
                 //Header Info
                 br.BaseStream.Seek(24, 0);

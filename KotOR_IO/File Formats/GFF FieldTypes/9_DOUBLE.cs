@@ -12,7 +12,14 @@ namespace KotOR_IO
             public double value;
 
             public DOUBLE() { }
-            public DOUBLE(BinaryReader br, int offset)
+            public DOUBLE(string Label, double value)
+            {
+                this.Type = 9;
+                if (Label.Length > 16) { throw new Exception($"Label \"{Label}\" is longer than 16 characters, and is invalid."); }
+                this.Label = Label;
+                this.value = value;
+            }
+            internal DOUBLE(BinaryReader br, int offset)
             {
                 //Header Info
                 br.BaseStream.Seek(24, 0);

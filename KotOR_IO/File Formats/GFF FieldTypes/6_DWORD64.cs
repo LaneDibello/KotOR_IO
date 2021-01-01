@@ -12,7 +12,14 @@ namespace KotOR_IO
             public ulong value;
 
             public DWORD64() { }
-            public DWORD64(BinaryReader br, int offset)
+            public DWORD64(string Label, ulong value)
+            {
+                this.Type = 6;
+                if (Label.Length > 16) { throw new Exception($"Label \"{Label}\" is longer than 16 characters, and is invalid."); }
+                this.Label = Label;
+                this.value = value;
+            }
+            internal DWORD64(BinaryReader br, int offset)
             {
                 //Header Info
                 br.BaseStream.Seek(24, 0);

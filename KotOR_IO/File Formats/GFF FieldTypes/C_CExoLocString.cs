@@ -15,12 +15,26 @@ namespace KotOR_IO
             {
                 public int StringID;
                 public string SString;
+
+                public SubString(int StringID, string SString)
+                {
+                    this.StringID = StringID;
+                    this.SString = SString;
+                }
             }
 
             public List<SubString> Strings = new List<SubString>();
 
             public CExoLocString() { }
-            public CExoLocString(BinaryReader br, int offset)
+            public CExoLocString(string Label, int StringRef, List<SubString> Strings)
+            {
+                this.Type = 12;
+                if (Label.Length > 16) { throw new Exception($"Label \"{Label}\" is longer than 16 characters, and is invalid."); }
+                this.Label = Label;
+                this.StringRef = StringRef;
+                this.Strings = Strings;
+            }
+            internal CExoLocString(BinaryReader br, int offset)
             {
                 //Header Info
                 br.BaseStream.Seek(24, 0);

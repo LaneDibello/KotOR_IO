@@ -14,7 +14,16 @@ namespace KotOR_IO
             public float z;
 
             public Vector() { }
-            public Vector(BinaryReader br, int offset)
+            public Vector(string Label, int x, int y, int z)
+            {
+                this.Type = 17;
+                if (Label.Length > 16) { throw new Exception($"Label \"{Label}\" is longer than 16 characters, and is invalid."); }
+                this.Label = Label;
+                this.x = x;
+                this.y = y;
+                this.z = z;
+            }
+            internal Vector(BinaryReader br, int offset)
             {
                 //Header Info
                 br.BaseStream.Seek(24, 0);

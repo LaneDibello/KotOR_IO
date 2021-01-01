@@ -16,8 +16,15 @@ namespace KotOR_IO
 
             //Construction
             public STRUCT() { }
-
-            public STRUCT(BinaryReader br, int index, int LabelIndex = -1)
+            public STRUCT(string Label, int Struct_Type, List<FIELD> Fields)
+            {
+                this.Type = 14;
+                if (Label.Length > 16) { throw new Exception($"Label \"{Label}\" is longer than 16 characters, and is invalid."); }
+                this.Label = Label;
+                this.Struct_Type = Struct_Type;
+                this.Fields = Fields;
+            }
+            internal STRUCT(BinaryReader br, int index, int LabelIndex = -1)
             {
                 Type = 14;
 

@@ -15,7 +15,17 @@ namespace KotOR_IO
             public float value4;
 
             public Orientation() { }
-            public Orientation(BinaryReader br, int offset)
+            public Orientation(string Label, int value1, int value2, int value3, int value4)
+            {
+                this.Type = 16;
+                if (Label.Length > 16) { throw new Exception($"Label \"{Label}\" is longer than 16 characters, and is invalid."); }
+                this.Label = Label;
+                this.value1 = value1;
+                this.value2 = value2;
+                this.value3 = value3;
+                this.value4 = value4;
+            }
+            internal Orientation(BinaryReader br, int offset)
             {
                 //Header Info
                 br.BaseStream.Seek(24, 0);
