@@ -9,23 +9,22 @@ namespace KotOR_IO
     {
         public class Orientation : FIELD
         {
-            public float value1;
-            public float value2;
-            public float value3;
-            public float value4;
+            public float Value1;
+            public float Value2;
+            public float Value3;
+            public float Value4;
 
-            public Orientation() { }
-            public Orientation(string Label, int value1, int value2, int value3, int value4)
+            public Orientation() : base(GffFieldType.Orientation) { }
+            public Orientation(string label, int value1, int value2, int value3, int value4)
+                : base(GffFieldType.Orientation, label)
             {
-                this.Type = 16;
-                if (Label.Length > 16) { throw new Exception($"Label \"{Label}\" is longer than 16 characters, and is invalid."); }
-                this.Label = Label;
-                this.value1 = value1;
-                this.value2 = value2;
-                this.value3 = value3;
-                this.value4 = value4;
+                Value1 = value1;
+                Value2 = value2;
+                Value3 = value3;
+                Value4 = value4;
             }
             internal Orientation(BinaryReader br, int offset)
+                : base(GffFieldType.Orientation)
             {
                 //Header Info
                 br.BaseStream.Seek(24, 0);
@@ -35,7 +34,7 @@ namespace KotOR_IO
 
                 //Basic Field Data
                 br.BaseStream.Seek(offset, 0);
-                Type = br.ReadInt32();
+                Type = (GffFieldType)br.ReadInt32();
                 int LabelIndex = br.ReadInt32();
                 int DataOrDataOffset = br.ReadInt32();
 
@@ -45,20 +44,20 @@ namespace KotOR_IO
 
                 //Comlex Value Logic
                 br.BaseStream.Seek(FieldDataOffset + DataOrDataOffset, 0);
-                value1 = br.ReadSingle();
-                value2 = br.ReadSingle();
-                value3 = br.ReadSingle();
-                value4 = br.ReadSingle();
+                Value1 = br.ReadSingle();
+                Value2 = br.ReadSingle();
+                Value3 = br.ReadSingle();
+                Value4 = br.ReadSingle();
 
             }
 
             internal override void collect_fields(ref List<Tuple<FIELD, int, int>> Field_Array, ref List<byte> Raw_Field_Data_Block, ref List<string> Label_Array, ref int Struct_Indexer, ref int List_Indices_Counter)
             {
                 Tuple<FIELD, int, int> T = new Tuple<FIELD, int, int>(this, Raw_Field_Data_Block.Count, this.GetHashCode());
-                Raw_Field_Data_Block.AddRange(BitConverter.GetBytes(value1));
-                Raw_Field_Data_Block.AddRange(BitConverter.GetBytes(value2));
-                Raw_Field_Data_Block.AddRange(BitConverter.GetBytes(value3));
-                Raw_Field_Data_Block.AddRange(BitConverter.GetBytes(value4));
+                Raw_Field_Data_Block.AddRange(BitConverter.GetBytes(Value1));
+                Raw_Field_Data_Block.AddRange(BitConverter.GetBytes(Value2));
+                Raw_Field_Data_Block.AddRange(BitConverter.GetBytes(Value3));
+                Raw_Field_Data_Block.AddRange(BitConverter.GetBytes(Value4));
                 Field_Array.Add(T);
 
                 if (!Label_Array.Contains(Label))
@@ -76,16 +75,19 @@ namespace KotOR_IO
                 }
                 else
                 {
-                    return value1 == (obj as Orientation).value1 && value2 == (obj as Orientation).value2 && value3 == (obj as Orientation).value3 && value4 == (obj as Orientation).value4 && Label == (obj as Orientation).Label;
+                    return Value1 == (obj as Orientation).Value1 && Value2 == (obj as Orientation).Value2 && Value3 == (obj as Orientation).Value3 && Value4 == (obj as Orientation).Value4 && Label == (obj as Orientation).Label;
                 }
             }
 
             public override int GetHashCode()
             {
-                return new { Type, value1, value2, value3, value4, Label }.GetHashCode();
+                return new { Type, Value1, Value2, Value3, Value4, Label }.GetHashCode();
             }
 
-
+            public override string ToString()
+            {
+                return $"{base.ToString()}, ({Value1}, {Value2}, {Value3}, {Value4})";
+            }
         }
     }
 } 

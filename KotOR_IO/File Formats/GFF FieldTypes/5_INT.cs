@@ -9,18 +9,17 @@ namespace KotOR_IO
     {
         public class INT : FIELD
         {
-            public int value;
+            public int Value;
 
             //Construction
-            public INT() { }
-            public INT(string Label, int value)
+            public INT() : base(GffFieldType.INT) { }
+            public INT(string label, int value)
+                : base(GffFieldType.INT, label)
             {
-                this.Type = 5;
-                if (Label.Length > 16) { throw new Exception($"Label \"{Label}\" is longer than 16 characters, and is invalid."); }
-                this.Label = Label;
-                this.value = value;
+                Value = value;
             }
             internal INT(BinaryReader br, int offset)
+                : base(GffFieldType.INT)
             {
                 //header info
                 br.BaseStream.Seek(24, 0);
@@ -28,9 +27,9 @@ namespace KotOR_IO
 
                 //Basic Field Data
                 br.BaseStream.Seek(offset, 0);
-                Type = br.ReadInt32();
+                Type = (GffFieldType)br.ReadInt32();
                 int LabelIndex = br.ReadInt32();
-                value = br.ReadInt32();
+                Value = br.ReadInt32();
 
                 //Label Logic
                 br.BaseStream.Seek(LabelOffset + LabelIndex * 16, 0);
@@ -40,7 +39,7 @@ namespace KotOR_IO
 
             internal override void collect_fields(ref List<Tuple<FIELD, int, int>> Field_Array, ref List<byte> Raw_Field_Data_Block, ref List<string> Label_Array, ref int Struct_Indexer, ref int List_Indices_Counter)
             {
-                Tuple<FIELD, int, int> T = new Tuple<FIELD, int, int>(this, (int)value, this.GetHashCode());
+                Tuple<FIELD, int, int> T = new Tuple<FIELD, int, int>(this, (int)Value, this.GetHashCode());
                 Field_Array.Add(T);
 
                 if (!Label_Array.Contains(Label))
@@ -57,16 +56,19 @@ namespace KotOR_IO
                 }
                 else
                 {
-                    return value == (obj as INT).value && Label == (obj as INT).Label;
+                    return Value == (obj as INT).Value && Label == (obj as INT).Label;
                 }
             }
 
             public override int GetHashCode()
             {
-                return new { Type, value, Label }.GetHashCode();
+                return new { Type, Value, Label }.GetHashCode();
             }
 
-
+            public override string ToString()
+            {
+                return $"{base.ToString()}, {Value}";
+            }
         }
     }
 } 

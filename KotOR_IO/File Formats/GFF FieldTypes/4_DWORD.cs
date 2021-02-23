@@ -9,18 +9,17 @@ namespace KotOR_IO
     {
         public class DWORD : FIELD
         {
-            public uint value;
+            public uint Value;
 
             //Construction
-            public DWORD() { }
-            public DWORD(string Label, uint value)
+            public DWORD() : base(GffFieldType.DWORD) { }
+            public DWORD(string label, uint value)
+                : base(GffFieldType.DWORD, label)
             {
-                this.Type = 4;
-                if (Label.Length > 16) { throw new Exception($"Label \"{Label}\" is longer than 16 characters, and is invalid."); }
-                this.Label = Label;
-                this.value = value;
+                Value = value;
             }
             internal DWORD(BinaryReader br, int offset)
+                : base(GffFieldType.DWORD)
             {
                 //header info
                 br.BaseStream.Seek(24, 0);
@@ -28,9 +27,9 @@ namespace KotOR_IO
 
                 //Basic Field Data
                 br.BaseStream.Seek(offset, 0);
-                Type = br.ReadInt32();
+                Type = (GffFieldType)br.ReadInt32();
                 int LabelIndex = br.ReadInt32();
-                value = br.ReadUInt32();
+                Value = br.ReadUInt32();
 
                 //Label Logic
                 br.BaseStream.Seek(LabelOffset + LabelIndex * 16, 0);
@@ -40,7 +39,7 @@ namespace KotOR_IO
 
             internal override void collect_fields(ref List<Tuple<FIELD, int, int>> Field_Array, ref List<byte> Raw_Field_Data_Block, ref List<string> Label_Array, ref int Struct_Indexer, ref int List_Indices_Counter)
             {
-                Tuple<FIELD, int, int> T = new Tuple<FIELD, int, int>(this, BitConverter.ToInt32((BitConverter.GetBytes(value)), 0), this.GetHashCode());
+                Tuple<FIELD, int, int> T = new Tuple<FIELD, int, int>(this, BitConverter.ToInt32((BitConverter.GetBytes(Value)), 0), this.GetHashCode());
                 Field_Array.Add(T);
 
                 if (!Label_Array.Contains(Label))
@@ -57,16 +56,19 @@ namespace KotOR_IO
                 }
                 else
                 {
-                    return value == (obj as DWORD).value && Label == (obj as DWORD).Label;
+                    return Value == (obj as DWORD).Value && Label == (obj as DWORD).Label;
                 }
             }
 
             public override int GetHashCode()
             {
-                return new { Type, value, Label }.GetHashCode();
+                return new { Type, Value, Label }.GetHashCode();
             }
 
-
+            public override string ToString()
+            {
+                return $"{base.ToString()}, {Value}";
+            }
         }
     }
 } 

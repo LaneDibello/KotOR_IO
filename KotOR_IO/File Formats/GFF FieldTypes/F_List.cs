@@ -11,15 +11,15 @@ namespace KotOR_IO
         {
             public List<STRUCT> Structs = new List<STRUCT>();
 
-            public LIST() { }
-            public LIST(string Label, List<STRUCT> Structs)
+            public LIST() : base(GffFieldType.List) { }
+            public LIST(string label, List<STRUCT> structs)
+                : base(GffFieldType.List, label)
             {
-                this.Type = 15;
-                if (Label.Length > 16) { throw new Exception($"Label \"{Label}\" is longer than 16 characters, and is invalid."); }
-                this.Label = Label;
-                this.Structs = Structs;
+                Label = label;
+                Structs = structs;
             }
             internal LIST(BinaryReader br, int offset)
+                : base(GffFieldType.List)
             {
                 //Header Info
                 br.BaseStream.Seek(24, 0);
@@ -34,7 +34,7 @@ namespace KotOR_IO
 
                 //Basic Field Data
                 br.BaseStream.Seek(offset, 0);
-                Type = br.ReadInt32();
+                Type = (GffFieldType)br.ReadInt32();
                 int LabelIndex = br.ReadInt32();
                 int DataOrDataOffset = br.ReadInt32();
 
@@ -116,7 +116,10 @@ namespace KotOR_IO
                 return new { Type, partial_hash, Label }.GetHashCode();
             }
 
-
+            public override string ToString()
+            {
+                return $"{base.ToString()}, # of Structs = {Structs?.Count ?? 0}";
+            }
         }
     }
 } 

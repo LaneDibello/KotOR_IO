@@ -9,18 +9,17 @@ namespace KotOR_IO
     {
         public class SHORT : FIELD
         {
-            public short value;
+            public short Value;
 
             //Construction
-            public SHORT() { }
-            public SHORT(string Label, short value)
+            public SHORT() : base(GffFieldType.SHORT) { }
+            public SHORT(string label, short value)
+                : base(GffFieldType.SHORT, label)
             {
-                this.Type = 3;
-                if (Label.Length > 16) { throw new Exception($"Label \"{Label}\" is longer than 16 characters, and is invalid."); }
-                this.Label = Label;
-                this.value = value;
+                Value = value;
             }
             internal SHORT(BinaryReader br, int offset)
+                : base(GffFieldType.SHORT)
             {
                 //header info
                 br.BaseStream.Seek(24, 0);
@@ -28,9 +27,9 @@ namespace KotOR_IO
 
                 //Basic Field Data
                 br.BaseStream.Seek(offset, 0);
-                Type = br.ReadInt32();
+                Type = (GffFieldType)br.ReadInt32();
                 int LabelIndex = br.ReadInt32();
-                value = br.ReadInt16();
+                Value = br.ReadInt16();
 
                 //Label Logic
                 br.BaseStream.Seek(LabelOffset + LabelIndex * 16, 0);
@@ -40,7 +39,7 @@ namespace KotOR_IO
 
             internal override void collect_fields(ref List<Tuple<FIELD, int, int>> Field_Array, ref List<byte> Raw_Field_Data_Block, ref List<string> Label_Array, ref int Struct_Indexer, ref int List_Indices_Counter)
             {
-                Tuple<FIELD, int, int> T = new Tuple<FIELD, int, int>(this, (int)value, this.GetHashCode());
+                Tuple<FIELD, int, int> T = new Tuple<FIELD, int, int>(this, (int)Value, this.GetHashCode());
                 Field_Array.Add(T);
 
                 if (!Label_Array.Contains(Label))
@@ -57,16 +56,19 @@ namespace KotOR_IO
                 }
                 else
                 {
-                    return value == (obj as SHORT).value && Label == (obj as SHORT).Label;
+                    return Value == (obj as SHORT).Value && Label == (obj as SHORT).Label;
                 }
             }
 
             public override int GetHashCode()
             {
-                return new { Type, value, Label }.GetHashCode();
+                return new { Type, Value, Label }.GetHashCode();
             }
 
-
+            public override string ToString()
+            {
+                return $"{base.ToString()}, {Value}";
+            }
         }
     }
 } 

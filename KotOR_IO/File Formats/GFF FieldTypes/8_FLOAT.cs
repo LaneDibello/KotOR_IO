@@ -9,17 +9,16 @@ namespace KotOR_IO
     {
         public class FLOAT : FIELD
         {
-            public float value;
+            public float Value;
 
-            public FLOAT() { }
-            public FLOAT(string Label, float value)
+            public FLOAT() : base(GffFieldType.FLOAT) { }
+            public FLOAT(string label, float value)
+                : base(GffFieldType.FLOAT, label)
             {
-                this.Type = 8;
-                if (Label.Length > 16) { throw new Exception($"Label \"{Label}\" is longer than 16 characters, and is invalid."); }
-                this.Label = Label;
-                this.value = value;
+                Value = value;
             }
             internal FLOAT(BinaryReader br, int offset)
+                : base(GffFieldType.FLOAT)
             {
                 //header info
                 br.BaseStream.Seek(24, 0);
@@ -27,9 +26,9 @@ namespace KotOR_IO
 
                 //Basic Field Data
                 br.BaseStream.Seek(offset, 0);
-                Type = br.ReadInt32();
+                Type = (GffFieldType)br.ReadInt32();
                 int LabelIndex = br.ReadInt32();
-                value = br.ReadSingle();
+                Value = br.ReadSingle();
 
                 //Label Logic
                 br.BaseStream.Seek(LabelOffset + LabelIndex * 16, 0);
@@ -39,7 +38,7 @@ namespace KotOR_IO
 
             internal override void collect_fields(ref List<Tuple<FIELD, int, int>> Field_Array, ref List<byte> Raw_Field_Data_Block, ref List<string> Label_Array, ref int Struct_Indexer, ref int List_Indices_Counter)
             {
-                Tuple<FIELD, int, int> T = new Tuple<FIELD, int, int>(this, BitConverter.ToInt32((BitConverter.GetBytes(value)), 0), this.GetHashCode());
+                Tuple<FIELD, int, int> T = new Tuple<FIELD, int, int>(this, BitConverter.ToInt32((BitConverter.GetBytes(Value)), 0), this.GetHashCode());
                 Field_Array.Add(T);
 
                 if (!Label_Array.Contains(Label))
@@ -56,16 +55,19 @@ namespace KotOR_IO
                 }
                 else
                 {
-                    return value == (obj as FLOAT).value && Label == (obj as FLOAT).Label;
+                    return Value == (obj as FLOAT).Value && Label == (obj as FLOAT).Label;
                 }
             }
 
             public override int GetHashCode()
             {
-                return new { Type, value, Label }.GetHashCode();
+                return new { Type, Value, Label }.GetHashCode();
             }
 
-
+            public override string ToString()
+            {
+                return $"{base.ToString()}, {Value}";
+            }
         }
     }
 } 

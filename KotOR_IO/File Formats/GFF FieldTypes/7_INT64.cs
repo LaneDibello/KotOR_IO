@@ -9,17 +9,16 @@ namespace KotOR_IO
     {
         public class INT64 : FIELD
         {
-            public long value;
+            public long Value;
 
-            public INT64() { }
-            public INT64(string Label, long value)
+            public INT64() : base(GffFieldType.INT64) { }
+            public INT64(string label, long value)
+                : base(GffFieldType.INT64, label)
             {
-                this.Type = 7;
-                if (Label.Length > 16) { throw new Exception($"Label \"{Label}\" is longer than 16 characters, and is invalid."); }
-                this.Label = Label;
-                this.value = value;
+                Value = value;
             }
             internal INT64(BinaryReader br, int offset)
+                : base(GffFieldType.INT64)
             {
                 //Header Info
                 br.BaseStream.Seek(24, 0);
@@ -29,7 +28,7 @@ namespace KotOR_IO
 
                 //Basic Field Data
                 br.BaseStream.Seek(offset, 0);
-                Type = br.ReadInt32();
+                Type = (GffFieldType)br.ReadInt32();
                 int LabelIndex = br.ReadInt32();
                 int DataOrDataOffset = br.ReadInt32();
 
@@ -39,7 +38,7 @@ namespace KotOR_IO
 
                 //Comlex Value Logic
                 br.BaseStream.Seek(FieldDataOffset + DataOrDataOffset, 0);
-                value = br.ReadInt64();
+                Value = br.ReadInt64();
 
 
             }
@@ -47,7 +46,7 @@ namespace KotOR_IO
             internal override void collect_fields(ref List<Tuple<FIELD, int, int>> Field_Array, ref List<byte> Raw_Field_Data_Block, ref List<string> Label_Array, ref int Struct_Indexer, ref int List_Indices_Counter)
             {
                 Tuple<FIELD, int, int> T = new Tuple<FIELD, int, int>(this, Raw_Field_Data_Block.Count, this.GetHashCode());
-                Raw_Field_Data_Block.AddRange(BitConverter.GetBytes(value));
+                Raw_Field_Data_Block.AddRange(BitConverter.GetBytes(Value));
                 Field_Array.Add(T);
 
                 if (!Label_Array.Contains(Label))
@@ -64,16 +63,19 @@ namespace KotOR_IO
                 }
                 else
                 {
-                    return value == (obj as INT64).value && Label == (obj as INT64).Label;
+                    return Value == (obj as INT64).Value && Label == (obj as INT64).Label;
                 }
             }
 
             public override int GetHashCode()
             {
-                return new { Type, value, Label }.GetHashCode();
+                return new { Type, Value, Label }.GetHashCode();
             }
 
-
+            public override string ToString()
+            {
+                return $"{base.ToString()}, {Value}";
+            }
         }
     }
 } 
