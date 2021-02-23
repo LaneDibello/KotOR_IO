@@ -11,22 +11,16 @@ namespace KotOR_IO
         {
             public string Reference;
 
-            public ResRef() { }
-            public ResRef(string Label, string Reference)
+            public ResRef() : base(GffFieldType.ResRef) { }
+            public ResRef(string label, string reference)
+                : base(GffFieldType.ResRef, label)
             {
-                this.Type = 11;
-                if (Label.Length > 16) { throw new Exception($"Label \"{Label}\" is longer than 16 characters, and is invalid."); }
-                this.Label = Label;
-                if (Reference.Length <= 16)
-                {
-                    this.Reference = Reference;
-                }
-                else
-                {
-                    throw new Exception($"Reference \"{Reference}\" with a length of {Reference.Length} is longer than 16, and cannot be used for GFF type ResRef");
-                }
+                if (reference.Length > MAX_LABEL_LENGTH)
+                    throw new Exception($"Reference \"{reference}\" with a length of {reference.Length} is longer than {MAX_LABEL_LENGTH} characters, and cannot be used for GFF type ResRef");
+                Reference = reference;
             }
             internal ResRef(BinaryReader br, int offset)
+                : base(GffFieldType.ResRef)
             {
                 //Header Info
                 br.BaseStream.Seek(24, 0);
@@ -36,7 +30,7 @@ namespace KotOR_IO
 
                 //Basic Field Data
                 br.BaseStream.Seek(offset, 0);
-                Type = br.ReadInt32();
+                Type = (GffFieldType)br.ReadInt32();
                 int LabelIndex = br.ReadInt32();
                 int DataOrDataOffset = br.ReadInt32();
 
@@ -81,7 +75,10 @@ namespace KotOR_IO
                 return new { Type, Reference, Label }.GetHashCode();
             }
 
-
+            public override string ToString()
+            {
+                return $"{base.ToString()}, \"{Reference}\"";
+            }
         }
     }
 } 

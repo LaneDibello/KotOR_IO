@@ -9,21 +9,20 @@ namespace KotOR_IO
     {
         public class Vector : FIELD
         {
-            public float x;
-            public float y;
-            public float z;
+            public float X;
+            public float Y;
+            public float Z;
 
-            public Vector() { }
-            public Vector(string Label, int x, int y, int z)
+            public Vector() : base(GffFieldType.Vector) { }
+            public Vector(string label, int x, int y, int z)
+                : base(GffFieldType.Vector, label)
             {
-                this.Type = 17;
-                if (Label.Length > 16) { throw new Exception($"Label \"{Label}\" is longer than 16 characters, and is invalid."); }
-                this.Label = Label;
-                this.x = x;
-                this.y = y;
-                this.z = z;
+                X = x;
+                Y = y;
+                Z = z;
             }
             internal Vector(BinaryReader br, int offset)
+                : base(GffFieldType.Vector)
             {
                 //Header Info
                 br.BaseStream.Seek(24, 0);
@@ -33,7 +32,7 @@ namespace KotOR_IO
 
                 //Basic Field Data
                 br.BaseStream.Seek(offset, 0);
-                Type = br.ReadInt32();
+                Type = (GffFieldType)br.ReadInt32();
                 int LabelIndex = br.ReadInt32();
                 int DataOrDataOffset = br.ReadInt32();
 
@@ -43,18 +42,18 @@ namespace KotOR_IO
 
                 //Comlex Value Logic
                 br.BaseStream.Seek(FieldDataOffset + DataOrDataOffset, 0);
-                x = br.ReadSingle();
-                y = br.ReadSingle();
-                z = br.ReadSingle();
+                X = br.ReadSingle();
+                Y = br.ReadSingle();
+                Z = br.ReadSingle();
 
             }
 
             internal override void collect_fields(ref List<Tuple<FIELD, int, int>> Field_Array, ref List<byte> Raw_Field_Data_Block, ref List<string> Label_Array, ref int Struct_Indexer, ref int List_Indices_Counter)
             {
                 Tuple<FIELD, int, int> T = new Tuple<FIELD, int, int>(this, Raw_Field_Data_Block.Count, this.GetHashCode());
-                Raw_Field_Data_Block.AddRange(BitConverter.GetBytes(x));
-                Raw_Field_Data_Block.AddRange(BitConverter.GetBytes(y));
-                Raw_Field_Data_Block.AddRange(BitConverter.GetBytes(z));
+                Raw_Field_Data_Block.AddRange(BitConverter.GetBytes(X));
+                Raw_Field_Data_Block.AddRange(BitConverter.GetBytes(Y));
+                Raw_Field_Data_Block.AddRange(BitConverter.GetBytes(Z));
                 Field_Array.Add(T);
 
                 if (!Label_Array.Contains(Label))
@@ -71,16 +70,19 @@ namespace KotOR_IO
                 }
                 else
                 {
-                    return x == (obj as Vector).x && y == (obj as Vector).y && z == (obj as Vector).z && Label == (obj as Vector).Label;
+                    return X == (obj as Vector).X && Y == (obj as Vector).Y && Z == (obj as Vector).Z && Label == (obj as Vector).Label;
                 }
             }
 
             public override int GetHashCode()
             {
-                return new { Type, x, y, z, Label }.GetHashCode();
+                return new { Type, X, Y, Z, Label }.GetHashCode();
             }
 
-
+            public override string ToString()
+            {
+                return $"{base.ToString()}, ({X}, {Y}, {Z})";
+            }
         }
     }
 } 

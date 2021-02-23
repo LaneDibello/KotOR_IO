@@ -21,20 +21,24 @@ namespace KotOR_IO
                     this.StringID = StringID;
                     this.SString = SString;
                 }
+
+                public override string ToString()
+                {
+                    return $"({StringID}:\'{SString}\')";
+                }
             }
 
             public List<SubString> Strings = new List<SubString>();
 
-            public CExoLocString() { }
-            public CExoLocString(string Label, int StringRef, List<SubString> Strings)
+            public CExoLocString() : base(GffFieldType.CExoLocString) { }
+            public CExoLocString(string label, int strRef, List<SubString> strings)
+                : base(GffFieldType.CExoLocString, label)
             {
-                this.Type = 12;
-                if (Label.Length > 16) { throw new Exception($"Label \"{Label}\" is longer than 16 characters, and is invalid."); }
-                this.Label = Label;
-                this.StringRef = StringRef;
-                this.Strings = Strings;
+                StringRef = strRef;
+                Strings = strings;
             }
             internal CExoLocString(BinaryReader br, int offset)
+                : base(GffFieldType.CExoLocString)
             {
                 //Header Info
                 br.BaseStream.Seek(24, 0);
@@ -44,7 +48,7 @@ namespace KotOR_IO
 
                 //Basic Field Data
                 br.BaseStream.Seek(offset, 0);
-                Type = br.ReadInt32();
+                Type = (GffFieldType)br.ReadInt32();
                 int LabelIndex = br.ReadInt32();
                 int DataOrDataOffset = br.ReadInt32();
 
@@ -142,7 +146,10 @@ namespace KotOR_IO
                 return new { Type, StringRef, partial_hash, Label }.GetHashCode();
             }
 
-
+            public override string ToString()
+            {
+                return $"{base.ToString()}, \"{StringRef}\", # of Strings = {Strings?.Count ?? 0}";
+            }
         }
     }
 } 

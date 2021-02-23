@@ -11,15 +11,14 @@ namespace KotOR_IO
         {
             public string CEString;
 
-            public CExoString() { }
-            public CExoString(string Label, string CEString)
+            public CExoString() : base(GffFieldType.CExoString) { }
+            public CExoString(string label, string cEString)
+                : base(GffFieldType.CExoString, label)
             {
-                this.Type = 10;
-                if (Label.Length > 16) { throw new Exception($"Label \"{Label}\" is longer than 16 characters, and is invalid."); }
-                this.Label = Label;
-                this.CEString = CEString;
+                CEString = cEString;
             }
             internal CExoString(BinaryReader br, int offset)
+                : base(GffFieldType.CExoString)
             {
                 //Header Info
                 br.BaseStream.Seek(24, 0);
@@ -29,7 +28,7 @@ namespace KotOR_IO
 
                 //Basic Field Data
                 br.BaseStream.Seek(offset, 0);
-                Type = br.ReadInt32();
+                Type = (GffFieldType)br.ReadInt32();
                 int LabelIndex = br.ReadInt32();
                 int DataOrDataOffset = br.ReadInt32();
 
@@ -74,7 +73,10 @@ namespace KotOR_IO
                 return new { Type, CEString, Label }.GetHashCode();
             }
 
-
+            public override string ToString()
+            {
+                return $"{base.ToString()}, \"{CEString}\"";
+            }
         }
     }
 } 

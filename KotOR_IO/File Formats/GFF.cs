@@ -16,10 +16,26 @@ namespace KotOR_IO
         /// </summary>
         public abstract class FIELD //A GFF is just a collection of nested fields
         {
-            public int Type;
+            public const int MAX_LABEL_LENGTH = 16;
+
+            public GffFieldType Type;
             public string Label;
 
             abstract internal void collect_fields(ref List<Tuple<FIELD, int, int>> Field_Array, ref List<byte> Raw_Field_Data_Block, ref List<string> Label_Array, ref int Struct_Indexer, ref int List_Indices_Counter);
+
+            internal FIELD(GffFieldType type, string label = "")
+            {
+                if (label.Length > MAX_LABEL_LENGTH)
+                    throw new Exception($"Label \"{label}\" is longer than {MAX_LABEL_LENGTH} characters, and is invalid.");
+
+                Type = type;
+                Label = label;
+            }
+
+            public override string ToString()
+            {
+                return $"[{Type}] \"{Label}\"";
+            }
         }
 
 
@@ -83,7 +99,7 @@ namespace KotOR_IO
             //Preparing raw struct data
             for (int i = 0; i < Struct_Indexer; i++)
             {
-                STRUCT S = Field_Array.Where(x => x.Item1.Type == 14 && x.Item2 == i).Select(x => x.Item1 as STRUCT).FirstOrDefault();
+                STRUCT S = Field_Array.Where(x => x.Item1.Type == GffFieldType.Struct && x.Item2 == i).Select(x => x.Item1 as STRUCT).FirstOrDefault();
                 Raw_Struct_Array.AddRange(BitConverter.GetBytes(S.Struct_Type));
                 int f_count = S.Fields.Count;
                 if (f_count == 1)
@@ -121,7 +137,7 @@ namespace KotOR_IO
             //Preparing raw Field data
             foreach (Tuple<FIELD, int, int> T in Field_Array)
             {
-                Raw_Field_Array.AddRange(BitConverter.GetBytes(T.Item1.Type)); //Field Type
+                Raw_Field_Array.AddRange(BitConverter.GetBytes((int)T.Item1.Type)); //Field Type
                 int lbl_index = Label_Array.IndexOf(T.Item1.Label); //Find Label index
                 Raw_Field_Array.AddRange(BitConverter.GetBytes(lbl_index)); //Label index
                 Raw_Field_Array.AddRange(BitConverter.GetBytes(T.Item2)); //DataOrDataOffset
@@ -139,7 +155,7 @@ namespace KotOR_IO
             //Preparing raw List indices data
             for (int i = 0; i < List_Indices_Counter;)
             {
-                LIST L = Field_Array.Where(x => x.Item1.Type == 15 && x.Item2 == Raw_List_Indices_Array.Count).Select(x => x.Item1 as LIST).FirstOrDefault();
+                LIST L = Field_Array.Where(x => x.Item1.Type == GffFieldType.List && x.Item2 == Raw_List_Indices_Array.Count).Select(x => x.Item1 as LIST).FirstOrDefault();
                 Raw_List_Indices_Array.AddRange(BitConverter.GetBytes(L.Structs.Count));
                 foreach (STRUCT S in L.Structs)
                 {

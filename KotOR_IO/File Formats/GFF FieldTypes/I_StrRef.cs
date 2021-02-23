@@ -9,19 +9,18 @@ namespace KotOR_IO
     {
         public class StrRef : FIELD
         {
-            public int leading_value;
-            public int reference;
+            public int LeadingValue;
+            public int Reference;
 
-            public StrRef() { }
-            public StrRef(string Label, int leading_value, int reference)
+            public StrRef() : base(GffFieldType.StrRef) { }
+            public StrRef(string label, int leading_value, int reference)
+                : base(GffFieldType.StrRef, label)
             {
-                this.Type = 18;
-                if (Label.Length > 16) { throw new Exception($"Label \"{Label}\" is longer than 16 characters, and is invalid."); }
-                this.Label = Label;
-                this.leading_value = leading_value;
-                this.reference = reference;
+                LeadingValue = leading_value;
+                Reference = reference;
             }
             internal StrRef(BinaryReader br, int offset)
+                : base(GffFieldType.StrRef)
             {
                 //Header Info
                 br.BaseStream.Seek(24, 0);
@@ -31,7 +30,7 @@ namespace KotOR_IO
 
                 //Basic Field Data
                 br.BaseStream.Seek(offset, 0);
-                Type = br.ReadInt32();
+                Type = (GffFieldType)br.ReadInt32();
                 int LabelIndex = br.ReadInt32();
                 int DataOrDataOffset = br.ReadInt32();
 
@@ -41,16 +40,16 @@ namespace KotOR_IO
 
                 //Comlex Value Logic
                 br.BaseStream.Seek(FieldDataOffset + DataOrDataOffset, 0);
-                leading_value = br.ReadInt32();
-                reference = br.ReadInt32();
+                LeadingValue = br.ReadInt32();
+                Reference = br.ReadInt32();
 
             }
 
             internal override void collect_fields(ref List<Tuple<FIELD, int, int>> Field_Array, ref List<byte> Raw_Field_Data_Block, ref List<string> Label_Array, ref int Struct_Indexer, ref int List_Indices_Counter)
             {
                 Tuple<FIELD, int, int> T = new Tuple<FIELD, int, int>(this, Raw_Field_Data_Block.Count, this.GetHashCode());
-                Raw_Field_Data_Block.AddRange(BitConverter.GetBytes(leading_value));
-                Raw_Field_Data_Block.AddRange(BitConverter.GetBytes(reference));
+                Raw_Field_Data_Block.AddRange(BitConverter.GetBytes(LeadingValue));
+                Raw_Field_Data_Block.AddRange(BitConverter.GetBytes(Reference));
                 Field_Array.Add(T);
 
                 if (!Label_Array.Contains(Label))
@@ -67,16 +66,19 @@ namespace KotOR_IO
                 }
                 else
                 {
-                    return leading_value == (obj as StrRef).leading_value && reference == (obj as StrRef).reference && Label == (obj as StrRef).Label;
+                    return LeadingValue == (obj as StrRef).LeadingValue && Reference == (obj as StrRef).Reference && Label == (obj as StrRef).Label;
                 }
             }
 
             public override int GetHashCode()
             {
-                return new { Type, leading_value, reference, Label }.GetHashCode();
+                return new { Type, LeadingValue, Reference, Label }.GetHashCode();
             }
 
-
+            public override string ToString()
+            {
+                return $"{base.ToString()}, Leading Value = {LeadingValue}, StrRef = {Reference}";
+            }
         }
     }
 } 

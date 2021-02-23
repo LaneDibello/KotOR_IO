@@ -15,19 +15,16 @@ namespace KotOR_IO
             public List<FIELD> Fields = new List<FIELD>();
 
             //Construction
-            public STRUCT() { }
-            public STRUCT(string Label, int Struct_Type, List<FIELD> Fields)
+            public STRUCT() : base(GffFieldType.Struct) { }
+            public STRUCT(string label, int structType, List<FIELD> fields)
+                : base(GffFieldType.Struct, label)
             {
-                this.Type = 14;
-                if (Label.Length > 16) { throw new Exception($"Label \"{Label}\" is longer than 16 characters, and is invalid."); }
-                this.Label = Label;
-                this.Struct_Type = Struct_Type;
-                this.Fields = Fields;
+                Struct_Type = structType;
+                Fields = fields;
             }
             internal STRUCT(BinaryReader br, int index, int LabelIndex = -1)
+                : base(GffFieldType.Struct)
             {
-                Type = 14;
-
                 //Header Info
                 br.BaseStream.Seek(8, 0);
                 int StructOffset = br.ReadInt32();
@@ -61,71 +58,8 @@ namespace KotOR_IO
                 if (S_FieldCount == 1)
                 {
                     br.BaseStream.Seek(FieldOffset + DataOrDataOffset * 12, 0);
-                    int Field_Type = br.ReadInt32();
-                    FIELD data;
-                    switch (Field_Type)
-                    {
-                        case 0:
-                            data = new BYTE(br, FieldOffset + DataOrDataOffset * 12);
-                            break;
-                        case 1:
-                            data = new CHAR(br, FieldOffset + DataOrDataOffset * 12);
-                            break;
-                        case 2:
-                            data = new WORD(br, FieldOffset + DataOrDataOffset * 12);
-                            break;
-                        case 3:
-                            data = new SHORT(br, FieldOffset + DataOrDataOffset * 12);
-                            break;
-                        case 4:
-                            data = new DWORD(br, FieldOffset + DataOrDataOffset * 12);
-                            break;
-                        case 5:
-                            data = new INT(br, FieldOffset + DataOrDataOffset * 12);
-                            break;
-                        case 6:
-                            data = new DWORD64(br, FieldOffset + DataOrDataOffset * 12);
-                            break;
-                        case 7:
-                            data = new INT64(br, FieldOffset + DataOrDataOffset * 12);
-                            break;
-                        case 8:
-                            data = new FLOAT(br, FieldOffset + DataOrDataOffset * 12);
-                            break;
-                        case 9:
-                            data = new DOUBLE(br, FieldOffset + DataOrDataOffset * 12);
-                            break;
-                        case 10:
-                            data = new CExoString(br, FieldOffset + DataOrDataOffset * 12);
-                            break;
-                        case 11:
-                            data = new ResRef(br, FieldOffset + DataOrDataOffset * 12);
-                            break;
-                        case 12:
-                            data = new CExoLocString(br, FieldOffset + DataOrDataOffset * 12);
-                            break;
-                        case 13:
-                            data = new VOID(br, FieldOffset + DataOrDataOffset * 12);
-                            break;
-                        case 14:
-                            int lbl_index = br.ReadInt32();
-                            data = new STRUCT(br, br.ReadInt32(), lbl_index);
-                            break;
-                        case 15:
-                            data = new LIST(br, FieldOffset + DataOrDataOffset * 12);
-                            break;
-                        case 16:
-                            data = new Orientation(br, FieldOffset + DataOrDataOffset * 12);
-                            break;
-                        case 17:
-                            data = new Vector(br, FieldOffset + DataOrDataOffset * 12);
-                            break;
-                        case 18:
-                            data = new StrRef(br, FieldOffset + DataOrDataOffset * 12);
-                            break;
-                        default:
-                            throw new Exception(string.Format("UNEXPECTED FIELD TYPE \"{0}\", IN STRUCT INDEX \"{1}\"", Field_Type, index));
-                    }
+                    GffFieldType fieldType = (GffFieldType)br.ReadInt32();
+                    FIELD data = CreateNewField(br, index, FieldOffset, DataOrDataOffset, fieldType);
                     Fields.Add(data);
                 }
                 //If there is more than one field, a set of Indices are read off, and then those fields are read in
@@ -137,71 +71,8 @@ namespace KotOR_IO
                         int f_index = br.ReadInt32();
 
                         br.BaseStream.Seek(FieldOffset + f_index * 12, 0);
-                        int Field_Type = br.ReadInt32();
-                        FIELD data;
-                        switch (Field_Type)
-                        {
-                            case 0:
-                                data = new BYTE(br, FieldOffset + f_index * 12);
-                                break;
-                            case 1:
-                                data = new CHAR(br, FieldOffset + f_index * 12);
-                                break;
-                            case 2:
-                                data = new WORD(br, FieldOffset + f_index * 12);
-                                break;
-                            case 3:
-                                data = new SHORT(br, FieldOffset + f_index * 12);
-                                break;
-                            case 4:
-                                data = new DWORD(br, FieldOffset + f_index * 12);
-                                break;
-                            case 5:
-                                data = new INT(br, FieldOffset + f_index * 12);
-                                break;
-                            case 6:
-                                data = new DWORD64(br, FieldOffset + f_index * 12);
-                                break;
-                            case 7:
-                                data = new INT64(br, FieldOffset + f_index * 12);
-                                break;
-                            case 8:
-                                data = new FLOAT(br, FieldOffset + f_index * 12);
-                                break;
-                            case 9:
-                                data = new DOUBLE(br, FieldOffset + f_index * 12);
-                                break;
-                            case 10:
-                                data = new CExoString(br, FieldOffset + f_index * 12);
-                                break;
-                            case 11:
-                                data = new ResRef(br, FieldOffset + f_index * 12);
-                                break;
-                            case 12:
-                                data = new CExoLocString(br, FieldOffset + f_index * 12);
-                                break;
-                            case 13:
-                                data = new VOID(br, FieldOffset + f_index * 12);
-                                break;
-                            case 14:
-                                int lbl_index = br.ReadInt32();
-                                data = new STRUCT(br, br.ReadInt32(), lbl_index);
-                                break;
-                            case 15:
-                                data = new LIST(br, FieldOffset + f_index * 12);
-                                break;
-                            case 16:
-                                data = new Orientation(br, FieldOffset + f_index * 12);
-                                break;
-                            case 17:
-                                data = new Vector(br, FieldOffset + f_index * 12);
-                                break;
-                            case 18:
-                                data = new StrRef(br, FieldOffset + f_index * 12);
-                                break;
-                            default:
-                                throw new Exception(string.Format("UNEXPECTED FIELD TYPE \"{0}\", IN STRUCT INDEX \"{1}\"", Field_Type, index));
-                        }
+                        GffFieldType fieldType = (GffFieldType)br.ReadInt32();
+                        FIELD data = CreateNewField(br, index, FieldOffset, f_index, fieldType);
                         Fields.Add(data);
                     }
                 }
@@ -214,6 +85,78 @@ namespace KotOR_IO
                     throw new Exception(string.Format("BAD FIELD COUNT \"{0}\", IN STRUCT INDEX \"{1}\"", S_FieldCount, index));
                 }
             }
+
+            private static FIELD CreateNewField(BinaryReader br, int index, int fieldOffset, int dataOrDataOffset, GffFieldType fieldType)
+            {
+                FIELD data;
+                switch (fieldType)
+                {
+                    case GffFieldType.BYTE:
+                        data = new BYTE(br, fieldOffset + dataOrDataOffset * 12);
+                        break;
+                    case GffFieldType.CHAR:
+                        data = new CHAR(br, fieldOffset + dataOrDataOffset * 12);
+                        break;
+                    case GffFieldType.WORD:
+                        data = new WORD(br, fieldOffset + dataOrDataOffset * 12);
+                        break;
+                    case GffFieldType.SHORT:
+                        data = new SHORT(br, fieldOffset + dataOrDataOffset * 12);
+                        break;
+                    case GffFieldType.DWORD:
+                        data = new DWORD(br, fieldOffset + dataOrDataOffset * 12);
+                        break;
+                    case GffFieldType.INT:
+                        data = new INT(br, fieldOffset + dataOrDataOffset * 12);
+                        break;
+                    case GffFieldType.DWORD64:
+                        data = new DWORD64(br, fieldOffset + dataOrDataOffset * 12);
+                        break;
+                    case GffFieldType.INT64:
+                        data = new INT64(br, fieldOffset + dataOrDataOffset * 12);
+                        break;
+                    case GffFieldType.FLOAT:
+                        data = new FLOAT(br, fieldOffset + dataOrDataOffset * 12);
+                        break;
+                    case GffFieldType.DOUBLE:
+                        data = new DOUBLE(br, fieldOffset + dataOrDataOffset * 12);
+                        break;
+                    case GffFieldType.CExoString:
+                        data = new CExoString(br, fieldOffset + dataOrDataOffset * 12);
+                        break;
+                    case GffFieldType.ResRef:
+                        data = new ResRef(br, fieldOffset + dataOrDataOffset * 12);
+                        break;
+                    case GffFieldType.CExoLocString:
+                        data = new CExoLocString(br, fieldOffset + dataOrDataOffset * 12);
+                        break;
+                    case GffFieldType.VOID:
+                        data = new VOID(br, fieldOffset + dataOrDataOffset * 12);
+                        break;
+                    case GffFieldType.Struct:
+                        int lbl_index = br.ReadInt32();
+                        data = new STRUCT(br, br.ReadInt32(), lbl_index);
+                        break;
+                    case GffFieldType.List:
+                        data = new LIST(br, fieldOffset + dataOrDataOffset * 12);
+                        break;
+                    case GffFieldType.Orientation:
+                        data = new Orientation(br, fieldOffset + dataOrDataOffset * 12);
+                        break;
+                    case GffFieldType.Vector:
+                        data = new Vector(br, fieldOffset + dataOrDataOffset * 12);
+                        break;
+                    case GffFieldType.StrRef:
+                        data = new StrRef(br, fieldOffset + dataOrDataOffset * 12);
+                        break;
+                    default:
+                        throw new Exception(string.Format("UNEXPECTED FIELD TYPE \"{0}\", IN STRUCT INDEX \"{1}\"", fieldType, index));
+                }
+
+                return data;
+            }
+
+
 
             //Other
             internal override void collect_fields(ref List<Tuple<FIELD, int, int>> Field_Array, ref List<byte> Raw_Field_Data_Block, ref List<string> Label_Array, ref int Struct_Indexer, ref int List_Indices_Counter)
@@ -282,7 +225,10 @@ namespace KotOR_IO
                 return new { Type, Struct_Type, partial_hash, Label }.GetHashCode();
             }
 
-
+            public override string ToString()
+            {
+                return $"{base.ToString()}, Struct_Type = {Struct_Type}, # of Fields = {Fields?.Count ?? 0}";
+            }
         }
     }
 } 
