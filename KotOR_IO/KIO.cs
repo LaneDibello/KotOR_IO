@@ -87,28 +87,28 @@ namespace KotOR_IO
         /// <summary>Simulation Model</summary>
         [Description("MDL ")]
         MDL = 2002,
-        /// <summary>Sound Set</summary>
+        /// <summary>Neverwinter Source Script</summary>
         [Description("NSS ")]
         NSS = 2009,
         /// <summary>Model</summary>
         [Description("MOD ")]
         MOD = 2011,
-        /// <summary></summary>
+        /// <summary>Compiled Neverwinter Script</summary>
         [Description("NCS ")]
         NCS = 2010,
-        /// <summary></summary>
+        /// <summary>Static Area Information (GFF format)</summary>
         [Description("ARE ")]
         ARE = 2012,
         /// <summary></summary>
         [Description("SET ")]
         SET = 2013,
-        /// <summary></summary>
+        /// <summary>Information file (GFF format)</summary>
         [Description("IFO ")]
         IFO = 2014,
         /// <summary></summary>
         [Description("BIC ")]
         BIC = 2015,
-        /// <summary></summary>
+        /// <summary>Area Walkmesh</summary>
         [Description("WOK ")]
         WOK = 2016,
         /// <summary>Two-Dimensional Array</summary>
@@ -117,55 +117,55 @@ namespace KotOR_IO
         /// <summary>Talk</summary>
         [Description("TLK ")]
         TLK = 2018,
-        /// <summary></summary>
+        /// <summary>Texture Info File (Plain Text)</summary>
         [Description("TXI ")]
         TXI = 2022,
-        /// <summary></summary>
+        /// <summary>Dynamic Area Information (GFF Format)</summary>
         [Description("GIT ")]
         GIT = 2023,
         /// <summary></summary>
         [Description("BTI ")]
         BTI = 2024,
-        /// <summary></summary>
+        /// <summary>Item File (GFF Format)</summary>
         [Description("UTI ")]
         UTI = 2025,
-        /// <summary></summary>
+        /// <summary>Deprecated Character File Format</summary>
         [Description("BTC ")]
         BTC = 2026,
-        /// <summary></summary>
+        /// <summary>Character File (GFF Format)</summary>
         [Description("UTC ")]
         UTC = 2027,
-        /// <summary></summary>
+        /// <summary>Dialogue File (GFF Format)</summary>
         [Description("DLG ")]
         DLG = 2029,
-        /// <summary></summary>
+        /// <summary>Item Palette</summary>
         [Description("ITP ")]
         ITP = 2030,
-        /// <summary></summary>
+        /// <summary>Trigger File (GFF Format)</summary>
         [Description("UTT ")]
         UTT = 2032,
         /// <summary></summary>
         [Description("DDS ")]
         DDS = 2033,
-        /// <summary></summary>
+        /// <summary>Sound Object File (GFF Format)</summary>
         [Description("UTS ")]
         UTS = 2035,
-        /// <summary></summary>
+        /// <summary>Letter-combo Probability File</summary>
         [Description("LTR ")]
         LTR = 2036,
-        /// <summary></summary>
+        /// <summary>General File Format</summary>
         [Description("GFF ")]
         GFF = 2037,
-        /// <summary></summary>
+        /// <summary>Faction File (GFF Format)</summary>
         [Description("FAC ")]
         FAC = 2038,
-        /// <summary></summary>
+        /// <summary>Encounter File (GFF Format)</summary>
         [Description("UTE ")]
         UTE = 2040,
-        /// <summary></summary>
+        /// <summary>Door File (GFF Format)</summary>
         [Description("UTD ")]
         UTD = 2042,
-        /// <summary></summary>
+        /// <summary>Placeable File (GFF Format)</summary>
         [Description("UTP ")]
         UTP = 2044,
         /// <summary></summary>
@@ -174,31 +174,31 @@ namespace KotOR_IO
         /// <summary></summary>
         [Description("GIC ")]
         GIC = 2046,
-        /// <summary></summary>
+        /// <summary>General User Interface File (GFF Format)</summary>
         [Description("GUI ")]
         GUI = 2047,
-        /// <summary></summary>
+        /// <summary>Mercahnt File (GFF Format)</summary>
         [Description("UTM ")]
         UTM = 2051,
-        /// <summary></summary>
+        /// <summary>Door Walkmesh</summary>
         [Description("DWK ")]
         DWK = 2052,
-        /// <summary></summary>
+        /// <summary>Placeable Walkmesh</summary>
         [Description("PWK ")]
         PWK = 2053,
-        /// <summary></summary>
+        /// <summary>Journal File (GFF Format)</summary>
         [Description("JRL ")]
         JRL = 2056,
-        /// <summary>Save</summary>
+        /// <summary>Save Game (ERF Format)</summary>
         [Description("SAV ")]
         SAV = 2057,
-        /// <summary></summary>
+        /// <summary>Waypoint File (GFF Format)</summary>
         [Description("UTW ")]
         UTW = 2058,
-        /// <summary></summary>
+        /// <summary>Sound Set</summary>
         [Description("SSF ")]
         SSF = 2060,
-        /// <summary></summary>
+        /// <summary>Hack File (ERF Format)</summary>
         [Description("HAK ")]
         HAK = 2061,
         /// <summary></summary>
@@ -210,28 +210,28 @@ namespace KotOR_IO
         /// <summary></summary>
         [Description("PTT ")]
         PTT = 2066,
-        /// <summary></summary>
+        /// <summary>Layout File (Plain Text)</summary>
         [Description("LYT ")]
         LYT = 3000,
-        /// <summary></summary>
+        /// <summary>Visual Lightmap</summary>
         [Description("VIS ")]
         VIS = 3001,
-        /// <summary></summary>
+        /// <summary>Achived Module</summary>
         [Description("RIM ")]
         RIM = 3002,
-        /// <summary></summary>
+        /// <summary>Compiled Texture</summary>
         [Description("TPC ")]
         TPC = 3007,
-        /// <summary></summary>
+        /// <summary>Model Extension</summary>
         [Description("MDX ")]
         MDX = 3008,
-        /// <summary></summary>
+        /// <summary>BIF Key Table</summary>
         [Description("KEY ")]
         KEY = 9999,
-        /// <summary></summary>
+        /// <summary>Built-in File</summary>
         [Description("BIF ")]
         BIF = 9998,
-        /// <summary></summary>
+        /// <summary>Encapsulated Resource File</summary>
         [Description("ERF ")]
         ERF = 9997,
     }

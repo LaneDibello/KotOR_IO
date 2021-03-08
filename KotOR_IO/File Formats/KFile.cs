@@ -16,6 +16,7 @@ namespace KotOR_IO
     /// <see cref="KEY"/>, 
     /// <see cref="LTR"/>, 
     /// <see cref="RIM"/>, 
+    /// <see cref="WOK"/>, 
     /// <see cref="SSF"/>, 
     /// <see cref="TLK"/>, and
     /// <see cref="MiscType"/>
