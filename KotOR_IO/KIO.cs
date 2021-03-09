@@ -219,6 +219,9 @@ namespace KotOR_IO
         /// <summary>Achived Module</summary>
         [Description("RIM ")]
         RIM = 3002,
+        /// <summary>Lipsync File</summary>
+        [Description("LIP ")]
+        LIP = 3004,
         /// <summary>Compiled Texture</summary>
         [Description("TPC ")]
         TPC = 3007,
