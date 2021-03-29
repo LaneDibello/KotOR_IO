@@ -40,35 +40,42 @@ namespace KotOR_IO
         /// <param name="s">The Stream from which the File will be Read</param>
         protected RIM(Stream s)
         {
+            
             using (BinaryReader br = new BinaryReader(s))
             {
-                // Header
                 FileType = new string(br.ReadChars(4));
                 Version = new string(br.ReadChars(4));
                 Unknown = br.ReadBytes(4);
-                FileCount = br.ReadInt32();
-                File_Table_Offset = br.ReadInt32();
+                int FileCount = br.ReadInt32();
+                int File_Table_Offset = br.ReadInt32();
                 IsExtension = br.ReadBoolean();
                 Reserved = br.ReadBytes(99);
 
-                br.BaseStream.Seek(File_Table_Offset, SeekOrigin.Begin);
-                // File Table
+                List<unordered_rFile> unordered_File_Table = new List<unordered_rFile>();
+
+                br.BaseStream.Seek(File_Table_Offset, 0);
+                //File Table
                 for (int i = 0; i < FileCount; i++)
                 {
+                    unordered_rFile URF = new unordered_rFile();
                     rFile RF = new rFile();
                     RF.Label = new string(br.ReadChars(16)).TrimEnd('\0');
                     RF.TypeID = br.ReadInt32();
-                    RF.Index = br.ReadInt32();
-                    RF.DataOffset = br.ReadInt32();
-                    RF.DataSize = br.ReadInt32();
-                    File_Table.Add(RF);
+                    URF.Index = br.ReadInt32();
+                    URF.DataOffset = br.ReadInt32();
+                    URF.DataSize = br.ReadInt32();
+                    URF.rf = RF;
+
+                    unordered_File_Table.Add(URF);
                 }
 
-                // Populate FileData
-                foreach (rFile RF in File_Table)
+                //populate FileData and File_Table
+                foreach (unordered_rFile URF in unordered_File_Table.OrderBy(x => x.Index)) //Deals with rare non-linear index case
                 {
-                    br.BaseStream.Seek(RF.DataOffset, SeekOrigin.Begin);
-                    RF.File_Data = br.ReadBytes(RF.DataSize + 4); // Add an extra four bytes of padding into the null separater to eleminate size bound errors.
+                    br.BaseStream.Seek(URF.DataOffset, SeekOrigin.Begin);
+                    URF.rf.File_Data = br.ReadBytes(URF.DataSize);
+
+                    File_Table.Add(URF.rf);
                 }
             }
         }
@@ -81,16 +88,6 @@ namespace KotOR_IO
         public byte[] Unknown;
 
         /// <summary>
-        /// The number of files contained within the <see cref="RIM"/>.
-        /// </summary>
-        public int FileCount;
-
-        /// <summary>
-        /// Byte offset from start of the file to the <see cref="File_Table"/>.
-        /// </summary>
-        public int File_Table_Offset;
-
-        /// <summary>
         /// Denotes a <see cref="RIM"/> that is an extension to another (marked by a filename ending in 'x').
         /// </summary>
         public bool IsExtension;
@@ -101,35 +98,9 @@ namespace KotOR_IO
         public byte[] Reserved;
 
         /// <summary>
-        /// All of the <see cref="rFile"/>s contained within the <see cref="RIM"/>. This is the primary property of the <see cref="RIM"/>.
+        /// All of the <see cref="rFile"/>s contained within the <see cref="RIM"/> at their respective Index. This is the primary property of the <see cref="RIM"/>.
         /// </summary>
         public List<rFile> File_Table = new List<rFile>();
-
-        /// <summary>
-        /// Gets byte data from the RIM from the given index.
-        /// </summary>
-        /// <param name="index"></param>
-        /// <returns></returns>
-        public byte[] this[int index]
-        {
-            get
-            {
-                return File_Table[index].File_Data;
-            }
-        }
-
-        /// <summary>
-        /// Gets byte data from the RIM with the given filename.
-        /// </summary>
-        /// <param name="filename">The Name (res_ref) of the file being referenced</param>
-        /// <returns></returns>
-        public byte[] this[string filename]
-        {
-            get
-            {
-                return File_Table.Where(rf => rf.Label == filename).FirstOrDefault().File_Data;
-            }
-        }
 
         /// <summary>
         /// Appends a new KFile to the end of the <see cref="RIM"/>.
@@ -138,28 +109,16 @@ namespace KotOR_IO
         /// <param name="filename">The name of the file.</param>
         public void Append_File(KFile file, string filename)
         {
-            FileCount++;
-
-            foreach (rFile r in File_Table)
-            {
-                r.DataOffset += 32;
-            }
-
-            rFile rf = new rFile();
-            rf.Label = filename;
-            rf.TypeID = Reference_Tables.TypeCodes[file.FileType];
-            rf.Index = File_Table.Count();
+            rFile RF = new rFile();
+            RF.Label = filename;
+            RF.TypeID = Reference_Tables.TypeCodes[file.FileType];
 
             using (MemoryStream ms = new MemoryStream())
             {
                 file.Write(ms);
-                rf.File_Data = ms.ToArray();
+                RF.File_Data = ms.ToArray();
             }
-
-            rf.DataSize = rf.File_Data.Count();
-            rf.DataOffset = File_Table.Last().DataOffset + File_Table.Last().DataSize + 16;
-
-            File_Table.Add(rf);
+            File_Table.Add(RF);
         }
 
         /// <summary>
@@ -194,7 +153,7 @@ namespace KotOR_IO
                     }
                     else if (Reference_Tables.GFFResourceTypes.Contains((ResourceType)file.TypeID))
                     {
-                        return new GFF(file.File_Data);
+                        return new GFF_old(file.File_Data);
                     }
                     else
                     {
@@ -215,28 +174,36 @@ namespace KotOR_IO
                 bw.Write(FileType.ToArray());
                 bw.Write(Version.ToArray());
                 bw.Write(Unknown);
-                bw.Write(FileCount);
-                bw.Write(File_Table_Offset);
+                bw.Write(File_Table.Count());
+                bw.Write(120); //Should always be 120
                 bw.Write(IsExtension);
 
                 bw.Write(Reserved);
 
+                int file_indexer = 0; //Tracks the current file index
+                int file_data_counter = 120 + File_Table.Count * 32 + 8; //Tracks the byte offset into file data, Starts After the file table, and 8 bytes of null padding
+
                 //File Table
-                bw.Seek(File_Table_Offset, SeekOrigin.Begin);
+                bw.Seek(120, SeekOrigin.Begin);
                 foreach (rFile RF in File_Table)
                 {
                     bw.Write(RF.Label.PadRight(16, '\0').ToArray());
                     bw.Write(RF.TypeID);
-                    bw.Write(RF.Index);
-                    bw.Write(RF.DataOffset);
-                    bw.Write(RF.DataSize);
+                    bw.Write(file_indexer);
+                    file_indexer++;
+                    bw.Write(file_data_counter);
+                    bw.Write(RF.File_Data.Count());
+                    file_data_counter += RF.File_Data.Count() + 16;
                 }
 
                 //File Data
+                byte[] f_data_padding = new byte[8] { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
+                bw.BaseStream.Seek(120 + File_Table.Count * 32, 0);
                 foreach (rFile RF in File_Table)
                 {
-                    bw.Seek(RF.DataOffset, SeekOrigin.Begin);
+                    bw.Write(f_data_padding);
                     bw.Write(RF.File_Data);
+                    bw.Write(f_data_padding); //Each file is padded with 16 nulls, 8 before, 8 after, for unclear reasons.
                 }
 
                 //Padding the end with 6 bytes because kotor likes that for some reason.
@@ -244,6 +211,14 @@ namespace KotOR_IO
                 byte[] padend = new byte[6] { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 };
                 bw.Write(padend);
             }
+        }
+        
+        internal struct unordered_rFile
+        {
+            internal rFile rf;
+            internal int Index;
+            internal int DataOffset;
+            internal int DataSize;
         }
 
         // File Table
@@ -256,12 +231,6 @@ namespace KotOR_IO
             public string Label;
             ///<summary> The type ID from <see cref="Reference_Tables.Res_Types"/>. </summary>
             public int TypeID;
-            ///<summary> The Index of this file in <see cref="File_Table"/>. </summary>
-            public int Index;
-            ///<summary> Byte offset of <see cref="File_Data"/> from start of the <see cref="RIM"/>. </summary>
-            public int DataOffset;
-            ///<summary> The size of <see cref="File_Data"/> in bytes. </summary>
-            public int DataSize;
             ///<summary> The data contained within this file. </summary>
             public byte[] File_Data; // Populated from the FileData block.
 
