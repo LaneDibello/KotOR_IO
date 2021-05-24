@@ -66,7 +66,15 @@
     <Compile Include="File Formats\GFF FieldTypes\0_BYTE.cs" />
     <Compile Include="File Formats\GFF.cs" />
     <Compile Include="File Formats\GFFTypes\References.cs" />
+    <Compile Include="File Formats\GFFTypes\UTC.cs" />
+    <Compile Include="File Formats\GFFTypes\UTD.cs" />
+    <Compile Include="File Formats\GFFTypes\UTE.cs" />
     <Compile Include="File Formats\GFFTypes\UTI.cs" />
+    <Compile Include="File Formats\GFFTypes\UTM.cs" />
+    <Compile Include="File Formats\GFFTypes\UTP.cs" />
+    <Compile Include="File Formats\GFFTypes\UTS.cs" />
+    <Compile Include="File Formats\GFFTypes\UTT.cs" />
+    <Compile Include="File Formats\GFFTypes\UTW.cs" />
     <Compile Include="File Formats\GFF_old.cs" />
     <Compile Include="File Formats\KEY.cs" />
     <Compile Include="File Formats\KFile.cs" />
@@ -104,6 +112,7 @@
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
     <None Include="Resources\blankItem.uti" />
+    <None Include="Resources\blankWaypoint.utw" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
