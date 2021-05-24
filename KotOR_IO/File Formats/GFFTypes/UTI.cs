@@ -13,6 +13,7 @@ namespace KotOR_IO.GFFTypes
         /* TODO:
          * Add Upgradable item features
          * Complete XML comments
+         * Gets currently throws a linq exception if the field doesn't exist, decide if this is ok or not. Perhaps rethrow, with more details
         */
         private GFF uti;
         public UTI(baseitems b, string reference, string name)
