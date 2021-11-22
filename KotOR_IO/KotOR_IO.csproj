@@ -45,6 +45,7 @@
   <ItemGroup>
     <Compile Include="File Formats\BIF.cs" />
     <Compile Include="File Formats\ERF.cs" />
+    <Compile Include="File Formats\ERF_new.cs" />
     <Compile Include="File Formats\GFF FieldTypes\I_StrRef.cs" />
     <Compile Include="File Formats\GFF FieldTypes\H_Vector.cs" />
     <Compile Include="File Formats\GFF FieldTypes\G_Orientation.cs" />
