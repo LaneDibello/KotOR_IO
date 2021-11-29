@@ -7,11 +7,32 @@ namespace KotOR_IO
 {
     public partial class GFF
     {
+        /// <summary>
+        /// A ResRef is a string used to store the name of a file used by the game or toolset.
+        /// Up to 16 characters, not null-terminated, non-case-sensitive, and stored in all lower-case.
+        /// </summary>
         public class ResRef : FIELD
         {
-            public string Reference;
+            /// <summary>
+            /// String up to 16 characters long.
+            /// </summary>
+            public string Reference
+            {
+                get => _reference;
+                set => _reference = value.ToLower();
+            }
+            private string _reference;
 
+            /// <summary>
+            /// Default constructor.
+            /// </summary>
             public ResRef() : base(GffFieldType.ResRef) { }
+
+            /// <summary>
+            /// Construct with label and value.
+            /// </summary>
+            /// <param name="label"></param>
+            /// <param name="reference"></param>
             public ResRef(string label, string reference)
                 : base(GffFieldType.ResRef, label)
             {
@@ -19,6 +40,12 @@ namespace KotOR_IO
                     throw new Exception($"Reference \"{reference}\" with a length of {reference.Length} is longer than {MAX_LABEL_LENGTH} characters, and cannot be used for GFF type ResRef");
                 Reference = reference;
             }
+
+            /// <summary>
+            /// Construct by reading a binary reader.
+            /// </summary>
+            /// <param name="br"></param>
+            /// <param name="offset"></param>
             internal ResRef(BinaryReader br, int offset)
                 : base(GffFieldType.ResRef)
             {
@@ -42,10 +69,22 @@ namespace KotOR_IO
                 br.BaseStream.Seek(FieldDataOffset + DataOrDataOffset, 0);
                 byte Size = br.ReadByte();
                 Reference = new string(br.ReadChars(Size));
-
             }
 
-            internal override void collect_fields(ref List<Tuple<FIELD, int, int>> Field_Array, ref List<byte> Raw_Field_Data_Block, ref List<string> Label_Array, ref int Struct_Indexer, ref int List_Indices_Counter)
+            /// <summary>
+            /// Collect fields recursively.
+            /// </summary>
+            /// <param name="Field_Array"></param>
+            /// <param name="Raw_Field_Data_Block"></param>
+            /// <param name="Label_Array"></param>
+            /// <param name="Struct_Indexer"></param>
+            /// <param name="List_Indices_Counter"></param>
+            internal override void collect_fields(
+                ref List<Tuple<FIELD, int, int>> Field_Array,
+                ref List<byte> Raw_Field_Data_Block,
+                ref List<string> Label_Array,
+                ref int Struct_Indexer,
+                ref int List_Indices_Counter)
             {
                 Tuple<FIELD, int, int> T = new Tuple<FIELD, int, int>(this, Raw_Field_Data_Block.Count, this.GetHashCode());
                 Raw_Field_Data_Block.Add((byte)Reference.Length);
@@ -58,23 +97,35 @@ namespace KotOR_IO
                 }
             }
 
-            public override bool Equals(object obj)
+            /// <summary>
+            /// Test equality between two ResRef objects.
+            /// </summary>
+            /// <param name="right"></param>
+            /// <returns></returns>
+            public override bool Equals(object right)
             {
-                if ((obj == null) || !GetType().Equals(obj.GetType()))
-                {
+                // Check null, self, type, Gff Type, and Label
+                if (!base.Equals(right))
                     return false;
-                }
-                else
-                {
-                    return Reference == (obj as ResRef).Reference && Label == (obj as ResRef).Label;
-                }
+
+                // Check value
+                //return Reference.Equals((right as ResRef).Reference, StringComparison.InvariantCultureIgnoreCase);
+                return Reference == (right as ResRef).Reference;
             }
 
+            /// <summary>
+            /// Generate a hash code for this ResRef.
+            /// </summary>
+            /// <returns></returns>
             public override int GetHashCode()
             {
                 return new { Type, Reference, Label }.GetHashCode();
             }
 
+            /// <summary>
+            /// Write ResRef information to string.
+            /// </summary>
+            /// <returns>[ResRef] "Label", "String"</returns>
             public override string ToString()
             {
                 return $"{base.ToString()}, \"{Reference}\"";

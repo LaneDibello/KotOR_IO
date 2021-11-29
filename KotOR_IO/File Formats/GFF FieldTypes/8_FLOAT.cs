@@ -7,16 +7,37 @@ namespace KotOR_IO
 {
     public partial class GFF
     {
+        /// <summary>
+        /// A FLOAT is a 4-byte single-precision floating point value.
+        /// </summary>
         public class FLOAT : FIELD
         {
-            public float Value;
+            /// <summary>
+            /// 4-byte single-precision floating point value
+            /// </summary>
+            public float Value { get; set; }
 
+            /// <summary>
+            /// Default constructor.
+            /// </summary>
             public FLOAT() : base(GffFieldType.FLOAT) { }
+
+            /// <summary>
+            /// Construct with label and value.
+            /// </summary>
+            /// <param name="label"></param>
+            /// <param name="value"></param>
             public FLOAT(string label, float value)
                 : base(GffFieldType.FLOAT, label)
             {
                 Value = value;
             }
+
+            /// <summary>
+            /// Construct by reading a binary reader.
+            /// </summary>
+            /// <param name="br"></param>
+            /// <param name="offset"></param>
             internal FLOAT(BinaryReader br, int offset)
                 : base(GffFieldType.FLOAT)
             {
@@ -33,10 +54,22 @@ namespace KotOR_IO
                 //Label Logic
                 br.BaseStream.Seek(LabelOffset + LabelIndex * 16, 0);
                 Label = new string(br.ReadChars(16)).TrimEnd('\0');
-
             }
 
-            internal override void collect_fields(ref List<Tuple<FIELD, int, int>> Field_Array, ref List<byte> Raw_Field_Data_Block, ref List<string> Label_Array, ref int Struct_Indexer, ref int List_Indices_Counter)
+            /// <summary>
+            /// Collect fields recursively.
+            /// </summary>
+            /// <param name="Field_Array"></param>
+            /// <param name="Raw_Field_Data_Block"></param>
+            /// <param name="Label_Array"></param>
+            /// <param name="Struct_Indexer"></param>
+            /// <param name="List_Indices_Counter"></param>
+            internal override void collect_fields(
+                ref List<Tuple<FIELD, int, int>> Field_Array,
+                ref List<byte> Raw_Field_Data_Block,
+                ref List<string> Label_Array,
+                ref int Struct_Indexer,
+                ref int List_Indices_Counter)
             {
                 Tuple<FIELD, int, int> T = new Tuple<FIELD, int, int>(this, BitConverter.ToInt32((BitConverter.GetBytes(Value)), 0), this.GetHashCode());
                 Field_Array.Add(T);
@@ -47,23 +80,34 @@ namespace KotOR_IO
                 }
             }
 
-            public override bool Equals(object obj)
+            /// <summary>
+            /// Test equality between two FLOAT objects.
+            /// </summary>
+            /// <param name="right"></param>
+            /// <returns></returns>
+            public override bool Equals(object right)
             {
-                if ((obj == null) || !GetType().Equals(obj.GetType()))
-                {
+                // Check null, self, type, Gff Type, and Label
+                if (!base.Equals(right))
                     return false;
-                }
-                else
-                {
-                    return Value == (obj as FLOAT).Value && Label == (obj as FLOAT).Label;
-                }
+
+                // Check value
+                return Value == (right as FLOAT).Value;
             }
 
+            /// <summary>
+            /// Generate a hash code for this FLOAT.
+            /// </summary>
+            /// <returns></returns>
             public override int GetHashCode()
             {
                 return new { Type, Value, Label }.GetHashCode();
             }
 
+            /// <summary>
+            /// Write FLOAT information to string.
+            /// </summary>
+            /// <returns>[FLOAT] "Label", Value</returns>
             public override string ToString()
             {
                 return $"{base.ToString()}, {Value}";

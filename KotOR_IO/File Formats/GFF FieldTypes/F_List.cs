@@ -7,17 +7,38 @@ namespace KotOR_IO
 {
     public partial class GFF
     {
+        /// <summary>
+        /// A LIST is a collection of STRUCT objects.
+        /// </summary>
         public class LIST : FIELD
         {
-            public List<STRUCT> Structs = new List<STRUCT>();
+            /// <summary>
+            /// Structs contained in this LIST.
+            /// </summary>
+            public List<STRUCT> Structs { get; set; } = new List<STRUCT>();
 
+            /// <summary>
+            /// Default constructor.
+            /// </summary>
             public LIST() : base(GffFieldType.List) { }
+
+            /// <summary>
+            /// Construct using a custom list of structs.
+            /// </summary>
+            /// <param name="label"></param>
+            /// <param name="structs"></param>
             public LIST(string label, List<STRUCT> structs)
                 : base(GffFieldType.List, label)
             {
                 Label = label;
                 Structs = structs;
             }
+
+            /// <summary>
+            /// Construct by reading from a binary reader.
+            /// </summary>
+            /// <param name="br"></param>
+            /// <param name="offset"></param>
             internal LIST(BinaryReader br, int offset)
                 : base(GffFieldType.List)
             {
@@ -53,8 +74,20 @@ namespace KotOR_IO
                 }
             }
 
-            //Other
-            internal override void collect_fields(ref List<Tuple<FIELD, int, int>> Field_Array, ref List<byte> Raw_Field_Data_Block, ref List<string> Label_Array, ref int Struct_Indexer, ref int List_Indices_Counter)
+            /// <summary>
+            /// Collect fields recursively.
+            /// </summary>
+            /// <param name="Field_Array"></param>
+            /// <param name="Raw_Field_Data_Block"></param>
+            /// <param name="Label_Array"></param>
+            /// <param name="Struct_Indexer"></param>
+            /// <param name="List_Indices_Counter"></param>
+            internal override void collect_fields(
+                ref List<Tuple<FIELD, int, int>> Field_Array,
+                ref List<byte> Raw_Field_Data_Block,
+                ref List<string> Label_Array,
+                ref int Struct_Indexer,
+                ref int List_Indices_Counter)
             {
                 Tuple<FIELD, int, int> T = new Tuple<FIELD, int, int>(this, List_Indices_Counter, this.GetHashCode());
                 Field_Array.Add(T);
@@ -73,37 +106,37 @@ namespace KotOR_IO
 
             }
 
-            public override bool Equals(object obj)
+            /// <summary>
+            /// Test equality between two LIST objects.
+            /// </summary>
+            /// <returns>True if the lists have the same Struct_Type, Label, and Fields.</returns>
+            public override bool Equals(object right)
             {
-                if ((obj == null) || !GetType().Equals(obj.GetType()))
-                {
+                // Check null, self, type, Gff Type, and Label
+                if (!base.Equals(right))
                     return false;
-                }
-                else if (Structs.Count() != (obj as LIST).Structs.Count())
-                {
+
+                var other = right as LIST;
+                
+                // Check number of Structs
+                if (Structs.Count() != other.Structs.Count())
                     return false;
-                }
-                else if (Label != (obj as LIST).Label)
+
+                // Check each STRUCT
+                for (int i = 0; i < Structs.Count(); i++)
                 {
-                    return false;
+                    if (!Structs[i].Equals(other.Structs[i]))
+                        return false;
                 }
-                else
-                {
-                    for (int i = 0; i < Structs.Count(); i++)
-                    {
-                        if (Structs[i].Equals((obj as LIST).Structs[i]))
-                        {
-                            continue;
-                        }
-                        else
-                        {
-                            return false;
-                        }
-                    }
-                    return true;
-                }
+
+                // All checks passed
+                return true;
             }
 
+            /// <summary>
+            /// Generate a hash code for this LIST.
+            /// </summary>
+            /// <returns></returns>
             public override int GetHashCode()
             {
                 int partial_hash = 1;
@@ -116,6 +149,10 @@ namespace KotOR_IO
                 return new { Type, partial_hash, Label }.GetHashCode();
             }
 
+            /// <summary>
+            /// Write LIST information to string.
+            /// </summary>
+            /// <returns>[LIST] "Label", # of Structs = _</returns>
             public override string ToString()
             {
                 return $"{base.ToString()}, # of Structs = {Structs?.Count ?? 0}";
