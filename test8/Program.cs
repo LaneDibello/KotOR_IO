@@ -61,6 +61,11 @@ namespace test8
 
         static void Main(string[] args)
         {
+            var fileToRead = @"C:\Program Files (x86)\Steam\steamapps\common\swkotor\data\templates.bif";
+            BIF templates = new BIF(fileToRead);
+            GFF utc = new GFF(templates.VariableResourceTable.First(vre => vre.ResourceType == ResourceType.UTC).EntryData);
+            
+
             var filename = @"C:\Dev\KIO Test\test1.git";
             var fileinfo = new FileInfo(filename);
             Console.WriteLine($" file size: {fileinfo.Length:N0} bytes");

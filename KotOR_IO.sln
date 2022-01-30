@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31729.503
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KotOR_IO", "KotOR_IO\KotOR_IO.csproj", "{DDB8235B-7C51-4810-83EC-837BF040DFC2}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "test8", "test8\test8.csproj", "{ABF89826-3445-433D-8CE9-F87DA18DA009}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KIOTest", "KIOTest\KIOTest.csproj", "{AC363A4C-C268-4612-B2D6-609CEBFA9C87}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,8 +23,15 @@ Global
 		{ABF89826-3445-433D-8CE9-F87DA18DA009}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ABF89826-3445-433D-8CE9-F87DA18DA009}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{ABF89826-3445-433D-8CE9-F87DA18DA009}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AC363A4C-C268-4612-B2D6-609CEBFA9C87}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AC363A4C-C268-4612-B2D6-609CEBFA9C87}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AC363A4C-C268-4612-B2D6-609CEBFA9C87}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AC363A4C-C268-4612-B2D6-609CEBFA9C87}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C99B0B8E-BCBF-4E28-BC04-66489EFD9B62}
 	EndGlobalSection
 EndGlobal
