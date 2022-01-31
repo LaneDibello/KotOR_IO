@@ -7,26 +7,49 @@ namespace KotOR_IO
 {
     public partial class GFF
     {
+        /// <summary>
+        /// A STRUCT is a collection of FIELD objects.
+        /// </summary>
         public class STRUCT : FIELD
         {
-            //Declarations
-            public int Struct_Type;
+            /// <summary>
+            /// Type of this STRUCT.
+            /// </summary>
+            public int Struct_Type { get; set; }
 
-            public List<FIELD> Fields = new List<FIELD>();
+            /// <summary>
+            /// Fields this struct contains.
+            /// </summary>
+            public List<FIELD> Fields { get; set; } = new List<FIELD>();
 
-            //Construction
+            /// <summary>
+            /// Index of this STRUCT in the GFF struct array. Used during GFF write.
+            /// </summary>
+            internal int Index { get; private set; } = -1;
+
+            /// <summary>
+            /// Default constructor.
+            /// </summary>
             public STRUCT() : base(GffFieldType.Struct) { }
+
+            /// <summary>
+            /// Construct using a custom list of fields.
+            /// </summary>
             public STRUCT(string label, int structType, List<FIELD> fields)
                 : base(GffFieldType.Struct, label)
             {
                 Struct_Type = structType;
                 Fields = fields;
             }
+
+            /// <summary>
+            /// Construct by reading from a binary reader.
+            /// </summary>
             internal STRUCT(BinaryReader br, int index, int LabelIndex = -1)
                 : base(GffFieldType.Struct)
             {
-                //Header Info
-                br.BaseStream.Seek(8, 0);
+                // Header info
+                br.BaseStream.Seek(SIZEOF_FILEINFO, SeekOrigin.Begin);
                 int StructOffset = br.ReadInt32();
                 int StuctCount = br.ReadInt32();
                 int FieldOffset = br.ReadInt32();
@@ -36,8 +59,11 @@ namespace KotOR_IO
                 int FieldDataOffset = br.ReadInt32();
                 int FieldDataCount = br.ReadInt32();
                 int FieldIndicesOffset = br.ReadInt32();
-
-                //label logic
+                // FieldIndicesCount
+                // ListIndicesOffset
+                // ListIndicesCount
+                
+                // Label logic
                 if (LabelIndex < 0 || LabelIndex > LabelCount)
                 {
                     Label = "";
@@ -48,13 +74,13 @@ namespace KotOR_IO
                     Label = new string(br.ReadChars(16)).TrimEnd('\0');
                 }
 
-                //Struct Info
+                // Struct info
                 br.BaseStream.Seek(StructOffset + index * 12, 0);
                 Struct_Type = br.ReadInt32();
                 int DataOrDataOffset = br.ReadInt32();
                 int S_FieldCount = br.ReadInt32();
 
-                //If there is only one field, it pulls it from the field area
+                // If there is only one field, it pulls it from the field area
                 if (S_FieldCount == 1)
                 {
                     br.BaseStream.Seek(FieldOffset + DataOrDataOffset * 12, 0);
@@ -62,7 +88,7 @@ namespace KotOR_IO
                     FIELD data = CreateNewField(br, index, FieldOffset, DataOrDataOffset, fieldType);
                     Fields.Add(data);
                 }
-                //If there is more than one field, a set of Indices are read off, and then those fields are read in
+                // If there is more than one field, a set of Indices are read off, and then those fields are read in
                 else if (S_FieldCount > 1)
                 {
                     for (int i = 0; i < S_FieldCount; i++)
@@ -86,7 +112,21 @@ namespace KotOR_IO
                 }
             }
 
-            private static FIELD CreateNewField(BinaryReader br, int index, int fieldOffset, int dataOrDataOffset, GffFieldType fieldType)
+            /// <summary>
+            /// Construct a new field
+            /// </summary>
+            /// <param name="br"></param>
+            /// <param name="index"></param>
+            /// <param name="fieldOffset"></param>
+            /// <param name="dataOrDataOffset"></param>
+            /// <param name="fieldType"></param>
+            /// <returns></returns>
+            private static FIELD CreateNewField(
+                BinaryReader br,
+                int index,
+                int fieldOffset,
+                int dataOrDataOffset,
+                GffFieldType fieldType)
             {
                 FIELD data;
                 switch (fieldType)
@@ -156,12 +196,24 @@ namespace KotOR_IO
                 return data;
             }
 
-
-
-            //Other
-            internal override void collect_fields(ref List<Tuple<FIELD, int, int>> Field_Array, ref List<byte> Raw_Field_Data_Block, ref List<string> Label_Array, ref int Struct_Indexer, ref int List_Indices_Counter)
+            /// <summary>
+            /// Collect fields recursively.
+            /// </summary>
+            /// <param name="Field_Array"></param>
+            /// <param name="Raw_Field_Data_Block"></param>
+            /// <param name="Label_Array"></param>
+            /// <param name="Struct_Indexer"></param>
+            /// <param name="List_Indices_Counter"></param>
+            internal override void collect_fields(
+                ref List<Tuple<FIELD, int, int>> Field_Array,
+                ref List<byte> Raw_Field_Data_Block,
+                ref List<string> Label_Array,
+                ref int Struct_Indexer,
+                ref int List_Indices_Counter)
             {
-                Tuple<FIELD, int, int> T = new Tuple<FIELD, int, int>(this, Struct_Indexer, this.GetHashCode());
+                Tuple<FIELD, int, int> T = new Tuple<FIELD, int, int>(this, Struct_Indexer, this.GetHashCode());    // Why is GetHashCode() used?
+                Index = Struct_Indexer;
+
                 Struct_Indexer++;
                 Field_Array.Add(T);
 
@@ -176,55 +228,56 @@ namespace KotOR_IO
                 }
             }
 
-            public override bool Equals(object obj)
+            /// <summary>
+            /// Test equality between two STRUCT objects.
+            /// </summary>
+            /// <returns>True if the structs have the same Struct_Type, Label, and Fields.</returns>
+            public override bool Equals(object right)
             {
-                if ((obj == null) || !GetType().Equals(obj.GetType()))
-                {
+                // Check null, self, type, Gff Type, and Label
+                if (!base.Equals(right))
                     return false;
-                }
-                else
+
+                var other = right as STRUCT;
+
+                // Check field count
+                if (Fields.Count() != other.Fields.Count())
+                    return false;
+
+                // Check Struct_Type
+                if (Struct_Type != other.Struct_Type)
+                    return false;
+
+                // Check each FIELD
+                foreach (FIELD f in Fields)
                 {
-                    if (Fields.Count() != (obj as STRUCT).Fields.Count())
-                    {
+                    if (!other.Fields.Contains(f))
                         return false;
-                    }
-                    else if (Struct_Type != (obj as STRUCT).Struct_Type)
-                    {
-                        return false;
-                    }
-                    else if (Label != (obj as STRUCT).Label)
-                    {
-                        return false;
-                    }
-                    else
-                    {
-                        foreach (FIELD f in Fields)
-                        {
-                            if ((obj as STRUCT).Fields.Contains(f))
-                            {
-                                continue;
-                            }
-                            else
-                            {
-                                return false;
-                            }
-                        }
-                        return true;
-                    }
                 }
+
+                // All checks passed
+                return true;
             }
 
-            public override int GetHashCode()
-            {
-                int partial_hash = 1;
-                FIELD[] fieldArray = Fields.ToArray();
-                foreach (FIELD F in fieldArray)
-                {
-                    partial_hash *= F.GetHashCode();
-                }
-                return new { Type, Struct_Type, partial_hash, Label }.GetHashCode();
-            }
+            /// <summary>
+            /// Generate a hash code for this STRUCT.
+            /// </summary>
+            /// <returns></returns>
+            //public override int GetHashCode()
+            //{
+            //    int partial_hash = 1;
+            //    FIELD[] fieldArray = Fields.ToArray();
+            //    foreach (FIELD F in fieldArray)
+            //    {
+            //        partial_hash *= F.GetHashCode();
+            //    }
+            //    return new { Type, Struct_Type, partial_hash, Label }.GetHashCode();
+            //}
 
+            /// <summary>
+            /// Write STRUCT information to string.
+            /// </summary>
+            /// <returns>[STRUCT] "Label", Struct_Type = _, # of Fields = _</returns>
             public override string ToString()
             {
                 return $"{base.ToString()}, Struct_Type = {Struct_Type}, # of Fields = {Fields?.Count ?? 0}";

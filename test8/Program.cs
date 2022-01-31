@@ -61,18 +61,26 @@ namespace test8
 
         static void Main(string[] args)
         {
-            DirectoryInfo di = new DirectoryInfo("C:\\Program Files (x86)\\Steam\\steamapps\\common\\swkotor\\modules - Copy");
-            foreach (FileInfo fi in di.EnumerateFiles())
-            {
-                RIM r = new RIM(Path.Combine(fi.DirectoryName, fi.Name));
-                r.WriteToFile(Path.Combine("C:\\Program Files (x86)\\Steam\\steamapps\\common\\swkotor\\modules\\", fi.Name));
-            }
+            var fileToRead = @"C:\Program Files (x86)\Steam\steamapps\common\swkotor\data\templates.bif";
+            BIF templates = new BIF(fileToRead);
+            GFF utc = new GFF(templates.VariableResourceTable.First(vre => vre.ResourceType == ResourceType.UTC).EntryData);
+            
+            // Read GFF file.
+            var filename = @"C:\Dev\KIO Test\test1.git";
+            var fileinfo = new FileInfo(filename);
+            Console.WriteLine($" file size: {fileinfo.Length:N0} bytes");
 
+            GFF test = new GFF(filename);
+            Console.WriteLine($" read size: {test.ToRawData().Length:N0} bytes");
 
-            //RIM r = new RIM("D:\\ExampleFiles\\danm13.rim");
-            //r.WriteToFile("D:\\ExampleFiles\\danm13T.rim");
-            //RIM r2 = new RIM("D:\\ExampleFiles\\danm13T.rim");
-            Console.Write("");
+            // Write GFF object to file.
+            var filename2 = @"C:\Dev\KIO Test\test2.git";
+            test.WriteToFile(filename2);
+
+            var fileinfo2 = new FileInfo(filename2);
+            Console.WriteLine($"write size: {fileinfo2.Length:N0} bytes");
+
+            Console.ReadLine();
         }
     }
 }
