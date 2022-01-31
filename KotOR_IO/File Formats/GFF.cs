@@ -73,7 +73,7 @@ namespace KotOR_IO
         /// </summary>
         internal override void Write(Stream s)
         {
-            // List out all the fields in the file, followed by their DataOrDataOffset, and then their HasCode.
+            // List out all the fields in the file, followed by their DataOrDataOffset, and then their HashCode.
             List<Tuple<FIELD, int, int>> Field_Array = new List<Tuple<FIELD, int, int>>();
 
             // Contains all the unique labels used by the file.
@@ -94,10 +94,28 @@ namespace KotOR_IO
             // Recursive field collection call
             Top_Level.collect_fields(ref Field_Array, ref Raw_Field_Data_Block, ref Label_Array, ref Struct_Indexer, ref List_Indices_Counter);
 
-            // Preparing raw struct data
+            // Empty string should not be in the label array. !! ASSUMPTION !!
+            Label_Array.Remove(string.Empty);
+
+            // Create a struct array and remove all structs from field array that are contained within lists.
+            var Struct_Array = new List<Tuple<FIELD, int, int>>();
             for (int i = 0; i < Struct_Indexer; i++)
             {
-                STRUCT S = Field_Array.Where(x => x.Item1.Type == GffFieldType.Struct && x.Item2 == i).Select(x => x.Item1 as STRUCT).FirstOrDefault();
+                var field = Field_Array.Where(x => x.Item1.Type == GffFieldType.Struct && x.Item2 == i).FirstOrDefault();
+                Struct_Array.Add(field);
+                STRUCT S = field.Item1 as STRUCT;
+
+                if (string.IsNullOrEmpty(S.Label))
+                {
+                    Field_Array.Remove(field);
+                }
+            }
+
+            // Preparing raw struct data
+            foreach (var field in Struct_Array)
+            {
+                STRUCT S = field.Item1 as STRUCT;
+
                 Raw_Struct_Array.AddRange(BitConverter.GetBytes(S.Struct_Type));
                 int f_count = S.Fields.Count;
                 if (f_count == 1)
@@ -115,7 +133,7 @@ namespace KotOR_IO
                         int f_hash = F.GetHashCode();
                         int f_index = Field_Array.FindIndex(x => x.Item3 == f_hash);
 
-                        if (f_index == -1) { throw new Exception("Bad field index, was their a hashing issue?"); }
+                        if (f_index == -1) { throw new Exception("Bad field index, was there a hashing issue?"); }
 
                         Raw_Field_Indices_Array.AddRange(BitConverter.GetBytes(f_index));
                     }
@@ -158,9 +176,8 @@ namespace KotOR_IO
                 Raw_List_Indices_Array.AddRange(BitConverter.GetBytes(L.Structs.Count));
                 foreach (STRUCT S in L.Structs)
                 {
-                    int s_hash = S.GetHashCode();
-                    int s_index = Field_Array.Where(x => x.Item3 == s_hash).FirstOrDefault().Item2;
-                    Raw_List_Indices_Array.AddRange(BitConverter.GetBytes(s_index));
+                    if (S.Index < 0) throw new InvalidDataException("Bad struct index, was there a collection issue?");
+                    Raw_List_Indices_Array.AddRange(BitConverter.GetBytes(S.Index));
                 }
             }
 

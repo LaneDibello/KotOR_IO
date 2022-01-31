@@ -113,16 +113,16 @@ namespace KotOR_IO
             /// Generate a hash code for this VOID.
             /// </summary>
             /// <returns></returns>
-            public override int GetHashCode()
-            {
-                int partial_hash = 1;
-                byte[] dataArray = Data.ToArray();
-                foreach (byte b in dataArray)
-                {
-                    partial_hash *= b.GetHashCode();
-                }
-                return new { Type, partial_hash, Label }.GetHashCode();
-            }
+            //public override int GetHashCode()
+            //{
+            //    int partial_hash = 1;
+            //    byte[] dataArray = Data.ToArray();
+            //    foreach (byte b in dataArray)
+            //    {
+            //        partial_hash *= b.GetHashCode();
+            //    }
+            //    return new { Type, partial_hash, Label }.GetHashCode();
+            //}
 
             /// <summary>
             /// Write VOID information to string.

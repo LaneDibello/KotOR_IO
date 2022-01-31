@@ -137,17 +137,17 @@ namespace KotOR_IO
             /// Generate a hash code for this LIST.
             /// </summary>
             /// <returns></returns>
-            public override int GetHashCode()
-            {
-                int partial_hash = 1;
-                STRUCT[] StructArray = Structs.ToArray();
-                foreach (STRUCT S in StructArray)
-                {
-                    partial_hash *= S.GetHashCode();
-                }
+            //public override int GetHashCode()
+            //{
+            //    int partial_hash = 1;
+            //    STRUCT[] StructArray = Structs.ToArray();
+            //    foreach (STRUCT S in StructArray)
+            //    {
+            //        partial_hash *= S.GetHashCode();
+            //    }
 
-                return new { Type, partial_hash, Label }.GetHashCode();
-            }
+            //    return new { Type, partial_hash, Label }.GetHashCode();
+            //}
 
             /// <summary>
             /// Write LIST information to string.

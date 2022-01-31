@@ -23,6 +23,11 @@ namespace KotOR_IO
             public List<FIELD> Fields { get; set; } = new List<FIELD>();
 
             /// <summary>
+            /// Index of this STRUCT in the GFF struct array. Used during GFF write.
+            /// </summary>
+            internal int Index { get; private set; } = -1;
+
+            /// <summary>
             /// Default constructor.
             /// </summary>
             public STRUCT() : base(GffFieldType.Struct) { }
@@ -206,7 +211,9 @@ namespace KotOR_IO
                 ref int Struct_Indexer,
                 ref int List_Indices_Counter)
             {
-                Tuple<FIELD, int, int> T = new Tuple<FIELD, int, int>(this, Struct_Indexer, this.GetHashCode());
+                Tuple<FIELD, int, int> T = new Tuple<FIELD, int, int>(this, Struct_Indexer, this.GetHashCode());    // Why is GetHashCode() used?
+                Index = Struct_Indexer;
+
                 Struct_Indexer++;
                 Field_Array.Add(T);
 
@@ -256,16 +263,16 @@ namespace KotOR_IO
             /// Generate a hash code for this STRUCT.
             /// </summary>
             /// <returns></returns>
-            public override int GetHashCode()
-            {
-                int partial_hash = 1;
-                FIELD[] fieldArray = Fields.ToArray();
-                foreach (FIELD F in fieldArray)
-                {
-                    partial_hash *= F.GetHashCode();
-                }
-                return new { Type, Struct_Type, partial_hash, Label }.GetHashCode();
-            }
+            //public override int GetHashCode()
+            //{
+            //    int partial_hash = 1;
+            //    FIELD[] fieldArray = Fields.ToArray();
+            //    foreach (FIELD F in fieldArray)
+            //    {
+            //        partial_hash *= F.GetHashCode();
+            //    }
+            //    return new { Type, Struct_Type, partial_hash, Label }.GetHashCode();
+            //}
 
             /// <summary>
             /// Write STRUCT information to string.

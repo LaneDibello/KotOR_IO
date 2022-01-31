@@ -105,10 +105,10 @@ namespace KotOR_IO
             /// Generate a hash code for this DWORD64.
             /// </summary>
             /// <returns></returns>
-            public override int GetHashCode()
-            {
-                return new { Type, Value, Label }.GetHashCode();
-            }
+            //public override int GetHashCode()
+            //{
+            //    return new { Type, Value, Label }.GetHashCode();
+            //}
 
             /// <summary>
             /// Write DWORD64 information to string.

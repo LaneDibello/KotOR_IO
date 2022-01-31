@@ -108,10 +108,10 @@ namespace KotOR_IO
             /// Generate a hash code for this CExoString.
             /// </summary>
             /// <returns></returns>
-            public override int GetHashCode()
-            {
-                return new { Type, CEString, Label }.GetHashCode();
-            }
+            //public override int GetHashCode()
+            //{
+            //    return new { Type, CEString, Label }.GetHashCode();
+            //}
 
             /// <summary>
             /// Write CExoString information to string.

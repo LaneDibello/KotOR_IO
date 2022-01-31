@@ -111,10 +111,10 @@ namespace KotOR_IO
             /// Generate a hash code for this StrRef.
             /// </summary>
             /// <returns></returns>
-            public override int GetHashCode()
-            {
-                return new { Type, LeadingValue, Reference, Label }.GetHashCode();
-            }
+            //public override int GetHashCode()
+            //{
+            //    return new { Type, LeadingValue, Reference, Label }.GetHashCode();
+            //}
 
             /// <summary>
             /// Write StrRef information to string.

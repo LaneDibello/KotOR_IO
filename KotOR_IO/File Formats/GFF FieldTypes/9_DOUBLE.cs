@@ -106,10 +106,10 @@ namespace KotOR_IO
             /// Generate a hash code for this DOUBLE.
             /// </summary>
             /// <returns></returns>
-            public override int GetHashCode()
-            {
-                return new { Type, Value, Label }.GetHashCode();
-            }
+            //public override int GetHashCode()
+            //{
+            //    return new { Type, Value, Label }.GetHashCode();
+            //}
 
             /// <summary>
             /// Write DOUBLE information to string.

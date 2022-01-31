@@ -99,10 +99,10 @@ namespace KotOR_IO
             /// Generate a hash code for this SHORT.
             /// </summary>
             /// <returns></returns>
-            public override int GetHashCode()
-            {
-                return new { Type, Value, Label }.GetHashCode();
-            }
+            //public override int GetHashCode()
+            //{
+            //    return new { Type, Value, Label }.GetHashCode();
+            //}
 
             /// <summary>
             /// Write SHORT information to string.

@@ -117,10 +117,10 @@ namespace KotOR_IO
             /// Generate a hash code for this ResRef.
             /// </summary>
             /// <returns></returns>
-            public override int GetHashCode()
-            {
-                return new { Type, Reference, Label }.GetHashCode();
-            }
+            //public override int GetHashCode()
+            //{
+            //    return new { Type, Reference, Label }.GetHashCode();
+            //}
 
             /// <summary>
             /// Write ResRef information to string.

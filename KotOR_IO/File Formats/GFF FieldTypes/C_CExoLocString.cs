@@ -163,21 +163,21 @@ namespace KotOR_IO
             /// Generate a hash code for this CExoLocString.
             /// </summary>
             /// <returns></returns>
-            public override int GetHashCode()
-            {
-                int partial_hash = 1;
-                int[] IDArray = Strings.Select(x => x.StringID).ToArray();
-                foreach (int i in IDArray)
-                {
-                    partial_hash *= i.GetHashCode();
-                }
-                string[] StringArray = Strings.Select(x => x.SString).ToArray();
-                foreach (string s in StringArray)
-                {
-                    partial_hash *= s.GetHashCode();
-                }
-                return new { Type, StringRef, partial_hash, Label }.GetHashCode();
-            }
+            //public override int GetHashCode()
+            //{
+            //    int partial_hash = 1;
+            //    int[] IDArray = Strings.Select(x => x.StringID).ToArray();
+            //    foreach (int i in IDArray)
+            //    {
+            //        partial_hash *= i.GetHashCode();
+            //    }
+            //    string[] StringArray = Strings.Select(x => x.SString).ToArray();
+            //    foreach (string s in StringArray)
+            //    {
+            //        partial_hash *= s.GetHashCode();
+            //    }
+            //    return new { Type, StringRef, partial_hash, Label }.GetHashCode();
+            //}
 
             /// <summary>
             /// Write CExoLocString information to string.

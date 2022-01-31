@@ -130,10 +130,10 @@ namespace KotOR_IO
             /// Generate a hash code for this Orientation.
             /// </summary>
             /// <returns></returns>
-            public override int GetHashCode()
-            {
-                return new { Type, Value1, Value2, Value3, Value4, Label }.GetHashCode();
-            }
+            //public override int GetHashCode()
+            //{
+            //    return new { Type, Value1, Value2, Value3, Value4, Label }.GetHashCode();
+            //}
 
             /// <summary>
             /// Write Orientation information to string.

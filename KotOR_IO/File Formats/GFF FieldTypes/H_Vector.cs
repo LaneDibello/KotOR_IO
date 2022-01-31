@@ -119,10 +119,10 @@ namespace KotOR_IO
             /// Generate a hash code for this Vector.
             /// </summary>
             /// <returns></returns>
-            public override int GetHashCode()
-            {
-                return new { Type, X, Y, Z, Label }.GetHashCode();
-            }
+            //public override int GetHashCode()
+            //{
+            //    return new { Type, X, Y, Z, Label }.GetHashCode();
+            //}
 
             /// <summary>
             /// Write Vector information to string.
