@@ -258,6 +258,17 @@ namespace KotOR_IO
 
             /// <summary>Resource Reference string (aka filename) of this resource. This is populated when Attaching Key data. </summary>
             public string ResRef { get; set; } = null;
+
+            /// <summary>
+            /// Writes human readable summary of the VariableResourceEntry.
+            /// </summary>
+            /// <returns></returns>
+            public override string ToString()
+            {
+                return Enum.IsDefined(typeof(ResourceType), ResourceType) ?
+                    $"{ResourceType.ToDescription()}({(int)ResourceType}), {ResRef ?? "null"}" :
+                    $"??? ({ResourceType}), {ResRef ?? "null"}";
+            }
         }
 
         // Fixed Resource Table

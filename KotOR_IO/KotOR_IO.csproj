@@ -76,6 +76,8 @@
     <Compile Include="File Formats\SSF.cs" />
     <Compile Include="File Formats\TLK.cs" />
     <Compile Include="File Formats\TwoDA.cs" />
+    <Compile Include="File Formats\WOK.cs" />
+    <Compile Include="File Formats\LYT.cs" />
     <Compile Include="Temporary.cs" />
     <Compile Include="KIO.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
