@@ -313,7 +313,7 @@ namespace KotOR_IO
         public List<List_Index> List_Indices = new List<List_Index>();
 
         /// <summary>
-        /// Gets field data given a field label. If more than one fields have this label, type will be <see cref="List{object}"/>, otherwise type will be <see cref="object"/>
+        /// Gets field data given a field label. If more than one fields have this label, type will be <see cref="List{Object}"/>, otherwise type will be <see cref="object"/>
         /// </summary>
         /// <param name="Field_Label"></param>
         /// <returns></returns>

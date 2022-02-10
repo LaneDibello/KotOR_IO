@@ -45,6 +45,7 @@
   <ItemGroup>
     <Compile Include="File Formats\BIF.cs" />
     <Compile Include="File Formats\ERF.cs" />
+    <Compile Include="File Formats\GFF FieldTypes\_FIELD.cs" />
     <Compile Include="File Formats\GFF FieldTypes\I_StrRef.cs" />
     <Compile Include="File Formats\GFF FieldTypes\H_Vector.cs" />
     <Compile Include="File Formats\GFF FieldTypes\G_Orientation.cs" />
@@ -68,6 +69,7 @@
     <Compile Include="File Formats\GFF_old.cs" />
     <Compile Include="File Formats\KEY.cs" />
     <Compile Include="File Formats\KFile.cs" />
+    <Compile Include="File Formats\LIP.cs" />
     <Compile Include="File Formats\LTR.cs" />
     <Compile Include="File Formats\MiscType.cs" />
     <Compile Include="File Formats\RIM.cs" />

@@ -22,6 +22,9 @@ namespace KotOR_IO
     /// </summary>
     public abstract class KFile
     {
+        /// <summary> Number of bytes in the header info (FileType and Version). </summary>
+        protected const int SIZEOF_FILEINFO = 8;
+
         /// <summary> ASCII value of NUL character. </summary>
         protected const byte ASCII_NULL = 0;
 
