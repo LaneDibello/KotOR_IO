@@ -20,6 +20,44 @@ using System.ComponentModel;
 namespace KotOR_IO 
 {
     /// <summary>
+    /// Class containing extension methods for streams and stream readers.
+    /// </summary>
+    public static class StreamReaderExtensions
+    {
+        /// <summary>
+        /// Reads and returns an array of all the bytes in a binary reader.
+        /// </summary>
+        public static byte[] ReadAllBytes(this Stream reader)
+        {
+            const int bufferSize = 4096;
+            using (var ms = new MemoryStream())
+            {
+                var buffer = new byte[bufferSize];
+                int count;
+                while ((count = reader.Read(buffer, 0, buffer.Length)) != 0)
+                    ms.Write(buffer, 0, count);
+                return ms.ToArray();
+            }
+        }
+
+        /// <summary>
+        /// Reads and returns an array of all the bytes in a binary reader.
+        /// </summary>
+        public static byte[] ReadAllBytes(this BinaryReader reader)
+        {
+            const int bufferSize = 4096;
+            using (var ms = new MemoryStream())
+            {
+                var buffer = new byte[bufferSize];
+                int count;
+                while ((count = reader.Read(buffer, 0, buffer.Length)) != 0)
+                    ms.Write(buffer, 0, count);
+                return ms.ToArray();
+            }
+        }
+    }
+
+    /// <summary>
     /// Class containing enumeration extension methods
     /// </summary>
     public static class EnumHelper
@@ -36,7 +74,7 @@ namespace KotOR_IO
             var type = enumVal.GetType();
             var memInfo = type.GetMember(enumVal.ToString());
             var attributes = memInfo[0].GetCustomAttributes(typeof(T), false);
-            return (attributes.Length > 0) ? (T)attributes[0] : null;
+            return (attributes.Length > 0) ? attributes[0] as T : null;
         }
 
         /// <summary>
@@ -49,6 +87,15 @@ namespace KotOR_IO
         {
             var attribute = value.GetAttributeOfType<DescriptionAttribute>();
             return attribute == null ? "null" : attribute.Description;
+        }
+
+        /// <summary>
+        /// Gets the WalkableAttribute value on an enum field.
+        /// </summary>
+        public static bool IsWalkable(this SurfaceMaterial value)
+        {
+            var attribute = value.GetAttributeOfType<WalkableAttribute>();
+            return attribute?.IsWalkable ?? false;
         }
 
         //public static string ToName(this Enum value)
@@ -309,9 +356,90 @@ namespace KotOR_IO
     }
 
     /// <summary>
+    /// Attribute to describe if a surface material is walkable.
+    /// </summary>
+    public class WalkableAttribute : Attribute
+    {
+        /// <summary> Is this item walkable? </summary>
+        public bool IsWalkable { get; }
+
+        /// <summary> Attribute to describe if a surface material is walkable. </summary>
+        public WalkableAttribute(bool isWalkable) { IsWalkable = isWalkable; }
+    }
+
+    /// <summary>
+    /// Material used for walkmesh surfaces, as defined in surfacemat.2da.
+    /// </summary>
+    public enum SurfaceMaterial : int
+    {
+        /// <summary>Undefined (unwalkable)</summary>
+        [Walkable(false)] NotDefined = 0,
+        /// <summary>Dirt</summary>
+        [Walkable(true)]  Dirt = 1,
+        /// <summary>Obscuring (unwalkable)</summary>
+        [Walkable(false)] Obscuring = 2,
+        /// <summary>Grass</summary>
+        [Walkable(true)]  Grass = 3,
+        /// <summary>Stone</summary>
+        [Walkable(true)]  Stone = 4,
+        /// <summary>Wood</summary>
+        [Walkable(true)]  Wood = 5,
+        /// <summary>Water</summary>
+        [Walkable(true)]  Water = 6,
+        /// <summary>Non-walkable (unwalkable)</summary>
+        [Walkable(false)] NonWalk = 7,
+        /// <summary>Transparent (unwalkable)</summary>
+        [Walkable(false)] Transparent = 8,
+        /// <summary>Carpet</summary>
+        [Walkable(true)]  Carpet = 9,
+        /// <summary>Metal</summary>
+        [Walkable(true)]  Metal = 10,
+        /// <summary>Puddles</summary>
+        [Walkable(true)]  Puddles = 11,
+        /// <summary>Swamp</summary>
+        [Walkable(true)]  Swamp = 12,
+        /// <summary>Mud</summary>
+        [Walkable(true)]  Mud = 13,
+        /// <summary>Leaves</summary>
+        [Walkable(true)]  Leaves = 14,
+        /// <summary>Lava (unwalkable)</summary>
+        [Walkable(false)] Lava = 15,
+        /// <summary>Bottomless Pit (unwalkable)</summary>
+        [Walkable(true)]  BottomlessPit = 16,   // walkable in kotor 2, unused in kotor 1
+        /// <summary>Deep Water (unwalkable)</summary>
+        [Walkable(false)] DeepWater = 17,
+        /// <summary>Door</summary>
+        [Walkable(true)]  Door = 18,
+        /// <summary>Non-walkable grass (unwalkable)</summary>
+        [Walkable(false)] NonWalkGrass = 19,
+        /// <summary>Unused surface material (unwalkable)</summary>
+        [Walkable(false)] Unused0 = 20,
+        /// <summary>Unused surface material (unwalkable)</summary>
+        [Walkable(false)] Unused1 = 21,
+        /// <summary>Unused surface material (unwalkable)</summary>
+        [Walkable(false)] Unused2 = 22,
+        /// <summary>Unused surface material (unwalkable)</summary>
+        [Walkable(false)] Unused3 = 23,
+        /// <summary>Unused surface material (unwalkable)</summary>
+        [Walkable(false)] Unused4 = 24,
+        /// <summary>Unused surface material (unwalkable)</summary>
+        [Walkable(false)] Unused5 = 25,
+        /// <summary>Unused surface material (unwalkable)</summary>
+        [Walkable(false)] Unused6 = 26,
+        /// <summary>Unused surface material (unwalkable)</summary>
+        [Walkable(false)] Unused7 = 27,
+        /// <summary>Unused surface material (unwalkable)</summary>
+        [Walkable(false)] Unused8 = 28,
+        /// <summary>Unused surface material (unwalkable)</summary>
+        [Walkable(false)] Unused9 = 29,
+        /// <summary>Trigger</summary>
+        [Walkable(true)]  Trigger = 30,
+    }
+
+    /// <summary>
     /// A set of reference data used by the readers and constructors to generate user friendly data. 
     /// </summary>
-     public static class Reference_Tables
+    public static class Reference_Tables
     {
         /// <summary> Dictionary for conversion of Resource Type IDs to resource file extension. </summary>
         public static Dictionary<int, string> Res_Types = new Dictionary<int, string>() { { 0, "null" }, { 1, "bmp" }, { 3, "tga" }, { 4, "wav" }, { 6, "plt" }, { 7, "ini" }, { 10, "txt" }, { 2002, "mdl" }, { 2009, "nss" }, { 2011, "mod" }, { 2010, "ncs" }, { 2012, "are" }, { 2013, "set" }, { 2014, "ifo" }, { 2015, "bic" }, { 2016, "wok" }, { 2017, "2da" }, { 2018, "tlk" }, { 2022, "txi" }, { 2023, "git" }, { 2024, "bti" }, { 2025, "uti" }, { 2026, "btc" }, { 2027, "utc" }, { 2029, "dlg" }, { 2030, "itp" }, { 2032, "utt" }, { 2033, "dds" }, { 2035, "uts" }, { 2036, "ltr" }, { 2037, "gff" }, { 2038, "fac" }, { 2040, "ute" }, { 2042, "utd" }, { 2044, "utp" }, { 2045, "dft" }, { 2046, "gic" }, { 2047, "gui" }, { 2051, "utm" }, { 2052, "dwk" }, { 2053, "pwk" }, { 2056, "jrl" }, { 2057, "mod" }, { 2058, "utw" }, { 2060, "ssf" }, { 2061, "hak" }, { 2064, "ndb" }, { 2065, "ptm" }, { 2066, "ptt" }, { 3000, "lyt" }, { 3001, "vis" }, { 3002, "rim" }, { 3007, "tpc" }, { 3008, "mdx" }, { 9999, "key" }, { 9998, "bif" }, { 9997, "erf" } };

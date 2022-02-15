@@ -78,6 +78,7 @@
     <Compile Include="File Formats\TwoDA.cs" />
     <Compile Include="File Formats\WOK.cs" />
     <Compile Include="File Formats\LYT.cs" />
+    <Compile Include="Helpers\KPaths.cs" />
     <Compile Include="Temporary.cs" />
     <Compile Include="KIO.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

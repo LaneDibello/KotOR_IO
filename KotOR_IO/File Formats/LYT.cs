@@ -10,7 +10,7 @@ namespace KotOR_IO
     /// <summary>
     /// Kotor module layout file format.
     /// </summary>
-    public class LYT
+    public class LYT : KFile
     {
         #region Properties
 
@@ -183,7 +183,7 @@ namespace KotOR_IO
         /// <summary>
         /// Write layout data to stream.
         /// </summary>
-        public void Write(Stream s)
+        internal override void Write(Stream s)
         {
             using (StreamWriter sw = new StreamWriter(s))
             {
@@ -208,26 +208,6 @@ namespace KotOR_IO
                     sw.WriteLine($"      {doorhook}");
 
                 sw.WriteLine("donelayout");
-            }
-        }
-
-        /// <summary>
-        /// Write layout data to file.
-        /// </summary>
-        public void WriteToFile(string path)
-        {
-            Write(File.OpenWrite(path));
-        }
-
-        /// <summary>
-        /// Get layout data as a byte array.
-        /// </summary>
-        public byte[] ToRawData()
-        {
-            using (MemoryStream ms = new MemoryStream())
-            {
-                Write(ms);
-                return ms.ToArray();
             }
         }
 

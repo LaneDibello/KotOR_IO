@@ -1,91 +1,93 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace KotOR_IO
 {
     /// <summary>
     /// Kotor walkmesh file format.
     /// </summary>
-    public class WOK
+    public class WOK : KFile
     {
         #region Private Members
 
-        private int vert_count, face_count;
-        private float minX, minY, minZ, maxX, maxY, maxZ;
+        private readonly byte[] rawFileData;
+        private readonly List<Vert> verts = new List<Vert>();
+        private readonly List<Face> faces = new List<Face>();
 
         #endregion Private Members
 
         #region Properties
 
         /// <summary>
+        /// Name of the room.
+        /// </summary>
+        public string RoomName { get; set; }
+
+        /// <summary>
         /// List of vertices contained in this walkmesh.
         /// </summary>
-        public List<Vert> Verts { get; set; } = new List<Vert>();
+        public IReadOnlyList<Vert> Verts => verts;
 
         /// <summary>
         /// List of faces (triangles) that form the walkmesh.
         /// </summary>
-        public List<Face> Faces { get; set; } = new List<Face>();
+        public IReadOnlyList<Face> Faces => faces;
 
+        /// <summary>
+        /// Walkmesh type header information.
+        /// </summary>
+        public int WalkmeshType { get; private set; }
 
         /// <summary>
         /// Minimum X coordinate among the vertices in this walkmesh.
         /// </summary>
-        public float MinX => minX;
+        public float MinX { get; private set; } = float.MaxValue;
 
         /// <summary>
         /// Minimum Y coordinate among the vertices in this walkmesh.
         /// </summary>
-        public float MinY => minY;
+        public float MinY { get; private set; } = float.MaxValue;
 
         /// <summary>
         /// Minimum Z coordinate among the vertices in this walkmesh.
         /// </summary>
-        public float MinZ => minZ;
+        public float MinZ { get; private set; } = float.MaxValue;
 
         /// <summary>
         /// Maximum X coordinate among the vertices in this walkmesh.
         /// </summary>
-        public float MaxX => maxX;
+        public float MaxX { get; private set; } = float.MinValue;
 
         /// <summary>
         /// Maximum Y coordinate among the vertices in this walkmesh.
         /// </summary>
-        public float MaxY => maxY;
+        public float MaxY { get; private set; } = float.MinValue;
 
         /// <summary>
         /// Maximum Z coordinate among the vertices in this walkmesh.
         /// </summary>
-        public float MaxZ => maxZ;
+        public float MaxZ { get; private set; } = float.MinValue;
 
         /// <summary>
         /// Range of X values among the vertices in this walkmesh.
         /// </summary>
-        public float RangeX => minX == float.MaxValue ? 0f : maxX - minX;
+        public float RangeX => MinX == float.MaxValue ? 0f : MaxX - MinX;
 
         /// <summary>
         /// Range of Y values among the vertices in this walkmesh.
         /// </summary>
-        public float RangeY => minY == float.MaxValue ? 0f : maxY - minY;
+        public float RangeY => MinY == float.MaxValue ? 0f : MaxY - MinY;
 
         /// <summary>
         /// Range of Z values among the vertices in this walkmesh.
         /// </summary>
-        public float RangeZ => minZ == float.MaxValue ? 0f : maxZ - minZ;
+        public float RangeZ => MinZ == float.MaxValue ? 0f : MaxZ - MinZ;
 
         #endregion Properties
 
         #region Constructors
-
-        /// <summary>
-        /// Create an empty walkmesh object.
-        /// </summary>
-        public WOK()
-        {
-            minX = minY = minZ = float.MaxValue;
-            maxX = maxY = maxZ = float.MinValue;
-        }
 
         /// <summary>
         /// Parse raw byte data as a walkmesh file.
@@ -98,23 +100,53 @@ namespace KotOR_IO
         /// Parse walkmesh file from stream.
         /// </summary>
         public WOK(Stream s)
-            : this()
         {
             using (var br = new BinaryReader(s))
             {
-                // Skip header.
-                _ = br.ReadBytes(72);
+                rawFileData = br.ReadAllBytes();            // Save the entire file as a byte[].
+                br.BaseStream.Seek(0, SeekOrigin.Begin);    // Return to the beginning.
 
-                // Read counts and offsets.
-                vert_count = br.ReadInt32();
-                var vert_offset = br.ReadInt32();
-                face_count = br.ReadInt32();
-                var face_offset = br.ReadInt32();
-                var walk_offset = br.ReadInt32();
+                /*
+                 *  Header Format (72 bytes total):
+                 *       byte[8] - "BWM V1.0"
+                 *       4 bytes - walkmesh type
+                 *      60 bytes - unknown / unused
+                 */
+                FileType = new string(br.ReadChars(4));
+                Version = new string(br.ReadChars(4));
+                WalkmeshType = br.ReadInt32();
+                _ = br.ReadBytes(60);   // Skip 60 bytes.
+
+                /*
+                 *  Counts and Offsets (all ints, 56 bytes total):
+                 *     1. Vertex Count
+                 *     2. Vertex Offset
+                 *     3. Face Count
+                 *     4. Face Offset
+                 *     5. Face Type Offset
+                 */
+                var vertCount = br.ReadInt32();
+                var vertOffset = br.ReadInt32();
+                var faceCount = br.ReadInt32();
+                var faceOffset = br.ReadInt32();
+                var walkOffset = br.ReadInt32();
+
+                /*
+                 *  The remaining items in this section are ignored for now.
+                 *     6. Unknown int
+                 *     7. Unknown int
+                 *     8. AABB Count
+                 *     9. AABB Offset
+                 *    10. Unknown int
+                 *    11. Face Adj Count
+                 *    12. Face Adj Offset
+                 *    13. Perim Edges Count
+                 *    14. Perim Edges Offset
+                 */
 
                 // Read verts.
-                _ = br.BaseStream.Seek(vert_offset, SeekOrigin.Begin);
-                for (var i = 0; i < vert_count; i++)
+                _ = br.BaseStream.Seek(vertOffset, SeekOrigin.Begin);
+                for (var i = 0; i < vertCount; i++)
                 {
                     // Vertices are stored as a set of three floats.
                     var v = new Vert
@@ -123,31 +155,30 @@ namespace KotOR_IO
                         Y = br.ReadSingle(),
                         Z = br.ReadSingle()
                     };
-                    Verts.Add(v);
+                    verts.Add(v);
                     UpdateMinMax(v);
                 }
 
                 // Read faces.
-                _ = br.BaseStream.Seek(face_offset, SeekOrigin.Begin);
-                for (var i = 0; i < face_count; i++)
+                _ = br.BaseStream.Seek(faceOffset, SeekOrigin.Begin);
+                for (var i = 0; i < faceCount; i++)
                 {
                     // Vertices are stored as an index to the vertex array.
-                    // Walkable will be set later. Assume true for now.
-                    Faces.Add(new Face
+                    // Surface material will be set later.
+                    faces.Add(new Face
                     {
                         A = Verts[br.ReadInt32()],
                         B = Verts[br.ReadInt32()],
                         C = Verts[br.ReadInt32()],
-                        Walkable = true
+                        SurfaceMaterial = SurfaceMaterial.NotDefined
                     });
                 }
 
-                // Read walkable.
-                _ = br.BaseStream.Seek(walk_offset, SeekOrigin.Begin);
-                foreach (var f in Faces)
+                // Read surface material.
+                _ = br.BaseStream.Seek(walkOffset, SeekOrigin.Begin);
+                foreach (Face f in Faces)
                 {
-                    var temp = br.ReadInt32();
-                    f.Walkable = temp != 7 && temp != 19;
+                    f.SurfaceMaterial = (SurfaceMaterial)br.ReadInt32();
                 }
             }
         }
@@ -157,54 +188,62 @@ namespace KotOR_IO
         #region Methods
 
         /// <summary>
-        /// Use the given vertex to update the minimum and maximum coordinate values of this walkmesh
-        /// if the vertex is outside of the walkmesh's current bounds.
+        /// Determines if the given x and y coordinate pair is contained within a
+        /// walkable face projected into two-dimensional space. The Z axis is ignored
+        /// for this calculation.
+        /// </summary>
+        public bool ContainsWalkablePoint(float x, float y)
+        {
+            // Return false if point is outside of bounds.
+            if (x < MinX || x > MaxX || y < MinY || y > MaxY) return false;
+
+            // Check if any walkable face contains point.
+            return faces.Where(f => f.IsWalkable).Any(f => f.ContainsPoint2D(x, y));
+        }
+
+        /// <summary>
+        /// Determines if the given x and y coordinate pair is contained within a
+        /// non-walkable face projected into two-dimensional space. The Z axis is
+        /// ignored for this calculation.
+        /// </summary>
+        public bool ContainsNonWalkablePoint(float x, float y)
+        {
+            // Return false if point is outside of bounds.
+            if (x < MinX || x > MaxX || y < MinY || y > MaxY) return false;
+
+            // Check if any walkable face contains point.
+            return faces.Where(f => !f.IsWalkable).Any(f => f.ContainsPoint2D(x, y));
+        }
+
+        /// <summary>
+        /// Determines if the given x and y coordinate pair is contained within any
+        /// face projected into two-dimensional space. The Z axis is ignored for
+        /// this calculation.
+        /// </summary>
+        public bool ContainsPoint(float x, float y)
+        {
+            // Return false if point is outside of bounds.
+            if (x < MinX || x > MaxX || y < MinY || y > MaxY) return false;
+
+            // Check if any walkable face contains point.
+            return faces.Any(f => f.ContainsPoint2D(x, y));
+        }
+
+        /// <summary>
+        /// Use the given vertex to update the minimum and maximum coordinate values
+        /// of this walkmesh if the vertex is outside of the walkmesh's current bounds.
         /// </summary>
         private void UpdateMinMax(Vert v)
         {
             // Update minimum values.
-            if (v.X < minX) minX = v.X;
-            if (v.Y < minY) minY = v.Y;
-            if (v.Z < minZ) minZ = v.Z;
-
+            if (v.X < MinX) MinX = v.X;
+            if (v.Y < MinY) MinY = v.Y;
+            if (v.Z < MinZ) MinZ = v.Z;
+            
             // Update maximum values.
-            if (v.X > maxX) maxX = v.X;
-            if (v.Y > maxY) maxY = v.Y;
-            if (v.Z > maxZ) maxZ = v.Z;
-        }
-
-        /// <summary>
-        /// Use the given walkmesh to update the minimum and maximum coordinate values if the other
-        /// walkmesh is outside of this object's current bounds.
-        /// </summary>
-        private void UpdateMinMax(WOK other)
-        {
-            // Update minimum values.
-            if (other.minX < minX) minX = other.minX;
-            if (other.minY < minY) minY = other.minY;
-            if (other.minZ < minZ) minZ = other.minZ;
-
-            // Update maximum values.
-            if (other.maxX > maxX) maxX = other.maxX;
-            if (other.maxY > maxY) maxY = other.maxY;
-            if (other.maxZ > maxZ) maxZ = other.maxZ;
-        }
-
-        /// <summary>
-        /// Adds a walkmesh's vertices and faces to this walkmesh.
-        /// </summary>
-        public void Add(WOK other)
-        {
-            if (other is null) return;
-            if (ReferenceEquals(this, other)) return;
-
-            vert_count += other.vert_count;
-            face_count += other.face_count;
-
-            Verts.AddRange(other.Verts);
-            Faces.AddRange(other.Faces);
-
-            UpdateMinMax(other);
+            if (v.X > MaxX) MaxX = v.X;
+            if (v.Y > MaxY) MaxY = v.Y;
+            if (v.Z > MaxZ) MaxZ = v.Z;
         }
 
         /// <summary>
@@ -213,6 +252,17 @@ namespace KotOR_IO
         public override string ToString()
         {
             return $"Faces: {Faces.Count}, Verts: {Verts.Count}";
+        }
+
+        /// <summary>
+        /// Writes walkmesh file data.
+        /// </summary>
+        internal override void Write(Stream s)
+        {
+            using (BinaryWriter bw = new BinaryWriter(s))
+            {
+                bw.Write(rawFileData);
+            }
         }
 
         #endregion Methods
@@ -245,14 +295,30 @@ namespace KotOR_IO
         /// </summary>
         public class Face
         {
-            /// <summary> First vertex of the face. </summary>
+            /// <summary>
+            /// First vertex of the face.
+            /// </summary>
             public Vert A { get; set; }
-            /// <summary> Second vertex of the face. </summary>
+
+            /// <summary>
+            /// Second vertex of the face.
+            /// </summary>
             public Vert B { get; set; }
-            /// <summary> Third vertex of the face. </summary>
+
+            /// <summary>
+            /// Third vertex of the face.
+            /// </summary>
             public Vert C { get; set; }
-            /// <summary> Is this face walkable? </summary>
-            public bool Walkable { get; set; }
+
+            /// <summary>
+            /// The surface material of this face.
+            /// </summary>
+            public SurfaceMaterial SurfaceMaterial { get; set; }
+
+            /// <summary>
+            /// Is this face walkable?
+            /// </summary>
+            public bool IsWalkable => SurfaceMaterial.IsWalkable();
 
             /// <summary>
             /// Calculates the area of this face.
@@ -275,8 +341,9 @@ namespace KotOR_IO
             }
 
             /// <summary>
-            /// Determines if the given x and y coordinate pair is contained within this face projected
-            /// into two-dimensional space. The Z axis is ignored for this calculation.
+            /// Determines if the given x and y coordinate pair is contained within
+            /// this face projected into two-dimensional space. The Z axis is ignored
+            /// for this calculation.
             /// </summary>
             public bool ContainsPoint2D(float x, float y)
             {
@@ -298,11 +365,12 @@ namespace KotOR_IO
             }
 
             /// <summary>
-            /// String representation of this face as "Walkable?, [Ax, Ay, Az], [Bx, By, Bz], [Cx, Cy, Cz]".
+            /// String representation of this face as
+            /// "SurfaceMaterial, [Ax, Ay, Az], [Bx, By, Bz], [Cx, Cy, Cz]".
             /// </summary>
             public override string ToString()
             {
-                return $"{Walkable}, {A}, {B}, {C}";
+                return $"{SurfaceMaterial}, {A}, {B}, {C}";
             }
         }
 
