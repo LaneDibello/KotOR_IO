@@ -230,6 +230,33 @@ namespace KotOR_IO
         }
 
         /// <summary>
+        /// Returns the face found at the given x and y coordinate pair within this
+        /// walkmesh. If no face is found, null is returned. If multiple faces are
+        /// found, the first walkable face is returned. If no walkable faces are
+        /// found, the first non-walkable face is returned.
+        /// </summary>
+        public Face FaceAtPoint(float x, float y)
+        {
+            // Return null if point is outside of bounds.
+            if (x < MinX || x > MaxX || y < MinY || y > MaxY) return null;
+
+            // Find any faces that contain the point.
+            var matching = faces.Where(f => f.ContainsPoint2D(x, y));
+
+            // If 0 or 1 faces, return the first or default (null).
+            if (matching.Count() < 2) return matching.FirstOrDefault();
+
+            // If more than 1, check for walkable faces.
+            var walkmatch = matching.Where(f => f.IsWalkable);
+
+            // If any walkable faces, return first.
+            if (walkmatch.Any()) return walkmatch.First();
+
+            // Else, return first of matching (a non-walkable face).
+            return matching.First();
+        }
+
+        /// <summary>
         /// Use the given vertex to update the minimum and maximum coordinate values
         /// of this walkmesh if the vertex is outside of the walkmesh's current bounds.
         /// </summary>
