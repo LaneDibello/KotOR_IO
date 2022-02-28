@@ -65,6 +65,8 @@
     <Compile Include="File Formats\GFF FieldTypes\2_WORD.cs" />
     <Compile Include="File Formats\GFF FieldTypes\1_CHAR.cs" />
     <Compile Include="File Formats\GFF FieldTypes\0_BYTE.cs" />
+    <Compile Include="File Formats\GFF FileTypes\GffDerivative.cs" />
+    <Compile Include="File Formats\GFF FileTypes\GIT.cs" />
     <Compile Include="File Formats\GFF.cs" />
     <Compile Include="File Formats\GFF_old.cs" />
     <Compile Include="File Formats\KEY.cs" />
