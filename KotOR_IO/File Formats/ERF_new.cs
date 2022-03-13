@@ -10,7 +10,7 @@ namespace KotOR_IO
 {
     /// <summary>
     /// BioWare Encapsulated Resource File Data. <para/>
-    /// See: <see cref="ERF_old(Stream)"/>
+    /// See: <see cref="ERF(Stream)"/>
     /// <seealso  cref="Write(Stream)"/>
     /// <remarks>
     /// <para/>ERF files often come in the form of Save games (.SAV), active modules (.MOD), texture packs (.ERF), as well as hack-pack (.HAK)
@@ -218,6 +218,10 @@ namespace KotOR_IO
         public bool Contains(Res item)
         {
             return resources.Contains(item);
+        }
+        public bool Contains(string resref, ResourceType type)
+        {
+            return resources.Any(r => r.resref == resref && r.type == type);
         }
         public void CopyTo(Res[] array, int arrayIndex = 0)
         {
