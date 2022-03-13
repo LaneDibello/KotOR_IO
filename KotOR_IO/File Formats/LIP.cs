@@ -32,6 +32,10 @@ namespace KotOR_IO
             : this(File.OpenRead(path))
         { }
 
+        /// <summary>
+        /// Read a generic data Stream.
+        /// </summary>
+        /// <param name="s"></param>
         protected LIP(Stream s)
         {
             using (BinaryReader br = new BinaryReader(s))

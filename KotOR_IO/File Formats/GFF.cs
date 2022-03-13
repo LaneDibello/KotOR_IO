@@ -6,61 +6,55 @@ using System.IO;
 namespace KotOR_IO
 {
     /// <summary>
-    /// General File Format - The Format used for about 50% of the files in this game. Including, but not limited to: Creatures, Doors, Placeables, Items, Dialogue, GUIs, and Module Layouts
+    /// General File Format - The Format used for about 50% of the files in this game.
+    /// Including, but not limited to: Creatures, Doors, Placeables, Items, Dialogue,
+    /// GUIs, and Module Layouts.
     /// </summary>
     public partial class GFF : KFile
     {
-        //Type Definitions
+        /// <summary> Bytes in an int. </summary>
+        protected const int SIZEOF_INT = 4;
+
         /// <summary>
-        /// Abstract class that all the fields that make the GFF are based off of.
+        /// Top level of this container.
         /// </summary>
-        public abstract class FIELD //A GFF is just a collection of nested fields
-        {
-            public const int MAX_LABEL_LENGTH = 16;
+        public STRUCT Top_Level { get; set; }
 
-            public GffFieldType Type;
-            public string Label;
-
-            abstract internal void collect_fields(ref List<Tuple<FIELD, int, int>> Field_Array, ref List<byte> Raw_Field_Data_Block, ref List<string> Label_Array, ref int Struct_Indexer, ref int List_Indices_Counter);
-
-            internal FIELD(GffFieldType type, string label = "")
-            {
-                if (label.Length > MAX_LABEL_LENGTH)
-                    throw new Exception($"Label \"{label}\" is longer than {MAX_LABEL_LENGTH} characters, and is invalid.");
-
-                Type = type;
-                Label = label;
-            }
-
-            public override string ToString()
-            {
-                return $"[{Type}] \"{Label}\"";
-            }
-        }
-
-
-        //Declarations
-        public string FileType;
-        public string Version;
-        public STRUCT Top_Level;
-
-        //Construction
+        /// <summary>
+        /// Default constructor.
+        /// </summary>
         public GFF()
         {
             Top_Level = new STRUCT();
         }
+
+        /// <summary>
+        /// Construct GFF using a custom top level STRUCT.
+        /// </summary>
         public GFF(string FileType, string Version, STRUCT Top_Level)
         {
             this.FileType = FileType;
             this.Version = Version;
             this.Top_Level = Top_Level;
         }
+
+        /// <summary>
+        /// Construct GFF by reading a raw byte[] data stream.
+        /// </summary>
         public GFF(byte[] rawData)
             : this(new MemoryStream(rawData))
         { }
+
+        /// <summary>
+        /// Construct GFF by reading file at path.
+        /// </summary>
         public GFF(string path)
             : this(File.OpenRead(path))
         { }
+
+        /// <summary>
+        /// Construct GFF by reading a generic data stream.
+        /// </summary>
         public GFF(Stream s)
         {
             using (BinaryReader br = new BinaryReader(s))
@@ -68,20 +62,24 @@ namespace KotOR_IO
                 FileType = new string(br.ReadChars(4));
                 Version = new string(br.ReadChars(4));
 
+                // Begin reading top level STRUCT data.
                 Top_Level = new STRUCT(br, 0);
             }
 
         }
 
-        //Write Methods
+        /// <summary>
+        /// Write GFF data to a generic data stream.
+        /// </summary>
         internal override void Write(Stream s)
         {
-            //List out all the fields in the file, followed by their DataOrDataOffset, and then their HasCode.
+            // List out all the fields in the file, followed by their DataOrDataOffset, and then their HashCode.
             List<Tuple<FIELD, int, int>> Field_Array = new List<Tuple<FIELD, int, int>>();
-            //Contains all teh unique labels used by the file
+
+            // Contains all the unique labels used by the file.
             List<string> Label_Array = new List<string>();
 
-            //Raw Arrays that will store the bytes to be written to the File
+            // Raw Arrays that will store the bytes to be written to the File.
             List<byte> Raw_Struct_Array = new List<byte>();
             List<byte> Raw_Field_Array = new List<byte>();
             List<byte> Raw_Label_Array = new List<byte>();
@@ -89,17 +87,35 @@ namespace KotOR_IO
             List<byte> Raw_Field_Indices_Array = new List<byte>();
             List<byte> Raw_List_Indices_Array = new List<byte>();
 
-            //Indexers/Counters
+            // Indexers/Counters
             int Struct_Indexer = 0;
             int List_Indices_Counter = 0;
 
-            //Recursive field collection call
+            // Recursive field collection call
             Top_Level.collect_fields(ref Field_Array, ref Raw_Field_Data_Block, ref Label_Array, ref Struct_Indexer, ref List_Indices_Counter);
 
-            //Preparing raw struct data
+            // Empty string should not be in the label array. !! ASSUMPTION !!
+            Label_Array.Remove(string.Empty);
+
+            // Create a struct array and remove all structs from field array that are contained within lists.
+            var Struct_Array = new List<Tuple<FIELD, int, int>>();
             for (int i = 0; i < Struct_Indexer; i++)
             {
-                STRUCT S = Field_Array.Where(x => x.Item1.Type == GffFieldType.Struct && x.Item2 == i).Select(x => x.Item1 as STRUCT).FirstOrDefault();
+                var field = Field_Array.Where(x => x.Item1.Type == GffFieldType.Struct && x.Item2 == i).FirstOrDefault();
+                Struct_Array.Add(field);
+                STRUCT S = field.Item1 as STRUCT;
+
+                if (string.IsNullOrEmpty(S.Label))
+                {
+                    Field_Array.Remove(field);
+                }
+            }
+
+            // Preparing raw struct data
+            foreach (var field in Struct_Array)
+            {
+                STRUCT S = field.Item1 as STRUCT;
+
                 Raw_Struct_Array.AddRange(BitConverter.GetBytes(S.Struct_Type));
                 int f_count = S.Fields.Count;
                 if (f_count == 1)
@@ -117,24 +133,25 @@ namespace KotOR_IO
                         int f_hash = F.GetHashCode();
                         int f_index = Field_Array.FindIndex(x => x.Item3 == f_hash);
 
-                        if (f_index == -1) { throw new Exception("Bad field index, was their a hashing issue?"); }
+                        if (f_index == -1) { throw new Exception("Bad field index, was there a hashing issue?"); }
 
                         Raw_Field_Indices_Array.AddRange(BitConverter.GetBytes(f_index));
                     }
 
-                    //Depricated code for when I was using a counter and handling Field Indices separately
+                    // Depricated code for when I was using a counter and handling Field Indices separately
                     //Raw_Struct_Array.AddRange(BitConverter.GetBytes(Field_Indices_Counter));
                     //Field_Indices_Counter += 4 * S.Fields.Count;
                 }
                 else
                 {
-                    //Empty Struct case (this is rare)
+                    // Empty Struct case (this is rare)
                     Raw_Struct_Array.AddRange(BitConverter.GetBytes(-1));
                 }
+
                 Raw_Struct_Array.AddRange(BitConverter.GetBytes(f_count));
             }
 
-            //Preparing raw Field data
+            // Preparing raw Field data
             foreach (Tuple<FIELD, int, int> T in Field_Array)
             {
                 Raw_Field_Array.AddRange(BitConverter.GetBytes((int)T.Item1.Type)); //Field Type
@@ -143,33 +160,30 @@ namespace KotOR_IO
                 Raw_Field_Array.AddRange(BitConverter.GetBytes(T.Item2)); //DataOrDataOffset
             }
 
-            //Preparing raw Label data
+            // Preparing raw Label data
             foreach (string l in Label_Array)
             {
                 Raw_Label_Array.AddRange(l.PadRight(16, '\0').ToCharArray().Select(x => (byte)x));
             }
 
-            //Field Data block should've been prapared during collect_fields call
-            //Field Indice block should've been prapared while generating struct data
+            // Field Data block should've been prapared during collect_fields call
+            // Field Indice block should've been prapared while generating struct data
 
-            //Preparing raw List indices data
-            for (int i = 0; i < List_Indices_Counter;)
+            // Preparing raw List indices data
+            for (int i = 0; i < List_Indices_Counter; i = Raw_List_Indices_Array.Count)
             {
                 LIST L = Field_Array.Where(x => x.Item1.Type == GffFieldType.List && x.Item2 == Raw_List_Indices_Array.Count).Select(x => x.Item1 as LIST).FirstOrDefault();
                 Raw_List_Indices_Array.AddRange(BitConverter.GetBytes(L.Structs.Count));
                 foreach (STRUCT S in L.Structs)
                 {
-                    int s_hash = S.GetHashCode();
-                    int s_index = Field_Array.Where(x => x.Item3 == s_hash).FirstOrDefault().Item2;
-                    Raw_List_Indices_Array.AddRange(BitConverter.GetBytes(s_index));
+                    if (S.Index < 0) throw new InvalidDataException("Bad struct index, was there a collection issue?");
+                    Raw_List_Indices_Array.AddRange(BitConverter.GetBytes(S.Index));
                 }
-
-                i = Raw_List_Indices_Array.Count;
-
             }
 
-            //Header Calculations
-            int StructOffset = 56;
+            // Header Calculations
+            // 56 bytes in the header: 12 ints (4 bytes each) + type and version (4 bytes each)
+            int StructOffset = 12 * SIZEOF_INT + SIZEOF_FILEINFO;
             int StructCount = Raw_Struct_Array.Count / 12;
             int FieldOffset = StructOffset + StructCount * 12;
             int FieldCount = Field_Array.Count;
@@ -182,10 +196,10 @@ namespace KotOR_IO
             int ListIndicesOffset = FieldIndicesOffset + FieldIndicesCount;
             int ListIndicesCount = Raw_List_Indices_Array.Count;
 
-            //Writing
+            // Writing
             using (BinaryWriter bw = new BinaryWriter(s))
             {
-                //header
+                // Write header information
                 bw.Write(FileType.ToCharArray());
                 bw.Write(Version.ToCharArray());
                 bw.Write(StructOffset);
@@ -201,31 +215,28 @@ namespace KotOR_IO
                 bw.Write(ListIndicesOffset);
                 bw.Write(ListIndicesCount);
 
-                //structs
-                bw.Write(Raw_Struct_Array.ToArray());
-
-                //fields
-                bw.Write(Raw_Field_Array.ToArray());
-
-                //labels
-                bw.Write(Raw_Label_Array.ToArray());
-
-                //field data
-                bw.Write(Raw_Field_Data_Block.ToArray());
-
-                //fields indices
-                bw.Write(Raw_Field_Indices_Array.ToArray());
-
-                //list indices
-                bw.Write(Raw_List_Indices_Array.ToArray());
+                // Write data
+                bw.Write(Raw_Struct_Array.ToArray());           // structs
+                bw.Write(Raw_Field_Array.ToArray());            // fields
+                bw.Write(Raw_Label_Array.ToArray());            // labels
+                bw.Write(Raw_Field_Data_Block.ToArray());       // field data
+                bw.Write(Raw_Field_Indices_Array.ToArray());    // fields indices
+                bw.Write(Raw_List_Indices_Array.ToArray());     // list indices
             }
         }
 
+        /// <summary>
+        /// Write GFF data to a new file at the given path.
+        /// </summary>
         public override void WriteToFile(string path)
         {
             Write(File.OpenWrite(path));
         }
 
+        /// <summary>
+        /// Write GFF data to a raw byte[].
+        /// </summary>
+        /// <returns>byte[] of GFF data</returns>
         public override byte[] ToRawData()
         {
             using (MemoryStream ms = new MemoryStream())
@@ -234,6 +245,5 @@ namespace KotOR_IO
                 return ms.ToArray(); // Stream is closed, but the array is still available.
             }
         }
-
     }
 }

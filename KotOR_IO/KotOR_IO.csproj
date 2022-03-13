@@ -46,6 +46,7 @@
     <Compile Include="File Formats\BIF.cs" />
     <Compile Include="File Formats\ERF.cs" />
     <Compile Include="File Formats\ERF_new.cs" />
+    <Compile Include="File Formats\GFF FieldTypes\_FIELD.cs" />
     <Compile Include="File Formats\GFF FieldTypes\I_StrRef.cs" />
     <Compile Include="File Formats\GFF FieldTypes\H_Vector.cs" />
     <Compile Include="File Formats\GFF FieldTypes\G_Orientation.cs" />
@@ -76,6 +77,9 @@
     <Compile Include="File Formats\SSF.cs" />
     <Compile Include="File Formats\TLK.cs" />
     <Compile Include="File Formats\TwoDA.cs" />
+    <Compile Include="File Formats\WOK.cs" />
+    <Compile Include="File Formats\LYT.cs" />
+    <Compile Include="Helpers\KPaths.cs" />
     <Compile Include="Temporary.cs" />
     <Compile Include="KIO.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

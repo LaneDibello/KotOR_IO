@@ -7,16 +7,37 @@ namespace KotOR_IO
 {
     public partial class GFF
     {
+        /// <summary>
+        /// A CExoString is a string with length less than uint.MaxValue.
+        /// </summary>
         public class CExoString : FIELD
         {
-            public string CEString;
+            /// <summary>
+            /// String value
+            /// </summary>
+            public string CEString { get; set; }
 
+            /// <summary>
+            /// Default constructor.
+            /// </summary>
             public CExoString() : base(GffFieldType.CExoString) { }
-            public CExoString(string label, string cEString)
+
+            /// <summary>
+            /// Construct with label and value.
+            /// </summary>
+            /// <param name="label"></param>
+            /// <param name="ceStr"></param>
+            public CExoString(string label, string ceStr)
                 : base(GffFieldType.CExoString, label)
             {
-                CEString = cEString;
+                CEString = ceStr;
             }
+
+            /// <summary>
+            /// Construct by reading a binary reader.
+            /// </summary>
+            /// <param name="br"></param>
+            /// <param name="offset"></param>
             internal CExoString(BinaryReader br, int offset)
                 : base(GffFieldType.CExoString)
             {
@@ -40,10 +61,22 @@ namespace KotOR_IO
                 br.BaseStream.Seek(FieldDataOffset + DataOrDataOffset, 0);
                 int Size = br.ReadInt32();
                 CEString = new string(br.ReadChars(Size));
-
             }
 
-            internal override void collect_fields(ref List<Tuple<FIELD, int, int>> Field_Array, ref List<byte> Raw_Field_Data_Block, ref List<string> Label_Array, ref int Struct_Indexer, ref int List_Indices_Counter)
+            /// <summary>
+            /// Collect fields recursively.
+            /// </summary>
+            /// <param name="Field_Array"></param>
+            /// <param name="Raw_Field_Data_Block"></param>
+            /// <param name="Label_Array"></param>
+            /// <param name="Struct_Indexer"></param>
+            /// <param name="List_Indices_Counter"></param>
+            internal override void collect_fields(
+                ref List<Tuple<FIELD, int, int>> Field_Array,
+                ref List<byte> Raw_Field_Data_Block,
+                ref List<string> Label_Array,
+                ref int Struct_Indexer,
+                ref int List_Indices_Counter)
             {
                 Tuple<FIELD, int, int> T = new Tuple<FIELD, int, int>(this, Raw_Field_Data_Block.Count, this.GetHashCode());
                 Raw_Field_Data_Block.AddRange(BitConverter.GetBytes(CEString.Length));
@@ -56,23 +89,34 @@ namespace KotOR_IO
                 }
             }
 
-            public override bool Equals(object obj)
+            /// <summary>
+            /// Test equality between two CExoString objects.
+            /// </summary>
+            /// <param name="right"></param>
+            /// <returns></returns>
+            public override bool Equals(object right)
             {
-                if ((obj == null) || !GetType().Equals(obj.GetType()))
-                {
+                // Check null, self, type, Gff Type, and Label
+                if (!base.Equals(right))
                     return false;
-                }
-                else
-                {
-                    return CEString == (obj as CExoString).CEString && Label == (obj as CExoString).Label;
-                }
+
+                // Check value
+                return CEString == (right as CExoString).CEString;
             }
 
-            public override int GetHashCode()
-            {
-                return new { Type, CEString, Label }.GetHashCode();
-            }
+            /// <summary>
+            /// Generate a hash code for this CExoString.
+            /// </summary>
+            /// <returns></returns>
+            //public override int GetHashCode()
+            //{
+            //    return new { Type, CEString, Label }.GetHashCode();
+            //}
 
+            /// <summary>
+            /// Write CExoString information to string.
+            /// </summary>
+            /// <returns>[CExoString] "Label", "String"</returns>
             public override string ToString()
             {
                 return $"{base.ToString()}, \"{CEString}\"";

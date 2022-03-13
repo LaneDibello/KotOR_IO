@@ -54,13 +54,6 @@ namespace KotOR_IO
                 for (int i = 0; i < VariableResourceCount; i++)
                 {
                     VariableResourceEntry VRE = new VariableResourceEntry(br.ReadInt32(), br.ReadInt32(), br.ReadInt32(), br.ReadInt32());
-                    //VRE.ID = br.ReadInt32();
-                    //VRE.IDx = VRE.ID >> 20;
-                    //VRE.IDy = VRE.ID - (VRE.IDx << 20);
-                    //VRE.Offset = br.ReadInt32();
-                    //VRE.FileSize = br.ReadInt32();
-                    //VRE.EntryData = new byte[VRE.FileSize];
-                    //VRE.ResourceType = (ResourceType)br.ReadInt32();
                     VariableResourceTable.Add(VRE);
                 }
 
@@ -68,12 +61,6 @@ namespace KotOR_IO
                 for (int i = 0; i < FixedResourceCount; i++)
                 {
                     FixedResourceEntry FRE = new FixedResourceEntry(br.ReadInt32(), br.ReadInt32(), br.ReadInt32(), br.ReadInt32(), br.ReadInt32());
-                    //FRE.ID = br.ReadInt32();
-                    //FRE.Offset = br.ReadInt32();
-                    //FRE.PartCount = br.ReadInt32();
-                    //FRE.FileSize = br.ReadInt32();
-                    //FRE.ResourceType = (ResourceType)br.ReadInt32();
-                    //FRE.EntryData = new byte[FRE.FileSize];
                     FixedResourceTable.Add(FRE);
                 }
 
@@ -258,6 +245,17 @@ namespace KotOR_IO
 
             /// <summary>Resource Reference string (aka filename) of this resource. This is populated when Attaching Key data. </summary>
             public string ResRef { get; set; } = null;
+
+            /// <summary>
+            /// Writes human readable summary of the VariableResourceEntry.
+            /// </summary>
+            /// <returns></returns>
+            public override string ToString()
+            {
+                return Enum.IsDefined(typeof(ResourceType), ResourceType) ?
+                    $"{ResourceType.ToDescription()}({(int)ResourceType}), {ResRef ?? "null"}" :
+                    $"??? ({ResourceType}), {ResRef ?? "null"}";
+            }
         }
 
         // Fixed Resource Table
