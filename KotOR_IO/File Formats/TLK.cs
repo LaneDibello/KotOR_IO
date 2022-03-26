@@ -152,6 +152,12 @@ namespace KotOR_IO
             }
         }
 
+        /// <summary>Returns a string that represents the current object.</summary>
+        public override string ToString()
+        {
+            return $"Strings: {String_Data_Table.Count}";
+        }
+
         // String Data Table
         /// <summary>
         /// An element on the <see cref="String_Data_Table"/>.
@@ -209,6 +215,12 @@ namespace KotOR_IO
 
             /// <summary> The text associated with the string. </summary>
             public string StringText;
+
+            /// <summary>Returns a string that represents the current object.</summary>
+            public override string ToString()
+            {
+                return StringText.Length > 80 ? $"{StringText.Substring(0, 78)}..." : StringText;
+            }
         }
     }
 }

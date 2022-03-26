@@ -118,6 +118,12 @@ namespace KotOR_IO
         /// <summary> A list of all the <see cref="KeyEntry"/>s associted with the linked <see cref="BIF"/> files. </summary>
         public List<KeyEntry> KeyTable { get; set; } = new List<KeyEntry>();
 
+        /// <summary>Returns a string that represents the current object.</summary>
+        public override string ToString()
+        {
+            return $"Files: {FileTable.Count}, Keys: {KeyTable.Count}";
+        }
+
         /// <summary>
         /// Writes Bioware Key File data
         /// </summary>
@@ -180,6 +186,12 @@ namespace KotOR_IO
 
             ///<summary>The Filename of the <see cref="BIF"/> as a path from the <see cref="KEY"/>'s root directory</summary>
             public string Filename;
+
+            /// <summary>Returns a string that represents the current object.</summary>
+            public override string ToString()
+            {
+                return Filename;
+            }
         }
 
         // Key Table
@@ -203,6 +215,12 @@ namespace KotOR_IO
             public int IDx;
             ///<summary>The y component of <see cref="ResID"/> which is an index into the <see cref="BIF.VariableResourceTable"/></summary>
             public int IDy;
+
+            /// <summary>Returns a string that represents the current object.</summary>
+            public override string ToString()
+            {
+                return $"[{Type_Text.ToUpper()}] '{ResRef}'";
+            }
         }
     }
 }

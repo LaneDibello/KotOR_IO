@@ -79,7 +79,8 @@ namespace KotOR_IO
                     File_Table.Add(URF.rf);
                 }
 
-                GitFile = GIT.NewGIT(new GFF(File_Table.FirstOrDefault(f => f.TypeID == (int)ResourceType.GIT).File_Data));
+                var gitFile = File_Table.FirstOrDefault(f => f.TypeID == (int)ResourceType.GIT);
+                if (gitFile != null) GitFile = GIT.NewGIT(new GFF(gitFile.File_Data));
             }
         }
 
