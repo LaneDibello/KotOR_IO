@@ -267,6 +267,9 @@ namespace KotOR_IO
         [Description("RIM ")]
         RIM = 3002,
         /// <summary></summary>
+        [Description("PTH ")]
+        PTH = 3003,
+        /// <summary></summary>
         [Description("TPC ")]
         TPC = 3007,
         /// <summary></summary>
