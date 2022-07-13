@@ -40,9 +40,10 @@ namespace KotOR_IO
         Position:
             I'm not sure what this does?
          */
-        #endregion
+        #endregion Notes
 
         #region Constants
+
         const uint AABBNODESIZE = 44;
         const uint DEFAULTVERTOFF = 136;
         const uint VERTEXSIZE = 12;
@@ -50,7 +51,8 @@ namespace KotOR_IO
         const uint INT32SIZE = 4;
         const uint FLOATSIZE = 4;
         const uint EDGESIZE = 8;
-        #endregion
+
+        #endregion Constants
 
         #region Members
 
@@ -144,6 +146,10 @@ namespace KotOR_IO
             : this(new MemoryStream(rawData))
         { }
 
+        public WOK(string path)
+            : this(File.OpenRead(path))
+        { }
+
         /// <summary>
         /// Parse walkmesh file from stream.
         /// </summary>
@@ -202,7 +208,7 @@ namespace KotOR_IO
 
                 //Get Face Adjacencies
                 br.BaseStream.Seek(faceAdjOffset, SeekOrigin.Begin);
-                for (int i = 0; i < faceAdjCount; i++) Faces.Where(f => f.IsWalkable).ToList()[i].grabEdges(br);
+                Faces.Where(f => f.IsWalkable).ToList().ForEach(f => f.grabEdges(br));
 
                 //Get Perimeter Edges
                 br.BaseStream.Seek(edgesOffset, SeekOrigin.Begin);
