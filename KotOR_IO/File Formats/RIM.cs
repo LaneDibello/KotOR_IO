@@ -1,4 +1,5 @@
-﻿using System;
+﻿using KotOR_IO.GffFile;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -77,6 +78,9 @@ namespace KotOR_IO
 
                     File_Table.Add(URF.rf);
                 }
+
+                var gitFile = File_Table.FirstOrDefault(f => f.TypeID == (int)ResourceType.GIT);
+                if (gitFile != null) GitFile = GIT.NewGIT(new GFF(gitFile.File_Data));
             }
         }
 
@@ -101,6 +105,11 @@ namespace KotOR_IO
         /// All of the <see cref="rFile"/>s contained within the <see cref="RIM"/> at their respective Index. This is the primary property of the <see cref="RIM"/>.
         /// </summary>
         public List<rFile> File_Table = new List<rFile>();
+
+        /// <summary>
+        /// GIT file of this RIM.
+        /// </summary>
+        public GIT GitFile { get; private set; }
 
         /// <summary>
         /// Appends a new KFile to the end of the <see cref="RIM"/>.
