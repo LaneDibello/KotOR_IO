@@ -90,6 +90,35 @@ namespace test8
 
         static void Main(string[] args)
         {
+
+            GFF j = new GFF(@"L:\laned\Documents\kotor stuffs\global.jrl");
+            TLK t = new TLK(@"C:\Program Files (x86)\Steam\steamapps\common\swkotor\dialog.tlk");
+
+            var questlist = (j.Top_Level.Fields.First(f => f.Label == "Categories") as GFF.LIST).Structs;
+
+            foreach (var quest in questlist)
+            {
+                int talkID = (quest.Fields.First(f => f.Label == "Name") as GFF.CExoLocString).StringRef;
+                Console.WriteLine(t[talkID]);
+            }
+
+            Console.ReadKey();
+
+
+
+            //WOK w = new WOK(@"L:\laned\Documents\kotor stuffs\Walkmeshes\m01aa_01a.wok");
+            //LYT l = new LYT(File.OpenRead(@"L:\laned\Documents\kotor stuffs\m01aa.lyt"));
+            ////w.positon = new Tuple<float, float, float>(100, 100, 500);
+            //w.translate(0, 0, 0);
+            //foreach (var room in l.Rooms)
+            //{
+            //    room.X += 0;
+            //    room.Y += 0;
+            //    room.Z += 0;
+            //}
+            //w.WriteToFile(@"C:\Program Files (x86)\Steam\steamapps\common\swkotor\Override\m01aa_01a.wok");
+            //l.WriteToFile(@"C:\Program Files (x86)\Steam\steamapps\common\swkotor\Override\m01aa.lyt");
+
             //Stopwatch sw = new Stopwatch();
             //sw.Start();
             //WOK w = new WOK(@"L:\laned\Documents\kotor stuffs\Walkmeshes\m18ac_01a.wok");
@@ -98,24 +127,27 @@ namespace test8
             //Console.WriteLine(w.ToString());
             //Console.ReadKey();
 
-
-            DirectoryInfo di = new DirectoryInfo(@"L:\laned\Documents\kotor stuffs\Walkmeshes\");
-            foreach (FileInfo fi in di.GetFiles())
-            {
-                WOK w = new WOK(fi.OpenRead());
-                w.WriteToFile($@"L:\laned\Documents\kotor stuffs\TestWOKOut\{fi.Name}");
-                if (FilesAreEqual(fi, new FileInfo($@"L:\laned\Documents\kotor stuffs\TestWOKOut\{fi.Name}")))
-                {
-                    Console.WriteLine($"No Differences found for {fi.Name}");
-                }
-                else
-                {
-                    Console.BackgroundColor = ConsoleColor.Red;
-                    Console.WriteLine($"{fi.Name} differs");
-                    Console.BackgroundColor = ConsoleColor.Black;
-                }
-            }
-            Console.ReadKey();
+            //Stopwatch sw = new Stopwatch();
+            //sw.Start();
+            //DirectoryInfo di = new DirectoryInfo(@"L:\laned\Documents\kotor stuffs\Walkmeshes\");
+            //foreach (FileInfo fi in di.GetFiles())
+            //{
+            //    WOK w = new WOK(fi.OpenRead());
+            //    w.WriteToFile($@"L:\laned\Documents\kotor stuffs\TestWOKOut\{fi.Name}");
+            //    if (FilesAreEqual(fi, new FileInfo($@"L:\laned\Documents\kotor stuffs\TestWOKOut\{fi.Name}")))
+            //    {
+            //        Console.WriteLine($"No Differences found for {fi.Name}");
+            //    }
+            //    else
+            //    {
+            //        Console.BackgroundColor = ConsoleColor.Red;
+            //        Console.WriteLine($"{fi.Name} differs");
+            //        Console.BackgroundColor = ConsoleColor.Black;
+            //    }
+            //}
+            //sw.Stop();
+            //Console.WriteLine($"Read and wrote all meshes in only {sw.Elapsed.TotalSeconds} seconds.");
+            //Console.ReadKey();
 
 
             //var fileToRead = @"C:\Program Files (x86)\Steam\steamapps\common\swkotor\data\templates.bif";
