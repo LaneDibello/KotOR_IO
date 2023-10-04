@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace KotOR_IO
 {
+    //Finish me
     public class MDL : KFile
     {
         #region Constants
@@ -71,6 +72,9 @@ namespace KotOR_IO
          const uint kControllerTypeSelfIllumColor = 100;
          const uint kControllerTypeAlpha = 128;
         #endregion Constants
+
+
+
 
         internal override void Write(Stream s)
         {
