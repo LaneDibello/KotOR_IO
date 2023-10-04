@@ -188,7 +188,12 @@ namespace KotOR_IO
 
                 //Get Vertices
                 br.BaseStream.Seek(vertexOffset, SeekOrigin.Begin);
-                for (uint i = 0; i < vertexCount; i++) Vertices.Add(readVertex(br));
+                for (uint i = 0; i < vertexCount; i++)
+                {
+                    var v = readVertex(br);
+                    Vertices.Add(v);
+                    UpdateMinMax(v);
+                }
 
                 //Get Faces
                 br.BaseStream.Seek(faceOffset, SeekOrigin.Begin);
