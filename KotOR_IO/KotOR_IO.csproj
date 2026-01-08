@@ -4,12 +4,12 @@
     <OutputType>Library</OutputType>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
-	<VersionPrefix>1.5.0</VersionPrefix>
+	<VersionPrefix>1.6.0</VersionPrefix>
 	<Title>KotOR_IO</Title>
 	<Description>Provides Input and Output functionality for common KotOR File Types</Description>
 	<GenerateDocumentationFile>False</GenerateDocumentationFile>
 	<ProduceReferenceAssembly>False</ProduceReferenceAssembly>
-	<Copyright>Copyright © 2022</Copyright>
+	<Copyright>Copyright © 2026</Copyright>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DocumentationFile>bin\Debug\KotOR_IO.xml</DocumentationFile>

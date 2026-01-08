@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace KotOR_IO
 {
@@ -106,9 +105,9 @@ namespace KotOR_IO
                             Rooms.Add(new Room
                             {
                                 Name = split[0],
-                                X = float.Parse(split[1]),
-                                Y = float.Parse(split[2]),
-                                Z = float.Parse(split[3]),
+                                X = float.Parse(split[1], CultureInfo.InvariantCulture),
+                                Y = float.Parse(split[2], CultureInfo.InvariantCulture),
+                                Z = float.Parse(split[3], CultureInfo.InvariantCulture),
                             });
                             break;
                         case ParsingCategory.Track:
@@ -117,9 +116,9 @@ namespace KotOR_IO
                             Tracks.Add(new ArtPlaceable
                             {
                                 Model = split[0],
-                                X = float.Parse(split[1]),
-                                Y = float.Parse(split[2]),
-                                Z = float.Parse(split[3]),
+                                X = float.Parse(split[1], CultureInfo.InvariantCulture),
+                                Y = float.Parse(split[2], CultureInfo.InvariantCulture),
+                                Z = float.Parse(split[3], CultureInfo.InvariantCulture),
                             });
                             break;
                         case ParsingCategory.Obstacle:
@@ -128,9 +127,9 @@ namespace KotOR_IO
                             Obstacles.Add(new ArtPlaceable
                             {
                                 Model = split[0],
-                                X = float.Parse(split[1]),
-                                Y = float.Parse(split[2]),
-                                Z = float.Parse(split[3]),
+                                X = float.Parse(split[1], CultureInfo.InvariantCulture),
+                                Y = float.Parse(split[2], CultureInfo.InvariantCulture),
+                                Z = float.Parse(split[3], CultureInfo.InvariantCulture),
                             });
                             break;
                         case ParsingCategory.DoorHook:
@@ -140,14 +139,14 @@ namespace KotOR_IO
                             {
                                 Room = split[0],
                                 Name = split[1],
-                                Unk1 = float.Parse(split[2]),
-                                X = float.Parse(split[3]),
-                                Y = float.Parse(split[4]),
-                                Z = float.Parse(split[5]),
-                                Unk2 = float.Parse(split[6]),
-                                Unk3 = float.Parse(split[7]),
-                                Unk4 = float.Parse(split[8]),
-                                Unk5 = float.Parse(split[9]),
+                                Unk1 = float.Parse(split[2], CultureInfo.InvariantCulture),
+                                X = float.Parse(split[3], CultureInfo.InvariantCulture),
+                                Y = float.Parse(split[4], CultureInfo.InvariantCulture),
+                                Z = float.Parse(split[5], CultureInfo.InvariantCulture),
+                                Unk2 = float.Parse(split[6], CultureInfo.InvariantCulture),
+                                Unk3 = float.Parse(split[7], CultureInfo.InvariantCulture),
+                                Unk4 = float.Parse(split[8], CultureInfo.InvariantCulture),
+                                Unk5 = float.Parse(split[9], CultureInfo.InvariantCulture),
                             });
                             break;
                         case ParsingCategory.None:
